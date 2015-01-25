@@ -14388,4 +14388,62 @@ public class PApplet implements PConstants {
   public float random() {
     return random(1);
   }
+
+  public static float sinn(float v){
+    return (1+sin(v))/2;
+  }
+
+  public static float cosn(float v){
+    return (1+sin(v))/2;
+  }
+
+  public static float tann(float v){
+    return (1+sin(v))/2;
+  }
+
+  private float fcScale=1;
+
+  public void frameCountScale(float scale) {
+    fcScale=scale;
+  }
+
+  public float fcs(){
+    return frameCount*fcScale;
+  }
+
+  // move to right pos to set,
+  public int wh;
+  public int hh;
+
+  public float mouseXn() {
+    return (float)mouseX/width;
+  }
+
+  public float mouseYn() {
+    return (float)mouseY/height;
+  }
+
+  public float mouseXmap(float max) {
+    return (float)mouseX/width*max;
+  }
+
+  public float mouseYmap(float max) {
+    return (float)mouseY/width*max;
+  }
+
+  public float mouseXmap(float max,float add) {
+    return (float)mouseX/width*max+add;
+  }
+
+  public float mouseYmap(float max,float add) {
+    return (float)mouseY/width*max+add;
+  }
+
+  public void shadow(int clr) {
+    pushStyle();
+    fill(clr);
+    strokeWeight(1);
+    rect(-2,-2,width+5,width+5);
+    popStyle();
+  }
 }
