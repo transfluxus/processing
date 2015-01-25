@@ -14372,4 +14372,20 @@ public class PApplet implements PConstants {
     if (recorder != null) recorder.blend(src, sx, sy, sw, sh, dx, dy, dw, dh, mode);
     g.blend(src, sx, sy, sw, sh, dx, dy, dw, dh, mode);
   }
+
+  /**
+   * draw a line from a to b
+   * only for 2d yet. ask how to get renderer
+   */
+  public void line(PVector a,PVector b) {
+    line(a.x,a.y,b.x,b.y);
+  }
+
+  public void point(PVector p) {
+    point(p.x,p.y);
+  }
+
+  public float random() {
+    return random(1);
+  }
 }
