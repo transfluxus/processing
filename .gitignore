@@ -3,3 +3,8 @@
 ._*
 *~
 /build/shared/reference.zip
+test.js
+org.eclipse.vjet.eclipse.core.prefs
+core/doc
+core/src/javascriptEngine/Test1.java
+core/src/processing/test/PAppChild.java
