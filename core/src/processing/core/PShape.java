@@ -700,6 +700,19 @@ public class PShape implements PConstants {
   public void normal(float nx, float ny, float nz) {
   }
 
+
+  public void attrib(String name, float... values) {
+  }
+
+
+  public void attrib(String name, int... values) {
+  }
+
+
+  public void attrib(String name, boolean... values) {
+  }
+
+
   /**
    * @webref pshape:method
    * @brief Starts the creation of a new PShape
@@ -1603,7 +1616,12 @@ public class PShape implements PConstants {
         g.imageMode(CORNER);
         g.image(image, params[0], params[1], params[2], params[3]);
       } else {
-        g.rectMode(CORNER);
+        if(params.length != 5){
+          g.rectMode(CORNER);
+        }
+        else{
+          g.rectMode((int) params[4]);
+        }
         g.rect(params[0], params[1], params[2], params[3]);
       }
 
@@ -2202,6 +2220,19 @@ public class PShape implements PConstants {
     vertices[index][PGraphics.NX] = nx;
     vertices[index][PGraphics.NY] = ny;
     vertices[index][PGraphics.NZ] = nz;
+  }
+
+
+
+  public void setAttrib(String name, int index, float... values) {
+  }
+
+
+  public void setAttrib(String name, int index, int... values) {
+  }
+
+
+  public void setAttrib(String name, int index, boolean... values) {
   }
 
 

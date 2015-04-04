@@ -168,6 +168,8 @@ public class Table {
         // Do this after setting types, otherwise it'll attempt to parse the
         // allocated but empty rows, and drive CATEGORY columns nutso.
         setRowCount(alloc);
+        // sometimes more columns than titles (and types?)
+        setColumnCount(incoming.getColumnCount());
 
       } else if (row == alloc) {
         // Far more efficient than re-allocating all columns and doing a copy
@@ -176,7 +178,14 @@ public class Table {
       }
 
       //addRow(row);
+//      try {
       setRow(row++, incoming);
+//      } catch (ArrayIndexOutOfBoundsException aioobe) {
+//        for (int i = 0; i < incoming.getColumnCount(); i++) {
+//          System.out.format("[%d] %s%n", i, incoming.getString(i));
+//        }
+//        throw aioobe;
+//      }
     }
     // Shrink the table to only the rows that were used
     if (row != alloc) {
@@ -1034,12 +1043,18 @@ public class Table {
 
   protected void writeCSV(PrintWriter writer) {
     if (columnTitles != null) {
-      for (int col = 0; col < columns.length; col++) {
+      for (int col = 0; col < getColumnCount(); col++) {
         if (col != 0) {
           writer.print(',');
         }
-        if (columnTitles[col] != null) {
-          writeEntryCSV(writer, columnTitles[col]);
+        try {
+          if (columnTitles[col] != null) {  // col < columnTitles.length &&
+            writeEntryCSV(writer, columnTitles[col]);
+          }
+        } catch (ArrayIndexOutOfBoundsException e) {
+          PApplet.printArray(columnTitles);
+          PApplet.printArray(columns);
+          throw e;
         }
       }
       writer.println();
@@ -1102,21 +1117,44 @@ public class Table {
 
 
   protected void writeHTML(PrintWriter writer) {
-    writer.println("<html>");
+    writer.println("<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 3.2//EN\">");
+//    writer.println("<!DOCTYPE html>");
+//    writer.println("<meta charset=\"utf-8\">");
 
+    writer.println("<html>");
     writer.println("<head>");
     writer.println("  <meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\" />");
     writer.println("</head>");
 
     writer.println("<body>");
     writer.println("  <table>");
+
+    if (hasColumnTitles()) {
+      writer.println("  <tr>");
+      for (String entry : getColumnTitles()) {
+        writer.print("      <th>");
+        if (entry != null) {
+          writeEntryHTML(writer, entry);
+        }
+        writer.println("</th>");
+      }
+      writer.println("  </tr>");
+    }
+
     for (int row = 0; row < getRowCount(); row++) {
       writer.println("    <tr>");
       for (int col = 0; col < getColumnCount(); col++) {
         String entry = getString(row, col);
         writer.print("      <td>");
-        writeEntryHTML(writer, entry);
-        writer.println("      </td>");
+        if (entry != null) {
+          // probably not a great idea to mess w/ the export
+//          if (entry.startsWith("<") && entry.endsWith(">")) {
+//            writer.print(entry);
+//          } else {
+          writeEntryHTML(writer, entry);
+//          }
+        }
+        writer.println("</td>");
       }
       writer.println("    </tr>");
     }
@@ -1137,16 +1175,15 @@ public class Table {
         writer.print("&gt;");
       } else if (c == '&') {
         writer.print("&amp;");
-      } else if (c == '\'') {
-        writer.print("&apos;");
+//      } else if (c == '\'') {  // only in XML
+//        writer.print("&apos;");
       } else if (c == '"') {
         writer.print("&quot;");
 
-      // not necessary with UTF-8?
-//      } else if (c < 32 || c > 127) {
-//        writer.print("&#");
-//        writer.print((int) c);
-//        writer.print(';');
+      } else if (c < 32 || c > 127) {  // keep in ASCII or Tidy complains
+        writer.print("&#");
+        writer.print((int) c);
+        writer.print(';');
 
       } else {
         writer.print(c);
@@ -1652,6 +1689,7 @@ public class Table {
     }
   }
 
+
   /**
    * @webref table:method
    * @brief Gets the number of columns in a table
@@ -2078,7 +2116,7 @@ public class Table {
     // Make sure there are enough columns to add this data
     ensureBounds(row, source.getColumnCount() - 1);
 
-    for (int col = 0; col < columns.length; col++) {
+    for (int col = 0; col < Math.min(source.getColumnCount(), columns.length); col++) {
       switch (columnTypes[col]) {
       case INT:
         setInt(row, col, source.getInt(col));

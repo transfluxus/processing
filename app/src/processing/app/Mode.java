@@ -25,6 +25,8 @@ package processing.app;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.WritableRaster;
 import java.io.*;
 import java.util.*;
 
@@ -40,6 +42,7 @@ import processing.app.contrib.ContributionType;
 import processing.app.contrib.ExamplesContribution;
 import processing.app.syntax.*;
 import processing.core.PApplet;
+import processing.core.PConstants;
 
 
 public abstract class Mode {
@@ -208,7 +211,7 @@ public abstract class Mode {
       // other things that have to be set explicitly for the defaults
       theme.setColor("run.window.bgcolor", SystemColor.control);
 
-      loadBackground();
+//      loadBackground();
 
     } catch (IOException e) {
       Base.showError("Problem loading theme.txt",
@@ -217,6 +220,7 @@ public abstract class Mode {
   }
   
   
+  /*
   protected void loadBackground() {
     String suffix = Toolkit.highResDisplay() ? "-2x.png" : ".png";
     backgroundImage = loadImage("theme/mode" + suffix);
@@ -245,6 +249,7 @@ public abstract class Mode {
                   BACKGROUND_WIDTH, BACKGROUND_HEIGHT, null);
     }
   }
+  */
 
 
   public File getContentFile(String path) {
@@ -440,6 +445,40 @@ public abstract class Mode {
   }
 
 
+  protected int importMenuIndex = -1;
+  
+  /**
+   * Rather than re-building the library menu for every open sketch (very slow
+   * and prone to bugs when updating libs, particularly with the contribs mgr), 
+   * share a single instance across all windows. 
+   * @since 3.0a6
+   * @param sketchMenu the Sketch menu that's currently active
+   */
+  public void removeImportMenu(JMenu sketchMenu) {
+    JMenu importMenu = getImportMenu();
+    //importMenuIndex = sketchMenu.getComponentZOrder(importMenu);
+    importMenuIndex = Toolkit.getMenuItemIndex(sketchMenu, importMenu);
+    sketchMenu.remove(importMenu);
+  }
+  
+  
+  /**
+   * Re-insert the Import Library menu. Added function so that other modes
+   * need not have an 'import' menu.
+   * @since 3.0a6
+   * @param sketchMenu the Sketch menu that's currently active
+   */
+  public void insertImportMenu(JMenu sketchMenu) {
+    // hard-coded as 4 in 3.0a5, change to 5 for 3.0a6, but... yuck
+    //sketchMenu.insert(mode.getImportMenu(), 4);
+    // This is -1 on when the editor window is first shown, but that's fine
+    // because the import menu has just been added in the Editor constructor.
+    if (importMenuIndex != -1) {
+      sketchMenu.insert(getImportMenu(), importMenuIndex);
+    }
+  }
+  
+  
   public JMenu getImportMenu() {
     if (importMenu == null) {
       rebuildImportMenu();
@@ -1178,24 +1217,40 @@ public abstract class Mode {
 
   
   /**
-   * Get an ImageIcon object from the mode folder.
+   * Get an ImageIcon object from the Mode folder.
+   * Or when prefixed with /lib, load it from the main /lib folder.
    * @since 3.0a6
    */
   public ImageIcon loadIcon(String filename) {
+    if (filename.startsWith("/lib/")) {
+      return Toolkit.getLibIcon(filename.substring(5));
+    }
     File file = new File(folder, filename);
     if (!file.exists()) {
+//      EditorConsole.systemErr.println("file does not exist: " + file.getAbsolutePath());
       return null;
     }
+//    EditorConsole.systemErr.println("found: " + file.getAbsolutePath());
     return new ImageIcon(file.getAbsolutePath());
   }
   
   
   /**
    * Get an image object from the mode folder.
+   * Or when prefixed with /lib, load it from the main /lib folder.
    */
   public Image loadImage(String filename) {
-    return loadIcon(filename).getImage();
+    ImageIcon icon = loadIcon(filename); 
+    if (icon != null) {
+      return icon.getImage();
+    }
+    return null;
   }
+  
+  
+//  public EditorButton loadButton(String name) {
+//    return new EditorButton(this, name);
+//  }
 
 
   //public Settings getTheme() {
@@ -1289,6 +1344,39 @@ public abstract class Mode {
 
 //    return new SyntaxStyle(color, italic, bold);
     return new SyntaxStyle(color, bold);
+  }
+  
+  
+  public Image getGradient(String attribute, int wide, int high) {
+    int top = getColor(attribute + ".gradient.top").getRGB();
+    int bot = getColor(attribute + ".gradient.bottom").getRGB();
+
+//    float r1 = (top >> 16) & 0xff;
+//    float g1 = (top >> 8) & 0xff;
+//    float b1 = top & 0xff;
+//    float r2 = (bot >> 16) & 0xff;
+//    float g2 = (bot >> 8) & 0xff;
+//    float b2 = bot & 0xff;
+    
+    BufferedImage outgoing = 
+      new BufferedImage(wide, high, BufferedImage.TYPE_INT_RGB);
+    int[] row = new int[wide];
+    WritableRaster wr = outgoing.getRaster();
+    for (int i = 0; i < high; i++) {
+//      Arrays.fill(row, (255 - (i + GRADIENT_TOP)) << 24);
+//      int r = (int) PApplet.map(i, 0, high-1, r1, r2);
+      int rgb = PApplet.lerpColor(top, bot, i / (float)(high-1), PConstants.RGB);
+      Arrays.fill(row, rgb);
+//      System.out.println(PApplet.hex(row[0]));
+      wr.setDataElements(0, i, wide, 1, row);
+    }
+//    Graphics g = outgoing.getGraphics();
+//    for (int i = 0; i < steps; i++) {
+//      g.setColor(new Color(1, 1, 1, 255 - (i + GRADIENT_TOP)));
+//      //g.fillRect(0, i, EditorButton.DIM, 10);
+//      g.drawLine(0, i, EditorButton.DIM, i);
+//    }
+    return outgoing;
   }
 
 

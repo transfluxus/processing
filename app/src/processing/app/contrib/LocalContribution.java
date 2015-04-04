@@ -46,9 +46,8 @@ public abstract class LocalContribution extends Contribution {
   protected String id;          // 1 (unique id for this library)
   protected int latestVersion;  // 103
   protected File folder;
-  protected HashMap<String, String> properties;
+  protected Map<String, String> properties;
   protected ClassLoader loader;
-  protected List<String> specifiedImports; // mylib,mylib.util;
 
   public LocalContribution(File folder) {
     this.folder = folder;

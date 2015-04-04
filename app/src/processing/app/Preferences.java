@@ -63,11 +63,11 @@ public class Preferences {
    * Standardized width for buttons. Mac OS X 10.3 wants 70 as its default,
    * Windows XP needs 66, and my Ubuntu machine needs 80+, so 80 seems proper.
    */
-  static public int BUTTON_WIDTH = 
+  static public int BUTTON_WIDTH =
     Integer.parseInt(Language.text("preferences.button.width"));
 
-  /** height of the EditorHeader, EditorToolbar, and EditorStatus */
-  static final int GRID_SIZE = 32;
+//  /** height of the EditorHeader, EditorToolbar, and EditorStatus */
+//  static final int GRID_SIZE = 32;
 
   // Indents and spacing standards. These probably need to be modified
   // per platform as well, because Mac OS X is so huge, Windows is smaller,
@@ -182,7 +182,6 @@ public class Preferences {
 
 
   static protected void save() {
-//    try {
     // on startup, don't worry about it
     // this is trying to update the prefs for who is open
     // before Preferences.init() has been called.
@@ -191,11 +190,6 @@ public class Preferences {
     // Fix for 0163 to properly use Unicode when writing preferences.txt
     PrintWriter writer = PApplet.createWriter(preferencesFile);
 
-//    Enumeration e = table.keys(); //properties.propertyNames();
-//    while (e.hasMoreElements()) {
-//      String key = (String) e.nextElement();
-//      writer.println(key + "=" + ((String) table.get(key)));
-//    }
     String[] keyList = table.keySet().toArray(new String[table.size()]);
     keyList = PApplet.sort(keyList);
     for (String key : keyList) {
@@ -204,10 +198,6 @@ public class Preferences {
 
     writer.flush();
     writer.close();
-
-//    } catch (Exception ex) {
-//      Base.showWarning(null, "Error while saving the settings file", ex);
-//    }
   }
 
 

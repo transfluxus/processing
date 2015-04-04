@@ -20,7 +20,7 @@
   </condition>
 
   <!-- Require Java 8 everywhere. -->
-  <fail message="Unsupported Java version: ${java.version}. Make sure that Java 7 (aka Java 1.8) is installed."> 
+  <fail message="Unsupported Java version: ${java.version}. To build, make sure that Java 8 (aka Java 1.8) is installed."> 
     <condition> 
       <not> 
         <or> 
@@ -29,6 +29,9 @@
       </not> 
     </condition> 
   </fail> 
+
+  <!-- could prompt here to download the necessary JRE
+       (Windows/Linux) or JDK (on Mac OS X) -->
 
   <property name="examples.dir" 
 	    value="../../processing-docs/content/examples" />
@@ -40,34 +43,44 @@
   -->
   <!-- Switching to 8 because updates for 7 end April 2015 -->
   <property name="jdk.version" value="8" />
-  <property name="jdk.update" value="31" />
-  <property name="jdk.build" value="13" />
-  <property name="jdk.stuff" value="${jdk.version}u${jdk.update}" />
+  <property name="jdk.update" value="40" />
+  <property name="jdk.build" value="26" />
+  <property name="jdk.short" value="${jdk.version}u${jdk.update}" />
   <property name="jdk.esoteric" value="1.${jdk.version}.0_${jdk.update}" />
 
   <!-- Figure out the JRE download location for Linux and Windows. -->
   <condition property="jre.file" 
-             value="jre-${jdk.stuff}-${platform}-i586.tar.gz"> 
+             value="jre-${jdk.short}-${platform}-i586.tar.gz"> 
     <equals arg1="${sun.arch.data.model}" arg2="32" />
   </condition>
   <condition property="jre.file" 
-             value="jre-${jdk.stuff}-${platform}-x64.tar.gz"> 
+             value="jre-${jdk.short}-${platform}-x64.tar.gz"> 
     <equals arg1="${sun.arch.data.model}" arg2="64" />
   </condition>
 
-  <!-- for the new one that uses the special getter -->
+  <!-- for the full name from processing.org/downloads -->
   <condition property="jre.download" 
-             value="${jdk.stuff}-${platform}-i586.tar.gz"> 
+             value="${jdk.short}-${platform}-i586.tar.gz"> 
     <equals arg1="${sun.arch.data.model}" arg2="32" />
   </condition>
   <condition property="jre.download" 
-             value="${jdk.stuff}-${platform}-x64.tar.gz"> 
+             value="${jdk.short}-${platform}-x64.tar.gz"> 
+    <equals arg1="${sun.arch.data.model}" arg2="64" />
+  </condition>
+
+  <!-- for use with the Ant Task -->
+  <condition property="jre.downloader" 
+             value="${platform}-i586.tar.gz"> 
+    <equals arg1="${sun.arch.data.model}" arg2="32" />
+  </condition>
+  <condition property="jre.downloader" 
+             value="${platform}-x64.tar.gz"> 
     <equals arg1="${sun.arch.data.model}" arg2="64" />
   </condition>
 
   <!-- JDK location for Mac OS X -->
   <!--
-  <condition property="jdk.file" value="jdk-${jdk.stuff}-macosx-x64.dmg">
+  <condition property="jdk.file" value="jdk-${jdk.short}-macosx-x64.dmg">
     <equals arg1="${platform}" arg2="macosx" />
   </condition>
   -->
@@ -184,6 +197,29 @@
 
   <property environment="env" />
 
+  <property name="jre.tgz.path" value="${platform}/jre-${jdk.short}.tgz" />
+
+  <target name="jre-check"> 
+    <available file="${jre.tgz.path}" property="jre.tgz.downloaded" />
+  </target>
+
+  <target name="jre-download" depends="jre-check" unless="jre.tgz.downloaded">
+    <!-- make sure we're built -->
+    <subant buildpath="jre" target="dist" />
+
+    <!-- our special JRE downloader task -->
+    <taskdef name="downloader" 
+	     classname="Downloader"
+	     classpath="jre/downloader.jar" />
+
+    <downloader version="${jdk.version}" 
+                update="${jdk.update}" 
+                build="${jdk.build}" 
+                jdk="false" 
+                flavor="${jre.downloader}"
+                path="${jre.tgz.path}" />    
+  </target>
+
   <!-- code signing hack, turns on code signing during dist -->
   <condition property="codesign"> 
     <equals arg1="${env.USER}" arg2="fry" />
@@ -196,7 +232,7 @@
   <available file="${jdk.path.macosx}" property="macosx_jdk_found" />
 
   <fail if="macosx" unless="macosx_jdk_found"
-        message="JDK ${jdk.stuff} required.${line.separator}To build on OS X, you must install Oracle's JDK ${jdk.stuff} from${line.separator}http://www.oracle.com/technetwork/java/javase/downloads${line.separator}Note that only ${jdk.stuff} (not a later or earlier version) will work. ${line.separator}And it must be the JDK, not the JRE. And do not try to defy me again." />
+        message="JDK ${jdk.short} required.${line.separator}To build on OS X, you must install Oracle's JDK ${jdk.short} from${line.separator}http://www.oracle.com/technetwork/java/javase/downloads${line.separator}Note that only ${jdk.short} (not a later or earlier version) will work. ${line.separator}And it must be the JDK, not the JRE. And do not try to defy me again." />
   <!--
   <fail if="linux" unless="java_tools_found" 
         message="The JAVA_HOME variable must be set to the location of a full JDK. For instance, on Ubuntu Linux, this might be /usr/lib/jvm/java-6-sun." />
@@ -399,7 +435,7 @@
     <delete file="macosx/processing-*.dmg" />
   </target>
   
-  <target name="macosx-checkos" unless="macosx">
+  <target name="macosx-check-os" unless="macosx">
     <echo>
       =======================================================
       Processing for Mac OS X can only be built on Mac OS X.
@@ -410,7 +446,7 @@
     <fail message="wrong platform (${os.name})" />
   </target>
   
-  <target name="macosx-build" if="macosx" depends="revision-check, macosx-checkos, subprojects-build" description="Build Mac OS X version">
+  <target name="macosx-build" if="macosx" depends="revision-check, macosx-check-os, subprojects-build" description="Build Mac OS X version">
     <mkdir dir="macosx/work" />
     
     <!-- app bundler for OS X and Java 1.7 -->
@@ -634,10 +670,10 @@
     <delete dir="linux/work" />
   </target>
   
-  <target name="linux-checkos" unless="linux">
+  <target name="linux-check-os" unless="linux">
     <echo>
       =======================================================
-      Processing for Linux can only be built on on unix systems.
+      Processing for Linux can only be built on *nix systems.
       
       Bye. 
       =======================================================
@@ -646,7 +682,7 @@
     <fail message="wrong platform (${os.name})" />
   </target>
   
-  <target name="linux-build" depends="revision-check, linux-checkos, subprojects-build" description="Build linux version">
+  <target name="linux-build" depends="revision-check, linux-check-os, jre-download, subprojects-build" description="Build Linux version">
     <mkdir dir="linux/work" />
     
     <copy todir="linux/work">
@@ -661,7 +697,8 @@
       <param name="target.path" value="linux/work" />
     </antcall>
 
-    <property name="launch4j.dir" value="linux/work/modes/java/application/launch4j" />
+    <property name="launch4j.dir" 
+              value="linux/work/modes/java/application/launch4j" />
 
     <!-- rename the version we need -->
     <move file="${launch4j.dir}/bin/windres-linux"
@@ -690,9 +727,11 @@
     <copy file="linux/processing" tofile="linux/work/processing-java" />
     <chmod perm="ugo+x" file="linux/work/processing-java" />
 
+<!--
     <get src="http://download.processing.org/java/${jre.file}" 
          dest="linux/jre.tgz" 
          usetimestamp="true" />
+-->
 
 <!--           
     Cannot use ant version of tar because it doesn't preserve properties.
@@ -713,7 +752,7 @@
       <arg value="-xzpf" />
       -->
       <arg value="xfz" />
-      <arg value="jre.tgz"/>
+      <arg value="../${jre.tgz.path}"/>
     </exec>
 
     <!--
@@ -874,7 +913,7 @@
     <delete dir="windows/work" />
   </target>
   
-  <target name="windows-checkos" unless="windows">
+  <target name="windows-check-os" unless="windows">
     <echo>
       =======================================================
       Processing for Windows can only be built on windows.
@@ -886,9 +925,7 @@
     <fail message="wrong platform (${os.name})" />
   </target>
   
-  <target name="windows-build" 
-          depends="revision-check, windows-checkos, subprojects-build" 
-          description="Build windows version">
+  <target name="windows-build" depends="revision-check, windows-check-os, jre-download, subprojects-build" description="Build Windows version">
     <mkdir dir="windows/work" />
     
     <!-- assemble the pde -->
@@ -940,9 +977,11 @@
     </chmod>
 
     <!-- starting with 2.0a7, require the local JRE + tools.jar -->
+<!--
     <get src="http://download.processing.org/java/${jre.file}" 
          dest="windows/jre.tgz" 
          usetimestamp="true" />
+-->
 
     <!--
     <unzip dest="windows/work" src="windows/jre.zip" overwrite="false"/>
@@ -951,7 +990,7 @@
          since those shouldn't matter on Windows. -->
     <untar compression="gzip"
            dest="windows/work" 
-           src="windows/jre.tgz" 
+           src="${jre.tgz.path}" 
            overwrite="false" />
     <move file="windows/work/jre${jdk.esoteric}" 
           tofile="windows/work/java" />

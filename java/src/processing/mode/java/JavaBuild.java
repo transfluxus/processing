@@ -411,6 +411,7 @@ public class JavaBuild {
     if (core != null) {
       importedLibraries.add(core);
       classPath += core.getClassPath();
+      javaLibraryPath += File.pathSeparator + core.getNativePath();
     }
 
 //    System.out.println("extra imports: " + result.extraImports);
@@ -1430,9 +1431,9 @@ public class JavaBuild {
         exportClassPath.append(jarList[i]);
       }
     } else {
+      exportClassPath.append("$APPDIR");
       for (int i = 0; i < jarList.length; i++) {
-        if (i != 0) exportClassPath.append(":");
-        exportClassPath.append("$APPDIR/lib/" + jarList[i]);
+        exportClassPath.append(":$APPDIR/lib/" + jarList[i]);
       }
     }
 

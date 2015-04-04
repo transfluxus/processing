@@ -518,6 +518,8 @@ public class PSurfaceAWT implements PSurface {
       // Did not help, and the screenRect setup seems to work fine.
       //frame.setExtendedState(Frame.MAXIMIZED_BOTH);
 
+      // https://github.com/processing/processing/pull/3162
+      frame.dispose();  // release native resources, allows setUndecorated()
       frame.setUndecorated(true);
       // another duplicate?
 //      if (backgroundColor != null) {
@@ -525,7 +527,7 @@ public class PSurfaceAWT implements PSurface {
 //      }
       // this may be the bounds of all screens
       frame.setBounds(screenRect);
-      frame.setVisible(true);
+      frame.setVisible(true);  // re-add native resources
     }
     frame.setLayout(null);
     //frame.add(applet);
@@ -574,6 +576,9 @@ public class PSurfaceAWT implements PSurface {
   public void setVisible(boolean visible) {
     frame.setVisible(visible);
 
+    // removing per https://github.com/processing/processing/pull/3162
+    // can remove the code below once 3.0a6 is tested and behaving
+/*
     if (visible && PApplet.platform == PConstants.LINUX) {
       // Linux doesn't deal with insets the same way. We get fake insets
       // earlier, and then the window manager will slap its own insets
@@ -586,6 +591,7 @@ public class PSurfaceAWT implements PSurface {
                       insets.top + insets.bottom);
       }
     }
+*/
   }
 
 
@@ -679,6 +685,9 @@ public class PSurfaceAWT implements PSurface {
 
   /** Resize frame for these sketch (canvas) dimensions. */
   private Dimension setFrameSize() {  //int sketchWidth, int sketchHeight) {
+    // https://github.com/processing/processing/pull/3162
+    frame.addNotify();  // using instead of show() to add the peer [fry]
+
 //    System.out.format("setting frame size %d %d %n", sketchWidth, sketchHeight);
 //    new Exception().printStackTrace(System.out);
     Insets insets = frame.getInsets();
@@ -979,6 +988,8 @@ public class PSurfaceAWT implements PSurface {
       // maximization bug in OSX:
       // http://bugs.java.com/bugdatabase/view_bug.do?bug_id=8036935
       public void windowStateChanged(WindowEvent e) {
+        // This seems to be firing when dragging the window on OS X
+        // https://github.com/processing/processing/issues/3092
         if (Frame.MAXIMIZED_BOTH == e.getNewState()) {
           // Supposedly, sending the frame to back and then front is a
           // workaround for this bug:
@@ -986,8 +997,11 @@ public class PSurfaceAWT implements PSurface {
           // but is not working for me...
           //frame.toBack();
           //frame.toFront();
-          // but either packing the frame does!
-          frame.pack();
+          // Packing the frame works, but that causes the window to collapse
+          // on OS X when the window is dragged. Changing to addNotify() for
+          // https://github.com/processing/processing/issues/3092
+          //frame.pack();
+          frame.addNotify();
         }
       }
     });
@@ -995,6 +1009,13 @@ public class PSurfaceAWT implements PSurface {
     frame.addComponentListener(new ComponentAdapter() {
         @Override
         public void componentResized(ComponentEvent e) {
+//          for (ComponentListener cl : frame.getComponentListeners()) {
+//            System.out.println(cl);
+//          }
+//          System.out.println(e);
+//          System.out.println(frame.isResizable());
+//          new Exception().printStackTrace();
+
           // Ignore bad resize events fired during setup to fix
           // http://dev.processing.org/bugs/show_bug.cgi?id=341
           // This should also fix the blank screen on Linux bug

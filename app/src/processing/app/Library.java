@@ -113,7 +113,10 @@ public class Library extends LocalContribution {
     referenceFile = new File(folder, "reference/index.html");
 
     File exportSettings = new File(libraryFolder, "export.txt");
-    HashMap<String,String> exportTable = Base.readSettings(exportSettings);
+    Map<String,String> exportTable = Base.readSettings(exportSettings);
+    if (exportTable == null) {
+      exportTable = new HashMap<>();  // need an empty table below
+    }
 
     exportList = new HashMap<String, String[]>();
 
@@ -519,7 +522,7 @@ public class Library extends LocalContribution {
   /**
    * Returns the object stored in the referenceFile field, which contains an
    * instance of the file object representing the index file of the reference
-   * 
+   *
    * @return referenceFile
    */
   public File getReferenceIndexFile() {
@@ -529,7 +532,7 @@ public class Library extends LocalContribution {
 
   /**
    * Tests whether the reference's index file indicated by referenceFile exists.
-   * 
+   *
    * @return true if and only if the file denoted by referenceFile exists; false
    *         otherwise.
    */

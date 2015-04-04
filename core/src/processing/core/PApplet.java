@@ -189,8 +189,8 @@ public class PApplet implements PConstants {
 
   /**
    * Command line options passed in from main().
-   * <p>
    * This does not include the arguments passed in to PApplet itself.
+   * @see PApplet#main
    */
   public String[] args;
 
@@ -4868,6 +4868,10 @@ public class PApplet implements PConstants {
         vessel.height = actual.height;
         vessel.format = actual.format;
         vessel.pixels = actual.pixels;
+
+        vessel.pixelWidth = actual.width;
+        vessel.pixelHeight = actual.height;
+        vessel.pixelFactor = 1;
       }
       requestImageCount--;
     }
@@ -4921,6 +4925,7 @@ public class PApplet implements PConstants {
       // with the old method.
       outgoing.checkAlpha();
 
+      stream.close();
       // return the image
       return outgoing;
 
@@ -5131,7 +5136,7 @@ public class PApplet implements PConstants {
         }
       }
     }
-
+    is.close();
     return outgoing;
   }
 
@@ -5366,7 +5371,12 @@ public class PApplet implements PConstants {
           return dictionary.typedParse(createInput(filename), optionStr);
         }
       }
-      return new Table(createInput(filename), optionStr);
+      InputStream input = createInput(filename);
+      if (input == null) {
+        System.err.println(filename + " does not exist or could not be read");
+        return null;
+      }
+      return new Table(input, optionStr);
 
     } catch (IOException e) {
       e.printStackTrace();
@@ -6084,8 +6094,6 @@ public class PApplet implements PConstants {
    * Call openStream() without automatic gzip decompression.
    */
   public InputStream createInputRaw(String filename) {
-    InputStream stream = null;
-
     if (filename == null) return null;
 
     if (filename.length() == 0) {
@@ -6094,19 +6102,29 @@ public class PApplet implements PConstants {
       return null;
     }
 
-    // safe to check for this as a url first. this will prevent online
+    // First check whether this looks like a URL. This will prevent online
     // access logs from being spammed with GET /sketchfolder/http://blahblah
     if (filename.contains(":")) {  // at least smells like URL
       try {
         URL url = new URL(filename);
-        stream = url.openStream();
-        return stream;
+        URLConnection conn = url.openConnection();
+        HttpURLConnection httpConn = (HttpURLConnection) conn;
+        // Will not handle a protocol change (see below)
+        httpConn.setInstanceFollowRedirects(true);
+        int response = httpConn.getResponseCode();
+        // Normally will not follow HTTPS redirects from HTTP due to security concerns
+        // http://stackoverflow.com/questions/1884230/java-doesnt-follow-redirect-in-urlconnection/1884427
+        if (response >= 300 && response < 400) {
+          String newLocation = httpConn.getHeaderField("Location");
+          return createInputRaw(newLocation);
+        }
+        return conn.getInputStream();
 
       } catch (MalformedURLException mfue) {
         // not a url, that's fine
 
       } catch (FileNotFoundException fnfe) {
-        // Java 1.5 likes to throw this when URL not available. (fix for 0119)
+        // Added in 0119 b/c Java 1.5 throws FNFE when URL not available.
         // http://dev.processing.org/bugs/show_bug.cgi?id=403
 
       } catch (IOException e) {
@@ -6117,6 +6135,8 @@ public class PApplet implements PConstants {
         //throw new RuntimeException("Error downloading from URL " + filename);
       }
     }
+
+    InputStream stream = null;
 
     // Moved this earlier than the getResourceAsStream() checks, because
     // calling getResourceAsStream() on a directory lists its contents.
@@ -6148,7 +6168,7 @@ public class PApplet implements PConstants {
             throw new RuntimeException("This file is named " +
                                        filenameActual + " not " +
                                        filename + ". Rename the file " +
-            "or change your code.");
+                                       "or change your code.");
           }
         } catch (IOException e) { }
       }
@@ -6311,7 +6331,13 @@ public class PApplet implements PConstants {
    */
   static public byte[] loadBytes(File file) {
     InputStream is = createInput(file);
-    return loadBytes(is);
+    byte[] byteArr = loadBytes(is);
+    try {
+      is.close();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return byteArr;
   }
 
   /**
@@ -6377,7 +6403,15 @@ public class PApplet implements PConstants {
    */
   public String[] loadStrings(String filename) {
     InputStream is = createInput(filename);
-    if (is != null) return loadStrings(is);
+    if (is != null) {
+      String[] strArr = loadStrings(is);
+      try {
+        is.close();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+      return strArr;
+    }
 
     System.err.println("The file \"" + filename + "\" " +
                        "is missing or inaccessible, make sure " +
@@ -9185,6 +9219,34 @@ public class PApplet implements PConstants {
   }
 
 
+  /**
+   * ( begin auto-generated from lerpColor.xml )
+   *
+   * Calculates a color or colors between two color at a specific increment.
+   * The <b>amt</b> parameter is the amount to interpolate between the two
+   * values where 0.0 equal to the first point, 0.1 is very near the first
+   * point, 0.5 is half-way in between, etc.
+   *
+   * ( end auto-generated )
+   *
+   * @webref color:creating_reading
+   * @usage web_application
+   * @param c1 interpolate from this color
+   * @param c2 interpolate to this color
+   * @param amt between 0.0 and 1.0
+   * @see PImage#blendColor(int, int, int)
+   * @see PGraphics#color(float, float, float, float)
+   * @see PApplet#lerp(float, float, float)
+   */
+  public int lerpColor(int c1, int c2, float amt) {
+    if (g != null) {
+      return g.lerpColor(c1, c2, amt);
+    }
+    // use the default mode (RGB) if lerpColor is called before setup()
+    return PGraphics.lerpColor(c1, c2, amt, RGB);
+  }
+
+
   static public int blendColor(int c1, int c2, int mode) {
     return PImage.blendColor(c1, c2, mode);
   }
@@ -9199,16 +9261,23 @@ public class PApplet implements PConstants {
   /**
    * main() method for running this class from the command line.
    * <p>
-   * <B>The options shown here are not yet finalized and will be
-   * changing over the next several releases.</B>
+   * Usage: PApplet [options] &lt;class name&gt; [sketch args]
+   * <ul>
+   * <li>The [options] are one or several of the parameters seen below.
+   * <li>The class name is required. If you're running outside the PDE and
+   * your class is in a package, this should include the full name. That means
+   * that if the class is called Sketchy and the package is com.sketchycompany
+   * then com.sketchycompany.Sketchy should be used as the class name.
+   * <li>The [sketch args] are any command line parameters you want to send to
+   * the sketch itself. These will be passed into the args[] array in PApplet.
    * <p>
-   * The simplest way to turn and applet into an application is to
+   * The simplest way to turn and sketch into an application is to
    * add the following code to your program:
    * <PRE>static public void main(String args[]) {
-   *   PApplet.main("YourSketchName", args);
+   *   PApplet.main("YourSketchName");
    * }</PRE>
-   * This will properly launch your applet from a double-clickable
-   * .jar or from the command line.
+   * That will properly launch your code from a double-clickable .jar
+   * or from the command line.
    * <PRE>
    * Parameters useful for launching or also used by the PDE:
    *
@@ -9244,6 +9313,11 @@ public class PApplet implements PConstants {
    *
    * --editor-location=x,y position of the upper-lefthand corner of the
    *                       editor window, for placement of applet window
+   *
+   * All parameters *after* the sketch class name are passed to the sketch
+   * itself and available from its 'args' array while the sketch is running.
+   *
+   * @see PApplet#args
    * </PRE>
    */
   static public void main(final String[] args) {
@@ -9253,7 +9327,7 @@ public class PApplet implements PConstants {
 
   /**
    * Convenience method so that PApplet.main("YourSketch") launches a sketch,
-   * rather than having to wrap it into a String array.
+   * rather than having to wrap it into a single element String array.
    * @param mainClass name of the class to load (with package if any)
    */
   static public void main(final String mainClass) {
@@ -9266,18 +9340,33 @@ public class PApplet implements PConstants {
    * sketch, rather than having to wrap it into a String array, and appending
    * the 'args' array when not null.
    * @param mainClass name of the class to load (with package if any)
-   * @param args command line arguments to pass to the sketch
+   * @param args command line arguments to pass to the sketch's 'args' array.
+   *             Note that this is *not* the same as the args passed to PApplet
+   *             such as --display and others.
    */
-  static public void main(final String mainClass, final String[] passedArgs) {
+  static public void main(final String mainClass, final String[] sketchArgs) {
     String[] args = new String[] { mainClass };
-    if (passedArgs != null) {
-      args = concat(args, passedArgs);
+    if (sketchArgs != null) {
+      args = concat(args, sketchArgs);
     }
     runSketch(args, null);
   }
 
 
-  static public void runSketch(final String[] args, final PApplet constructedApplet) {
+  /*
+  static public void runSketch(final String[] args,
+                               final PApplet constructedApplet) {
+    EventQueue.invokeLater(new Runnable() {
+      public void run() {
+        runSketchEDT(args, constructedApplet);
+      }
+    });
+  }
+  */
+
+
+  static public void runSketch(final String[] args,
+                               final PApplet constructedApplet) {
     // Supposed to help with flicker, but no effect on OS X.
     // TODO IIRC this helped on Windows, but need to double check.
     System.setProperty("sun.awt.noerasebackground", "true");
@@ -9285,8 +9374,8 @@ public class PApplet implements PConstants {
     Toolkit.getDefaultToolkit().setDynamicLayout(true);
 
     if (args.length < 1) {
-      System.err.println("Usage: PApplet <appletname>");
-      System.err.println("For additional options, see the Javadoc for PApplet");
+      System.err.println("Usage: PApplet [options] <class name> [sketch args]");
+      System.err.println("See the Javadoc for PApplet for an explanation.");
       System.exit(1);
     }
 
@@ -9356,16 +9445,16 @@ public class PApplet implements PConstants {
       argIndex++;
     }
 
-    // Now that sketch path is passed in args after the sketch name
-    // it's not set in the above loop(the above loop breaks after
-    // finding sketch name). So setting sketch path here.
-    // https://github.com/processing/processing/commit/0a14835e6f5f4766b022e73a8fe562318636727c
-    // TODO this is a hack added for PDE X and needs to be removed [fry 141104]
-    for (int i = 0; i < args.length; i++) {
-      if (args[i].startsWith(ARGS_SKETCH_FOLDER)){
-        folder = args[i].substring(args[i].indexOf('=') + 1);
-      }
-    }
+//    // Now that sketch path is passed in args after the sketch name
+//    // it's not set in the above loop(the above loop breaks after
+//    // finding sketch name). So setting sketch path here.
+//    // https://github.com/processing/processing/commit/0a14835e6f5f4766b022e73a8fe562318636727c
+//    // TODO this is a hack added for PDE X and needs to be removed [fry 141104]
+//    for (int i = 0; i < args.length; i++) {
+//      if (args[i].startsWith(ARGS_SKETCH_FOLDER)){
+//        folder = args[i].substring(args[i].indexOf('=') + 1);
+//      }
+//    }
 
     // Set this property before getting into any GUI init code
     //System.setProperty("com.apple.mrj.application.apple.menu.about.name", name);
@@ -9537,9 +9626,8 @@ public class PApplet implements PConstants {
 
 
   /**
-   * These methods provide a means for running an already-constructed
-   * sketch. In particular, it makes it easy to launch a sketch in
-   * Jython:
+   * Convenience method for Python Mode to run an already-constructed sketch.
+   * This makes it makes it easy to launch a sketch in Jython:
    *
    * <pre>class MySketch(PApplet):
    *     pass
@@ -9557,6 +9645,7 @@ public class PApplet implements PConstants {
   }
 
 
+  /** Convenience method for Python Mode */
   protected void runSketch() {
     runSketch(new String[0]);
   }
@@ -9935,6 +10024,24 @@ public class PApplet implements PConstants {
   public void normal(float nx, float ny, float nz) {
     if (recorder != null) recorder.normal(nx, ny, nz);
     g.normal(nx, ny, nz);
+  }
+
+
+  public void attrib(String name, float... values) {
+    if (recorder != null) recorder.attrib(name, values);
+    g.attrib(name, values);
+  }
+
+
+  public void attrib(String name, int... values) {
+    if (recorder != null) recorder.attrib(name, values);
+    g.attrib(name, values);
+  }
+
+
+  public void attrib(String name, boolean... values) {
+    if (recorder != null) recorder.attrib(name, values);
+    g.attrib(name, values);
   }
 
 
@@ -13926,30 +14033,6 @@ public class PApplet implements PConstants {
    */
   public final float brightness(int rgb) {
     return g.brightness(rgb);
-  }
-
-
-  /**
-   * ( begin auto-generated from lerpColor.xml )
-   *
-   * Calculates a color or colors between two color at a specific increment.
-   * The <b>amt</b> parameter is the amount to interpolate between the two
-   * values where 0.0 equal to the first point, 0.1 is very near the first
-   * point, 0.5 is half-way in between, etc.
-   *
-   * ( end auto-generated )
-   *
-   * @webref color:creating_reading
-   * @usage web_application
-   * @param c1 interpolate from this color
-   * @param c2 interpolate to this color
-   * @param amt between 0.0 and 1.0
-   * @see PImage#blendColor(int, int, int)
-   * @see PGraphics#color(float, float, float, float)
-   * @see PApplet#lerp(float, float, float)
-   */
-  public int lerpColor(int c1, int c2, float amt) {
-    return g.lerpColor(c1, c2, amt);
   }
 
 

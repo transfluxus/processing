@@ -370,11 +370,11 @@ public class CompilationChecker {
                                          .getDefault()));
     compiler.compile(new ICompilationUnit[] { unit });
 
-    List problems = requestor.getProblems();
+    List<IProblem> problems = requestor.getProblems();
     prob = new IProblem[problems.size()];
     int count = 0;
-    for (Iterator it = problems.iterator(); it.hasNext();) {
-      IProblem problem = (IProblem) it.next();
+    for (Iterator<IProblem> it = problems.iterator(); it.hasNext();) {
+      IProblem problem = it.next();
       prob[count++] = problem;
     }
   }
@@ -479,7 +479,6 @@ public class CompilationChecker {
   }
 
   
-  @SuppressWarnings("rawtypes")
   public IProblem[] getErrors(String sourceName, String source, Map<String, String> settings) {
     fileName = sourceName;
     sourceText = "package " + fileName + ";\n" + source;

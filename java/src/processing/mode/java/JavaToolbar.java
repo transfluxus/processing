@@ -1,7 +1,8 @@
 /*
   Part of the Processing project - http://processing.org
 
-  Copyright (c) 2010-11 Ben Fry and Casey Reas
+  Copyright (c) 2013-15 The Processing Foundation
+  Copyright (c) 2010-13 Ben Fry and Casey Reas
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License version 2
@@ -19,25 +20,64 @@
 
 package processing.mode.java;
 
-import java.awt.Image;
-import java.awt.event.MouseEvent;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
 
-//import javax.swing.JPopupMenu;
+import javax.swing.Box;
 
-import processing.app.Base;
 import processing.app.Editor;
+import processing.app.EditorButton;
 import processing.app.EditorToolbar;
 import processing.app.Language;
 
 
 public class JavaToolbar extends EditorToolbar {
+  JavaEditor jeditor;
+
+
+  public JavaToolbar(Editor editor) {
+    super(editor);
+    jeditor = (JavaEditor) editor;
+  }
+
+
+  public void addModeButtons(Box box) {
+    EditorButton debugButton = new EditorButton(mode, "/lib/toolbar/debug",
+                                                Language.text("toolbar.debug")) {
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        jeditor.toggleDebug();
+      }
+    };
+    debugButton.setReverse();
+    box.add(debugButton);
+    addGap(box);
+  }
+
+
+  @Override
+  public void handleRun(int modifiers) {
+    boolean shift = (modifiers & InputEvent.SHIFT_MASK) != 0;
+    if (shift) {
+      jeditor.handlePresent();
+    } else {
+      jeditor.handleRun();
+    }
+  }
+
+
+  @Override
+  public void handleStop() {
+    jeditor.handleStop();
+  }
+}
+
+
+/*
+public class JavaToolbar extends EditorToolbar {
   static protected final int RUN    = 0;
   static protected final int STOP   = 1;
-
-//  static protected final int NEW    = 2;
-//  static protected final int OPEN   = 3;
-//  static protected final int SAVE   = 4;
-//  static protected final int EXPORT = 5;
 
 
   public JavaToolbar(Editor editor, Base base) {
@@ -47,9 +87,7 @@ public class JavaToolbar extends EditorToolbar {
 
   public void init() {
     Image[][] images = loadImages();
-//    for (int i = 0; i < 6; i++) {
     for (int i = 0; i < 2; i++) {
-//      addButton(getTitle(i, false), getTitle(i, true), images[i], i == NEW);
       addButton(getTitle(i, false), getTitle(i, true), images[i], false);
     }
   }
@@ -57,12 +95,8 @@ public class JavaToolbar extends EditorToolbar {
 
   static public String getTitle(int index, boolean shift) {
     switch (index) {
-    case RUN:    return !shift ? Language.text("toolbar.run") : Language.text("toolbar.present");
-    case STOP:   return Language.text("toolbar.stop");
-//    case NEW:    return Language.text("toolbar.new");
-//    case OPEN:   return Language.text("toolbar.open");
-//    case SAVE:   return Language.text("toolbar.save");
-//    case EXPORT: return Language.text("toolbar.export_application");
+    case RUN: return !shift ? Language.text("toolbar.run") : Language.text("toolbar.present");
+    case STOP: return Language.text("toolbar.stop");
     }
     return null;
   }
@@ -84,35 +118,7 @@ public class JavaToolbar extends EditorToolbar {
     case STOP:
       jeditor.handleStop();
       break;
-
-      /*
-    case OPEN:
-//      popup = menu.getPopupMenu();
-      // TODO I think we need a longer chain of accessors here.
-      JPopupMenu popup = editor.getMode().getToolbarMenu().getPopupMenu();
-      popup.show(this, e.getX(), e.getY());
-      break;
-
-    case NEW:
-//      if (shift) {
-      base.handleNew();
-//      } else {
-//        base.handleNewReplace();
-//      }
-      break;
-
-    case SAVE:
-      jeditor.handleSave(false);
-      break;
-
-    case EXPORT:
-//      if (shift) {
-//        jeditor.handleExportApplet();
-//      } else {
-      jeditor.handleExportApplication();
-//      }
-      break;
-       */
     }
   }
 }
+*/

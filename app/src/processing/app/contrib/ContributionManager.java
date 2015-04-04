@@ -15,7 +15,7 @@
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
 
-  You should have received a copy of the GNU General Public License along 
+  You should have received a copy of the GNU General Public License along
   with this program; if not, write to the Free Software Foundation, Inc.
   59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
@@ -43,7 +43,7 @@ public class ContributionManager {
   /**
    * Blocks until the file is downloaded or an error occurs. Returns true if the
    * file was successfully downloaded, false otherwise.
-   * 
+   *
    * @param source
    *          the URL of the file to download
    * @param dest
@@ -67,17 +67,18 @@ public class ContributionManager {
       conn.setReadTimeout(60 * 1000);
       conn.setRequestMethod("GET");
       conn.connect();
-  
+
       if (progress != null) {
         // TODO this is often -1, may need to set progress to indeterminate
         int fileSize = conn.getContentLength();
+        progress.max = fileSize;
 //      System.out.println("file size is " + fileSize);
-        progress.startTask(Language.text("contrib.progress.downloading"), fileSize); 
+        progress.startTask(Language.text("contrib.progress.downloading"), fileSize);
       }
-  
+
       InputStream in = conn.getInputStream();
       FileOutputStream out = new FileOutputStream(dest);
-  
+
       byte[] b = new byte[8192];
       int amount;
       if (progress != null) {
@@ -95,7 +96,7 @@ public class ContributionManager {
       out.flush();
       out.close();
       success = true;
-      
+
     } catch (SocketTimeoutException ste) {
       if (progress != null) {
         progress.error(ste);
@@ -106,15 +107,16 @@ public class ContributionManager {
         progress.error(ioe);
         progress.cancel();
       }
-      // Hiding stack trace. An error has been shown where needed. 
+      // Hiding stack trace. An error has been shown where needed.
 //      ioe.printStackTrace();
     }
-    if (progress != null)
+    if (progress != null) {
       progress.finished();
+    }
     return success;
   }
 
-  
+
   /**
    * Non-blocking call to download and install a contribution in a new thread.
    *
@@ -143,18 +145,19 @@ public class ContributionManager {
 
           try {
             download(url, contribZip, downloadProgress);
-            
+
             if (!downloadProgress.isCanceled() && !downloadProgress.isError()) {
               installProgress.startTask(Language.text("contrib.progress.installing"), ProgressMonitor.UNKNOWN);
-              LocalContribution contribution = 
+              LocalContribution contribution =
                 ad.install(editor.getBase(), contribZip, false, status);
 
               if (contribution != null) {
                 contribListing.replaceContribution(ad, contribution);
                 if (contribution.getType() == ContributionType.MODE) {
                   ArrayList<ModeContribution> contribModes = editor.getBase().getModeContribs();
-                  if (!contribModes.contains(contribution))
+                  if (!contribModes.contains(contribution)) {
                     contribModes.add((ModeContribution) contribution);
+                  }
                 }
                 refreshInstalled(editor);
               }
@@ -196,11 +199,14 @@ public class ContributionManager {
 
   /**
    * Non-blocking call to download and install a contribution in a new thread.
+   * Used when information about the progress of the download and install
+   * procedure is not of importance, such as if a contribution has to be 
+   * installed at startup time.
    * 
    * @param url
    *          Direct link to the contribution.
    * @param ad
-   *          The AvailableContribution to be downloaded and installed. 
+   *          The AvailableContribution to be downloaded and installed.
    */
   static void downloadAndInstallOnStartup(final Base base, final URL url,
                                           final AvailableContribution ad) {
@@ -215,7 +221,7 @@ public class ContributionManager {
 
           try {
             download(url, contribZip, null);
-            
+
             LocalContribution contribution = ad.install(base, contribZip,
                                                         false, null);
 
@@ -228,24 +234,24 @@ public class ContributionManager {
                   contribModes.add((ModeContribution) contribution);
                 }
               }
-              if (base.getActiveEditor() != null)
+              if (base.getActiveEditor() != null) {
                 refreshInstalled(base.getActiveEditor());
+              }
             }
 
             contribZip.delete();
-            
+
             handleUpdateFailedMarkers(ad, filename.substring(0, filename.lastIndexOf('.')));
 
           } catch (Exception e) {
 //            Chuck the stack trace. The user might have no idea why it is appearing, or what (s)he did wrong...
 //            e.printStackTrace();
-            System.out.println("Error during download and install of "
-              + ad.getName());
+            String arg = "contrib.startup.errors.download_install";
+            System.err.println(Language.interpolate(arg, ad.getName()));
           }
         } catch (IOException e) {
-          System.err
-            .println("Could not write to temporary directory during download and install of "
-              + ad.getName());
+          String arg = "contrib.startup.errors.temp_dir";
+          System.err.println(Language.interpolate(arg, ad.getName()));
         }
       }
     }, "Contribution Installer").start();
@@ -284,10 +290,109 @@ public class ContributionManager {
     } catch (IOException e) {
 //      Again, forget about the stack trace. The user ain't done wrong
 //      e.printStackTrace();
-      System.err.println("The unupdated contribution marker seems to not like "
-        + ac.getName() + ". You may have to install it manually to update...");
+      String arg = "contrib.startup.errors.new_marker";
+      System.err.println(Language.interpolate(arg, ac.getName()));
     }
 
+  }
+
+
+  /**
+   * Blocking call to download and install a set of libraries. Used when a list
+   * of libraries have to be installed while forcing the user to not modify
+   * anything and providing feedback via the console status area, such as when
+   * the user tries to run a sketch that imports uninstaled libraries.
+   *
+   * @param aList
+   *          The list of AvailableContributions to be downloaded and installed.
+   */
+  public static void downloadAndInstallOnImport(final Base base,
+                                                final ArrayList<AvailableContribution> aList) {
+
+    // To avoid the user from modifying stuff, since this function is only called
+    // during pre-processing
+    base.getActiveEditor().getTextArea().setEditable(false);
+    base.getActiveEditor().getConsole().clear();
+
+    ArrayList<String> installedLibList = new ArrayList<String>();
+
+    // boolean variable to check if previous lib was installed successfully, 
+    // to give the user an idea about progress being made.
+    boolean isPrevDone = false;
+
+    for (AvailableContribution ad : aList) {
+      if (ad.getType() != ContributionType.LIBRARY) {
+        continue;
+      }
+      try {
+        URL url = new URL(ad.link);
+        String filename = url.getFile();
+        filename = filename.substring(filename.lastIndexOf('/') + 1);
+        try {
+
+          File contribZip = File.createTempFile("download", filename);
+          contribZip.setWritable(true);
+
+          try {
+            // Use the console to let the user know what's happening
+            // The slightly complex if-else is required to let the user know when
+            // one install is completed and the next download has begun without 
+            // interfereing with occur status messages that may arise in the meanwhile
+            String statusMsg = base.getActiveEditor().getStatusMessage();
+            if (isPrevDone) {
+              String status = statusMsg + " "
+                + Language.interpolate("contrib.import.progress.download", ad.name);
+              base.getActiveEditor().statusNotice(status);
+            }
+            else {
+              String arg = "contrib.import.progress.download";
+              String status = Language.interpolate(arg, ad.name);
+              base.getActiveEditor().statusNotice(status);
+            }
+
+            isPrevDone = false;
+
+            download(url, contribZip, null);
+
+            String arg = "contrib.import.progress.install";
+            base.getActiveEditor().statusNotice(Language.interpolate(arg,ad.name));
+            LocalContribution contribution = ad.install(base, contribZip,
+                                                        false, null);
+
+            if (contribution != null) {
+              contribListing.replaceContribution(ad, contribution);
+              if (base.getActiveEditor() != null) {
+                refreshInstalled(base.getActiveEditor());
+              }
+            }
+
+            contribZip.delete();
+
+            installedLibList.add(ad.name);
+            isPrevDone = true;
+            
+            arg = "contrib.import.progress.done";
+            base.getActiveEditor().statusNotice(Language.interpolate(arg,ad.name));
+
+          } catch (Exception e) {
+            String arg = "contrib.startup.errors.download_install";
+            System.err.println(Language.interpolate(arg, ad.getName()));
+          }
+        } catch (IOException e) {
+          String arg = "contrib.startup.errors.temp_dir";
+          System.err.println(Language.interpolate(arg,ad.getName()));
+        }
+      } catch (MalformedURLException e1) {
+        System.err.println(Language.interpolate("contrib.import.errors.link",
+                                                ad.getName()));
+      }
+    }
+    base.getActiveEditor().getTextArea().setEditable(true);
+    base.getActiveEditor().statusEmpty();
+    System.out.println(Language.text("contrib.import.progress.final_list"));
+    for (String l : installedLibList) {
+      System.out.println("  * " + l);
+    }
   }
 
 
@@ -353,27 +458,27 @@ public class ContributionManager {
 
     return fileName;
   }
-  
-  
-  /** 
+
+
+  /**
    * Called by Base to clean up entries previously marked for deletion
    * and remove any "requires restart" flags.
    * Also updates all entries previously marked for update.
    */
   static public void cleanup(final Base base) throws Exception {
-    
+
     deleteTemp(Base.getSketchbookModesFolder());
     deleteTemp(Base.getSketchbookToolsFolder());
-    
+
     deleteFlagged(Base.getSketchbookLibrariesFolder());
     deleteFlagged(Base.getSketchbookModesFolder());
     deleteFlagged(Base.getSketchbookToolsFolder());
-    
+
     installPreviouslyFailed(base, Base.getSketchbookModesFolder());
     updateFlagged(base, Base.getSketchbookModesFolder());
-    
+
     updateFlagged(base, Base.getSketchbookToolsFolder());
-    
+
     SwingWorker s = new SwingWorker<Void, Void>() {
 
       @Override
@@ -389,8 +494,8 @@ public class ContributionManager {
     };
     s.execute();
 
-    
-    
+
+
     clearRestartFlags(Base.getSketchbookModesFolder());
     clearRestartFlags(Base.getSketchbookToolsFolder());
   }
@@ -400,7 +505,7 @@ public class ContributionManager {
    * Deletes the icky tmp folders that were left over from installs and updates
    * in the previous run of Processing. Needed to be called only on the tools
    * and modes sketchbook folders.
-   * 
+   *
    * @param root
    */
   static private void deleteTemp(File root) {
@@ -421,7 +526,7 @@ public class ContributionManager {
 
   /**
    * Deletes all the modes/tools/libs that are flagged for removal.
-   * 
+   *
    * @param root
    * @throws Exception
    */
@@ -436,12 +541,12 @@ public class ContributionManager {
       Base.removeDir(folder);
     }
   }
-  
-  
+
+
   /**
    * Installs all the modes/tools whose installation failed during an
    * auto-update the previous time Processing was started up.
-   * 
+   *
    * @param base
    * @param root
    * @throws Exception
@@ -470,7 +575,7 @@ public class ContributionManager {
 
   /**
    * Updates all the flagged modes/tools.
-   * 
+   *
    * @param base
    * @param root
    * @throws Exception
@@ -497,12 +602,12 @@ public class ContributionManager {
       propFileName = "libraries.properties";
 
     for (File folder : markedForUpdate) {
-      HashMap<String, String> properties = Base
-        .readSettings(new File(folder, propFileName));
+      Map<String, String> properties = 
+        Base.readSettings(new File(folder, propFileName));
       updateContribsNames.add(properties.get("name"));
       Base.removeDir(folder);
     }
-    
+
     Iterator<AvailableContribution> iter = contribListing.advertisedContributions.iterator();
     while (iter.hasNext()) {
       AvailableContribution availableContribs = iter.next();
@@ -510,7 +615,7 @@ public class ContributionManager {
         updateContribsList.add(availableContribs);
       }
     }
-    
+
     Iterator<AvailableContribution> iter2 = updateContribsList.iterator();
     while (iter2.hasNext()) {
       AvailableContribution contribToUpdate = iter2.next();
@@ -518,8 +623,8 @@ public class ContributionManager {
       contribListing.replaceContribution(contribToUpdate, contribToUpdate);
     }
   }
-  
-  
+
+
   static private void installOnStartUp(final Base base, final AvailableContribution availableContrib) {
     if (availableContrib.link == null) {
       Base.showWarning(Language.interpolate("contrib.errors.update_on_restart_failed", availableContrib.getName()),
@@ -528,16 +633,16 @@ public class ContributionManager {
     }
     try {
       URL downloadUrl = new URL(availableContrib.link);
-      
+
       ContributionManager.downloadAndInstallOnStartup(base, downloadUrl, availableContrib);
-      
+
     } catch (MalformedURLException e) {
       Base.showWarning(Language.interpolate("contrib.errors.update_on_restart_failed", availableContrib.getName()),
                        Language.text("contrib.errors.malformed_url"), e);
     }
   }
-  
-  
+
+
   static private void clearRestartFlags(File root) throws Exception {
     File[] folderList = root.listFiles(new FileFilter() {
       public boolean accept(File folder) {

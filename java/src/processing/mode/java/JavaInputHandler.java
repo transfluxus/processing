@@ -48,25 +48,8 @@ public class JavaInputHandler extends PdeInputHandler {
 
 
   public JavaInputHandler(Editor editor) {
-    this.editor = editor;    
+    this.editor = editor;
   }
-  
-  
-  public void keyPressed(KeyEvent event) {
-    if (!pressed(event)) {
-      super.keyPressed(event);
-    }
-  }
-
-  
-  public void keyTyped(KeyEvent event) {
-    if (!typed(event)) {
-      super.keyTyped(event);
-    }
-  }
-  
-  
-  // we don't need keyReleased(), so that's passed through automatically
 
 
   /**
@@ -77,7 +60,7 @@ public class JavaInputHandler extends PdeInputHandler {
    * keyTyped().
    * @return true if the event has been handled (to remove it from the queue)
    */
-  protected boolean pressed(KeyEvent event) {
+  public boolean handlePressed(KeyEvent event) {
     char c = event.getKeyChar();
     int code = event.getKeyCode();
 
@@ -332,7 +315,7 @@ public class JavaInputHandler extends PdeInputHandler {
   }
 
 
-  protected boolean typed(KeyEvent event) {
+  public boolean handleTyped(KeyEvent event) {
     char c = event.getKeyChar();
 
     if ((event.getModifiers() & InputEvent.CTRL_MASK) != 0) {

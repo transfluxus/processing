@@ -10,6 +10,43 @@ X   https://github.com/processing/processing/issues/3014
 X add more bulletproofing to the save process
 X   https://github.com/processing/processing/issues/2923
 X serious text improvements (at least on retina)
+X Menu mnemonics (alt-f, etc) getting typed into the editor
+X   https://github.com/processing/processing/issues/3057
+X Opening and closing preferences window prompts user to save unmodified sketch
+X   https://github.com/processing/processing/issues/3074
+X Pressing PgDn in a code without scrollbar gives Exception
+X   https://github.com/processing/processing/issues/2990
+X internal fixes and cleanups to TweakMode
+X   https://github.com/processing/processing/issues/2799
+X implement line numbers in the editor
+X   5px between line number (right-aligned) and the right edge of the gutter
+X   ie textAlign(RIGHT) / text(lineNum, LEFT_GUTTER - 5, y)
+X   https://github.com/processing/processing/issues/3128
+X run button w/ debugger shouldn't require "continue" before actually starting
+X   https://github.com/processing/processing/issues/3096
+
+integration of pdex/debug
+o make the tabs have a default minimum size
+o   multiple sizes as they get smaller (web browser style)
+X merge experimental into the main Java mode 
+X   thereby removing Java 2.0 mode from the next release
+X   otherwise redoing the design for 2 modes
+X changed JLS4 to JLS8 (but make sure it doesn't introduce anything too weird)
+X change build scripts, get things running
+X rename TextArea and TextAreaPainter to JavaTextArea
+X DebugEditor.createTextArea() is copy & pasted from JavaEditor
+X   this whole setup is really gross at the moment
+X finish Ant task to download JRE and JDK from Oracle
+X remove public 'ta' object in DebugEditor, also dmode
+X hasJavaTabs() cleanup
+X   how does it relate to compilationCheckEnabled?
+X     removed, seems to be duplicate/used the same way
+
+jre download/install
+X make sure the file downloads correctly before renaming
+X   https://github.com/processing/processing/issues/2960
+X update build scripts for Windows and Linux to use JRE downloader Ant Task
+X   https://github.com/processing/processing/issues/3059
 
 update components
 X moving to Java 8 because Java 7 will be discontinued
@@ -20,6 +57,8 @@ X requires ECJ update (using 4.4.1)
 X   http://download.eclipse.org/eclipse/downloads/drops4/R-4.4.1-201409250400/
 X update to launch4j 3.6
 X   http://sourceforge.net/projects/launch4j/files/launch4j-3/3.6/
+o   update ld and windres: https://github.com/processing/processing/tree/master/java/application/launch4j/bin
+o   also xstream.jar https://github.com/processing/processing/tree/master/java/application/launch4j/lib
 
 earlier
 X any problems with new code signing crap? 
@@ -42,10 +81,32 @@ X   https://github.com/processing/processing/pull/2804
 X examples.properties file missing prevents startup
 X   https://github.com/processing/processing/issues/3037
 X   https://github.com/processing/processing/pull/3047
+X several new French translations
+X   https://github.com/processing/processing/pull/3061
+X contributions.txt now gets deleted and recreated instead of overwritten
+X   https://github.com/processing/processing/pull/3073
+X   https://github.com/processing/processing/issues/2994
+X Contrib Manager does not stop parsing contribs.txt if an error exists
+X   https://github.com/processing/processing/pull/3132
+X offer to install libraries imported libraries that are not available
+X   https://github.com/processing/processing/pull/3155
+X   https://github.com/processing/processing/issues/2566
+X make fatal errors terminate the pde
+X   https://github.com/processing/processing/issues/3068
+X   https://github.com/processing/processing/pull/3069
+X Java 8 method replace() used, removed
+X   https://github.com/processing/processing/issues/3168
+X   https://github.com/processing/processing/pull/3169
+X Closing a few unclosed BufferedReaders and InputStreams
+X   https://github.com/processing/processing/pull/2961
 
 manindra
 X Fix for "Probably a ++ should go here" messages
 X   https://github.com/processing/processing/issues/2956
+X Missing opening curly bracket error
+X   https://github.com/processing/processing/issues/3104
+X missing parenthesis error message
+X   https://github.com/processing/processing/issues/3103
 
 pulls
 X add mnemonics for menus (alt-f to open 'file')
@@ -80,48 +141,94 @@ X   https://github.com/processing/processing/issues/2984
 X   https://github.com/processing/processing/pull/3046
 X File change detection rewrite
 X   https://github.com/processing/processing/pull/3048
+X another file change detection rewrite
+X   https://github.com/processing/processing/pull/3070
+X broken Windows build due to launch4j .jar not updated
+X   https://github.com/processing/processing/issues/3062
+X   https://github.com/processing/processing/pull/3066
+X exported Linux sketches must be run from the sketch folder
+X   https://github.com/processing/processing/issues/1046
+X   https://github.com/processing/processing/pull/3083
+X rectMode() broken for createShape with JAVA2D
+X   https://github.com/processing/processing/issues/3024
+X   https://github.com/processing/processing/pull/3102
+X IllegalArgumentException when clicking between editor windows
+X   https://github.com/processing/processing/issues/2530
+X   https://github.com/processing/processing/pull/3101
+X processing.net.Server only cleans up internal Clients when trying to write
+X   https://github.com/processing/processing/issues/3089
+X   https://github.com/processing/processing/pull/3097
+X issues with cut/copy shortcuts not working
+X   https://github.com/processing/processing/pull/3138
+X   https://github.com/processing/processing/issues/3136
+X   https://github.com/processing/processing/issues/3107
+X Display download percentage when fetching contrib info
+X   https://github.com/processing/processing/pull/3161
+X Recreating Client instance will cause an out-of-memory error
+X   https://github.com/processing/processing/issues/1400
+X   https://github.com/processing/processing/pull/3088
+X Greek translation and new fonts
+X   https://github.com/processing/processing/pull/3025
+X Show tooltip when hovering over errors
+X   https://github.com/processing/processing/pull/3119
 
 
-integration of pdex
-X changed JLS4 to JLS8 (but make sure it doesn't introduce anything too weird)
-X change build scripts, get things running
-X rename TextArea and TextAreaPainter to JavaTextArea
-X DebugEditor.createTextArea() is copy & pasted from JavaEditor
-X   this whole setup is really gross at the moment
-X finish Ant task to download JRE and JDK from Oracle
-X remove public 'ta' object in DebugEditor, also dmode
+3.0a7
+_ finish adding 'examples' contribs
+_   https://github.com/processing/processing/issues/2953
+_   don't return here, allow contrib types to fail:
+_   https://github.com/processing/processing/blob/master/app/src/processing/app/contrib/ContributionListing.java#L509
 
+
+pdex
 _ fix hasJavaTabs() function
 _   almost always used as a negative, or tied to a 'return' from fxn
 _   name isn't tied to its function, but the symptom
 _   only checked once (when the editor is created)
-X   how does it relate to compilationCheckEnabled?
-X     removed, seems to be duplicate/used the same way
 _ crashed on startup w/ JavaScript mode as default b/c PdeKeyListener not found
 _   because it's in the other ClassLoader, can no longer rely on it
+_ remove JavaMode.errorLogsEnabled and JavaEditor.writeErrorsToFile()
+_ disable the debug toggle menu while running
+_   otherwise could run in one mode, then try to stop in another
+_ show debug window when running, hide when stopped
+_ can we animate the show/hide for the debug box?
 
+
+breakage
+_ break out a gui package (get class count down in .app)
+_ remove deprecated methods
 _ do the right thing on passing around List vs ArrayList and others
 
+
 gui
+_ finish the gui
+_   https://github.com/processing/processing/issues/3072
+_ fonts are still really ugly
+_   may need to drop use of Source Sans
+_   what do these do, and are we doing it already?
+_   System.setProperty("awt.useSystemAAFontSettings","on");
+_   System.setProperty("swing.aatext", "true");
+_ large window places the debugger window offscreen
+_   https://github.com/processing/processing/issues/3091
 _ need 'actively pressed' version of 'play' and 'stop'
 _   could do rollover as well, but do other apps use them?
 _   iTunes has no rollover state but has a 'down' state
 _     swaps to stop after release
+_ need unavailable/deactivate state for debug toolbar items
+_   or hide the tray when not debugging? Debug just a menu checkbox?
+_ using svg images for res-indep icons/gui
+_   http://stackoverflow.com/questions/2495501/swing-batik-create-an-imageicon-from-an-svg-file
 
-jre download/install
-_ update build scripts for Windows and Linux to use JRE downloader Ant Task
-_   https://github.com/processing/processing/issues/3059
-_ add method to prompt OS X developers to download the JDK update
-_ make sure the file downloads correctly before renaming
-_   https://github.com/processing/processing/issues/2960
 
+pde
+_ add build.xml prompt for OS X developers to download the JDK update
+_ how are we going to handle fonts for other languages? 
+_   two new fonts have been added, other languages will need more
+_   need a decent sans with with Unicode coverage
+_   i.e. https://github.com/processing/processing/pull/3025
 _ fix file change detection on OS X
 _   https://github.com/processing/processing/issues/2852
-
 _ make examples pull/build automatic during dist
-_ merge experimental into the main Java mode 
-_   thereby removing Java 2.0 mode from the next release
-_   otherwise redoing the design for 2 modes
 _ add span screens pref (near the display pref)
 _   add checkbox for spans to export dialog
 _ remove "save before running" message
@@ -134,6 +241,9 @@ _ reas: code coloring sometimes disappears
 _ me: undo not in the correct location
 _ implement the new gui
 _ drop XP support (but improve Windows 8 support? ouch)
+_ improve error message when creating a tab with the same name
+_   right now it's generic, based on "a file exists"
+_ don't allow users to create 'blah.java' when 'blah.pde' already in sketch
 
 
 high
@@ -161,8 +271,6 @@ _   processing-docs/java_generate/ReferenceGenerator/processingrefBuild.sh
 _   remove reference.zip from main repo
 _ clean out the repo
 _   https://github.com/processing/processing/issues/1898
-_ Add support for localizing contributions
-_   https://github.com/processing/processing/pull/2833
 
 
 help me
@@ -187,6 +295,9 @@ _ clean up 'ant doc' target to remove warnings
 _   https://github.com/processing/processing/issues/1492
 _ fix encodings, line endings, and mime types in the repo
 _   https://github.com/processing/processing/issues/2955
+_ Add support for localizing contributions
+_   https://github.com/processing/processing/pull/2833
+_   https://github.com/processing/processing/issues/3154
 
 
 medium
@@ -210,6 +321,7 @@ _ should default to the local Java on Windows and Linux
 _   have export apps default to the local JRE
 _   Linux is probably using the system JRE if available
 _   launch4j may be all set, but double-check
+_   um, no--we should use the embedded version, b/c who knows what happens
 _ use platformDelete() to remove untitled sketches?
 _   would allow us to use the /tmp folder
 _ change to using platformDelete() instead of Base.removeDir() where possible
@@ -482,8 +594,6 @@ _   http://code.google.com/p/processing/issues/detail?id=494
 
 PDE / Editor
 
-_ [help] IllegalArgumentException when clicking between editor windows
-_   https://github.com/processing/processing/issues/2530
 _ [help] Undo does not move to the correct location in the editor window
 _   https://github.com/processing/processing/issues/707
 _ clean up /tmp folders used during build
@@ -751,12 +861,8 @@ _   don't bother having a "cancel" for the prefs window
 _ rewrite preferences window to use proper layout
 _   https://github.com/processing/processing/issues/67
 _   https://github.com/processing/processing/issues/2708
+_   https://github.com/processing/processing/issues/2986
 _ make prefs dialog modal?
-_ preferences window has been hit with the ugly stick
-_   redo panel to use proper Box layout etc
-_   also needs to look good across all platforms
-_   http://code.google.com/p/processing/issues/detail?id=28
-_   https://github.com/processing/processing/issues/67
 
 
 PDE / Runner 

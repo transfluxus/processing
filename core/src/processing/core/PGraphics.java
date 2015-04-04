@@ -1210,6 +1210,22 @@ public class PGraphics extends PImage implements PConstants {
     }
   }
 
+
+  public void attrib(String name, float... values) {
+    showMissingWarning("attrib");
+  }
+
+
+  public void attrib(String name, int... values) {
+    showMissingWarning("attrib");
+  }
+
+
+  public void attrib(String name, boolean... values) {
+    showMissingWarning("attrib");
+  }
+
+
   /**
    * ( begin auto-generated from textureMode.xml )
    *
@@ -1622,7 +1638,6 @@ public class PGraphics extends PImage implements PConstants {
    */
   public void endShape(int mode) {
   }
-
 
 
   //////////////////////////////////////////////////////////////
@@ -4131,6 +4146,15 @@ public class PGraphics extends PImage implements PConstants {
    * @see PGraphics#textFont(PFont)
    */
   public void textSize(float size) {
+    // https://github.com/processing/processing/issues/3110
+    if (size <= 0) {
+      // Using System.err instead of showWarning to avoid running out of
+      // memory with a bunch of textSize() variants (cause of this bug is
+      // usually something done with map() or in a loop).
+      System.err.println("textSize(" + size + ") ignored: " +
+                         "the text size must be larger than zero");
+      return;
+    }
     if (textFont == null) {
       defaultFontOrDeath("textSize", size);
     }
@@ -7676,7 +7700,7 @@ public class PGraphics extends PImage implements PConstants {
    * @see PGraphics#color(float, float, float, float)
    * @see PApplet#lerp(float, float, float)
    */
-  public int lerpColor(int c1, int c2, float amt) {
+  public int lerpColor(int c1, int c2, float amt) {  // ignore
     return lerpColor(c1, c2, amt, colorMode);
   }
 

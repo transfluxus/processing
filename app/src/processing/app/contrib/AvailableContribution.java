@@ -22,8 +22,8 @@
 package processing.app.contrib;
 
 import java.io.*;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import processing.app.Base;
 import processing.app.Language;
@@ -33,17 +33,18 @@ import processing.core.PApplet;
 /**
  * A class to hold information about a Contribution that can be downloaded. 
  */
-class AvailableContribution extends Contribution {
+public class AvailableContribution extends Contribution {
   protected final ContributionType type;   // Library, tool, etc.
   protected final String link;             // Direct link to download the file
 
   
-  public AvailableContribution(ContributionType type, HashMap<String, String> params) {
+  public AvailableContribution(ContributionType type, Map<String, String> params) {
     this.type = type;
     this.link = params.get("download");
     
     //category = ContributionListing.getCategory(params.get("category"));
     categories = parseCategories(params.get("category"));
+    specifiedImports = parseImports(params.get("imports"));
     name = params.get("name");
     authorList = params.get("authorList");
     url = params.get("url");
@@ -231,7 +232,7 @@ class AvailableContribution extends Contribution {
    */
   public boolean writePropertiesFile(File propFile) {
     try {
-      HashMap<String, String> properties = Base.readSettings(propFile);
+      Map<String, String> properties = Base.readSettings(propFile);
 
       String name = properties.get("name");
       if (name == null || name.isEmpty())
@@ -249,6 +250,20 @@ class AvailableContribution extends Contribution {
         }
         sb.deleteCharAt(sb.length() - 1);
         category = sb.toString();
+      }
+
+      String specifiedImport = "";
+      List<String> importsList = parseImports(properties.get("imports"));
+      if (importsList == null || importsList.isEmpty()) {
+        specifiedImport = getImportStr();
+      } else {
+        StringBuilder sbImport = new StringBuilder();
+        for (String it : specifiedImports) {
+          sbImport.append(it);
+          sbImport.append(',');
+        }
+        sbImport.deleteCharAt(sbImport.length() - 1);
+        specifiedImport = sbImport.toString();
       }
 
       String authorList = properties.get("authorList");
@@ -336,6 +351,9 @@ class AvailableContribution extends Contribution {
         writer.println("lastUpdated=" + lastUpdated);
         writer.println("minRevision=" + minRev);
         writer.println("maxRevision=" + maxRev);
+        if (getType() == ContributionType.LIBRARY) {
+          writer.println("imports=" + specifiedImport);
+        }
         if (getType() == ContributionType.EXAMPLES) {
           writer.println("compatibleModesList=" + compatibleContribsList);
         }

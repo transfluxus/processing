@@ -21,6 +21,7 @@
 package processing.mode.java;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.image.BufferedImage;
@@ -32,6 +33,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.table.TableColumn;
@@ -41,11 +43,23 @@ import org.netbeans.swing.outline.*;
 
 import com.sun.jdi.Value;
 
+import processing.app.EditorButton;
+import processing.app.Language;
 import processing.app.Mode;
 import processing.mode.java.debug.VariableNode;
 
 
 public class DebugTray extends JFrame {
+  static public final int GAP = 13;
+  
+  EditorButton continueButton;
+  EditorButton stepButton;
+  EditorButton breakpointButton;
+    
+  // The tray will be placed at this amount from the top of the editor window,
+  // and extend to this amount from the bottom of the editor window.
+  final int VERTICAL_OFFSET = 64;
+  
   /// the root node (invisible)
   protected DefaultMutableTreeNode rootNode;
   
@@ -55,7 +69,7 @@ public class DebugTray extends JFrame {
   /// data model for the tree column
   protected DefaultTreeModel treeModel;
   
-  private JScrollPane scrollPane;
+//  private JScrollPane scrollPane;
   
   protected Outline tree;
   protected OutlineModel model; 
@@ -80,21 +94,100 @@ public class DebugTray extends JFrame {
   /// processing / "advanced" mode flag (currently not used)
   protected boolean p5mode = true; 
 
-  // The tray will be placed at this amount from the top of the editor window,
-  // and extend to this amount from the bottom of the editor window.
-  final int VERTICAL_OFFSET = 64;
-    
   
-  public DebugTray(JavaEditor editor) {
-    this.editor = editor;
-    
+  public DebugTray(final JavaEditor editor) {
     setUndecorated(true);
+    
+    this.editor = editor;    
     editor.addComponentListener(new EditorFollower());
 
-    scrollPane = new JScrollPane();
+    //setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+    Box box = Box.createVerticalBox();
+    box.add(createToolbar());
+    box.add(createScrollPane());
+    getContentPane().add(box);
+    pack();
+    
+    /*
+    bgColor = mode.getColor("buttons.bgcolor");
+    statusFont = mode.getFont("buttons.status.font");
+    statusColor = mode.getColor("buttons.status.color");
+//    modeTitle = mode.getTitle().toUpperCase();
+    modeTitle = mode.getTitle();
+    modeTextFont = mode.getFont("mode.button.font");
+    modeButtonColor = mode.getColor("mode.button.color");    
+    */
+  }
+  
+  
+  Container createToolbar() {
+    final Mode mode = editor.getMode();
+    Box box = Box.createHorizontalBox();
+
+    continueButton = 
+      new EditorButton(mode, "theme/debug/continue", 
+                       Language.text("toolbar.debug.continue")) {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        Logger.getLogger(DebugTray.class.getName()).log(Level.INFO, "Invoked 'Continue' toolbar button");
+        editor.debugger.continueDebug();
+      }
+    };
+    box.add(continueButton);
+    box.add(Box.createHorizontalStrut(GAP));
+    
+    stepButton = 
+      new EditorButton(mode, "theme/debug/step",
+                       Language.text("toolbar.debug.step"),
+                       Language.text("toolbar.debug.step_into")) {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (isShiftDown()) {
+          Logger.getLogger(DebugTray.class.getName()).log(Level.INFO, "Invoked 'Step Into' toolbar button");
+          editor.debugger.stepInto();
+        } else {
+          Logger.getLogger(DebugTray.class.getName()).log(Level.INFO, "Invoked 'Step' toolbar button");
+          editor.debugger.stepOver();
+        }
+      }
+    };
+    box.add(stepButton);
+    box.add(Box.createHorizontalStrut(GAP));
+
+    breakpointButton = 
+      new EditorButton(mode, "theme/debug/breakpoint",
+                       Language.text("toolbar.debug.toggle_breakpoints")) {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        Logger.getLogger(DebugTray.class.getName()).log(Level.INFO, "Invoked 'Toggle Breakpoint' toolbar button");
+        editor.debugger.toggleBreakpoint();
+      }
+    };
+    box.add(breakpointButton);
+    box.add(Box.createHorizontalStrut(GAP));
+
+    JLabel label = new JLabel();
+    box.add(label);
+    continueButton.setRolloverLabel(label);
+    stepButton.setRolloverLabel(label);
+    breakpointButton.setRolloverLabel(label);
+    
+    // the rest is all gaps
+    box.add(Box.createHorizontalGlue());
+    box.setBorder(new EmptyBorder(GAP, GAP, GAP, GAP));
+
+    // prevent the toolbar from getting taller than its default 
+    box.setMaximumSize(new Dimension(getMaximumSize().width, getPreferredSize().height));
+    return box;
+  }
+  
+  
+  Container createScrollPane() {
+    JScrollPane scrollPane = new JScrollPane();
     tree = new Outline();
     scrollPane.setViewportView(tree);
 
+    /*
     GroupLayout layout = new GroupLayout(getContentPane());
     getContentPane().setLayout(layout);
     layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
@@ -111,6 +204,7 @@ public class DebugTray extends JFrame {
                                                     GroupLayout.DEFAULT_SIZE, 
                                                     300, Short.MAX_VALUE)));
     pack();
+    */
     
     // setup Outline
     rootNode = new DefaultMutableTreeNode("root");
@@ -140,41 +234,73 @@ public class DebugTray extends JFrame {
     thisFields = new ArrayList<VariableNode>();
     declaredThisFields = new ArrayList<VariableNode>();
 
-//    this.setTitle(editor.getSketch().getName());
+    return scrollPane;
   }
+
   
-  
-  class TrayToolbar extends JComponent {
+  protected void activateContinue() {
+  }
+
+
+  protected void deactivateContinue() {
+  }
+
+
+  protected void activateStep() {
+  }
+
+
+  protected void deactivateStep() {
+  }  
     
-  }
-  
   
   /** Keeps the debug window adjacent the editor at all times. */
   class EditorFollower implements ComponentListener {
 
     @Override
-    public void componentShown(ComponentEvent e) { }
+    public void componentShown(ComponentEvent e) {
+      if (editor.isDebuggerEnabled()) {
+//        updateBounds();
+        setVisible(true);
+      }
+    }
 
     @Override
-    public void componentHidden(ComponentEvent e) { }
+    public void componentHidden(ComponentEvent e) {
+      if (isVisible()) {
+        setVisible(false);
+      }
+    }
 
     @Override
     public void componentResized(ComponentEvent e) {
-      updateBounds(e);
+      if (isVisible()) {
+        updateBounds();
+      }
     }
 
     @Override
     public void componentMoved(ComponentEvent e) {
-      updateBounds(e);
+      if (isVisible()) {
+        updateBounds();
+      }
     }
-
-    private void updateBounds(ComponentEvent e) { 
-      //        System.out.println(e);
-      setBounds(editor.getX() + editor.getWidth(), 
-                editor.getY() + VERTICAL_OFFSET, 
-                getPreferredSize().width, 
-                editor.getHeight() - VERTICAL_OFFSET*2);
+  }
+  
+  
+  private void updateBounds() {
+    setBounds(editor.getX() + editor.getWidth(), 
+              editor.getY() + VERTICAL_OFFSET, 
+              getPreferredSize().width, 
+              editor.getHeight() - VERTICAL_OFFSET*2);
+  }
+  
+  
+  public void setVisible(boolean visible) {
+    if (visible) {
+      updateBounds();
     }
+    super.setVisible(visible);
   }
 
     
@@ -192,8 +318,18 @@ public class DebugTray extends JFrame {
    * http://kickjava.com/src/org/netbeans/swing/outline/DefaultOutlineCellRenderer.java.htm
    */
   protected class VariableRowModel implements RowModel {
-    protected String[] columnNames = {"Value", "Type"};
-    protected int[] editableTypes = {VariableNode.TYPE_BOOLEAN, VariableNode.TYPE_FLOAT, VariableNode.TYPE_INTEGER, VariableNode.TYPE_STRING, VariableNode.TYPE_FLOAT, VariableNode.TYPE_DOUBLE, VariableNode.TYPE_LONG, VariableNode.TYPE_SHORT, VariableNode.TYPE_CHAR};
+    final String[] columnNames = { "Value", "Type" };
+    final int[] editableTypes = {
+      VariableNode.TYPE_BOOLEAN, 
+      VariableNode.TYPE_FLOAT, 
+      VariableNode.TYPE_INTEGER, 
+      VariableNode.TYPE_STRING, 
+      VariableNode.TYPE_FLOAT, 
+      VariableNode.TYPE_DOUBLE, 
+      VariableNode.TYPE_LONG, 
+      VariableNode.TYPE_SHORT, 
+      VariableNode.TYPE_CHAR
+    };
 
     @Override
     public int getColumnCount() {
@@ -205,25 +341,22 @@ public class DebugTray extends JFrame {
     }
 
     @Override
-    public Object getValueFor(Object o, int i) {
-      if (o instanceof VariableNode) {
-        VariableNode var = (VariableNode) o;
-        switch (i) {
-        case 0:
-          return var; // will be converted to an appropriate String by ValueCellRenderer
-        case 1:
+    public Object getValueFor(Object obj, int column) {
+      if (obj instanceof VariableNode) {
+        VariableNode var = (VariableNode) obj;
+        if (column == 0) {
+          // will be converted to an appropriate String by ValueCellRenderer
+          return var;
+        } else if (column == 1) {
           return var.getTypeName();
-        default:
-          return "";
         }
-      } else {
-        return "";
       }
+      return "";
     }
 
     @Override
-    public Class getColumnClass(int i) {
-      if (i == 0) {
+    public Class<?> getColumnClass(int column) {
+      if (column == 0) {
         return VariableNode.class;
       }
       return String.class;

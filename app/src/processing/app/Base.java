@@ -2060,6 +2060,10 @@ public class Base {
                                     fatal ?
                                     JOptionPane.ERROR_MESSAGE :
                                     JOptionPane.WARNING_MESSAGE);
+
+      if (fatal) {
+        System.exit(1);
+      }
     }
   }
 
@@ -2132,18 +2136,6 @@ public class Base {
   }
 
 
-//if (result == JOptionPane.YES_OPTION) {
-  //
-//      } else if (result == JOptionPane.NO_OPTION) {
-//        return true;  // ok to continue
-  //
-//      } else if (result == JOptionPane.CANCEL_OPTION) {
-//        return false;
-  //
-//      } else {
-//        throw new IllegalStateException();
-//      }
-
   static public int showYesNoQuestion(Frame editor, String title,
                                       String primary, String secondary) {
     if (!Base.isMacOS()) {
@@ -2189,49 +2181,12 @@ public class Base {
   }
 
 
-  /**
-   * Retrieve a path to something in the Processing folder. Eventually this
-   * may refer to the Contents subfolder of Processing.app, if we bundle things
-   * up as a single .app file with no additional folders.
-   */
-//  static public String getContentsPath(String filename) {
-//    String basePath = System.getProperty("user.dir");
-//    /*
-//      // do this later, when moving to .app package
-//    if (PApplet.platform == PConstants.MACOSX) {
-//      basePath = System.getProperty("processing.contents");
-//    }
-//    */
-//    return basePath + File.separator + filename;
-//  }
-
-
-  /**
-   * Get a path for something in the Processing lib folder.
-   */
-  /*
-  static public String getLibContentsPath(String filename) {
-    String libPath = getContentsPath("lib/" + filename);
-    File libDir = new File(libPath);
-    if (libDir.exists()) {
-      return libPath;
-    }
-//    was looking into making this run from Eclipse, but still too much mess
-//    libPath = getContents("build/shared/lib/" + what);
-//    libDir = new File(libPath);
-//    if (libDir.exists()) {
-//      return libPath;
-//    }
-    return null;
-  }
-  */
-
-  /**
-   * Adjacent the executable on Windows and Linux,
-   * or inside Contents/Resources/Java on Mac OS X.
-   */
   static protected File processingRoot;
 
+  /**
+   * Get reference to a file adjacent to the executable on Windows and Linux,
+   * or inside Contents/Resources/Java on Mac OS X.
+   */
   static public File getContentFile(String name) {
     if (processingRoot == null) {
       // Get the path to the .jar file that contains Base.class
@@ -2269,20 +2224,6 @@ public class Base {
         }
       }
     }
-/*
-    String path = System.getProperty("user.dir");
-
-    // Get a path to somewhere inside the .app folder
-    if (Base.isMacOS()) {
-//      <key>javaroot</key>
-//      <string>$JAVAROOT</string>
-      String javaroot = System.getProperty("javaroot");
-      if (javaroot != null) {
-        path = javaroot;
-      }
-    }
-    File working = new File(path);
-    */
     return new File(processingRoot, name);
   }
 
@@ -2312,59 +2253,7 @@ public class Base {
     } catch (IOException e) {
       return javaFile.getAbsolutePath();
     }
-    /*
-    if (isMacOS()) {
-      //return "Contents/PlugIns/jdk1.7.0_40.jdk/Contents/Home/jre/bin/java";
-      File[] plugins = getContentFile("../PlugIns").listFiles(new FilenameFilter() {
-        public boolean accept(File dir, String name) {
-          return name.endsWith(".jdk") && dir.isDirectory();
-        }
-      });
-      //PApplet.printArray(plugins);
-      File javaBinary = new File(plugins[0], "Contents/Home/jre/bin/java");
-      //return getContentFile(plugins[0].getAbsolutePath() + "/Contents/Home/jre/bin/java").getAbsolutePath();
-      //return getContentFile("../PlugIns/jdk1.7.0_40.jdk/Contents/Home/jre/bin/java").getAbsolutePath();
-      return javaBinary.getAbsolutePath();
-
-    } else if (isLinux()) {
-      return getContentFile("java/bin/java").getAbsolutePath();
-
-    } else if (isWindows()) {
-      return getContentFile("java/bin/java.exe").getAbsolutePath();
-    }
-    System.err.println("No appropriate platform found. " +
-                       "Hoping that Java is in the path.");
-    return Base.isWindows() ? "java.exe" : "java";
-    */
   }
-
-
-//  /**
-//   * Get an image associated with the current color theme.
-//   * @deprecated
-//   */
-//  static public Image getThemeImage(String name, Component who) {
-//    return getLibImage("theme/" + name, who);
-//  }
-//
-//
-//  /**
-//   * Return an Image object from inside the Processing lib folder.
-//   * @deprecated
-//   */
-//  static public Image getLibImage(String name, Component who) {
-//    Image image = null;
-////    Toolkit tk = Toolkit.getDefaultToolkit();
-//
-//    File imageLocation = new File(getContentFile("lib"), name);
-//    image = java.awt.Toolkit.getDefaultToolkit().getImage(imageLocation.getAbsolutePath());
-//    MediaTracker tracker = new MediaTracker(who);
-//    tracker.addImage(image, 0);
-//    try {
-//      tracker.waitForAll();
-//    } catch (InterruptedException e) { }
-//    return image;
-//  }
 
 
   /**
@@ -2381,9 +2270,12 @@ public class Base {
   static public InputStream getLibStream(String filename) throws IOException {
     return new FileInputStream(getLibFile(filename));
   }
+  
+  
+  // Note: getLibImage() has moved to Toolkit 
 
 
-  // ...................................................................
+  // . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
 
   /**
@@ -2421,14 +2313,20 @@ public class Base {
   /**
    * Read from a file with a bunch of attribute/value pairs
    * that are separated by = and ignore comments with #.
+   * Changed in 3.0a6 to return null (rather than empty hash) if no file,
+   * and changed return type to Map instead of HashMap.
    */
-  static public HashMap<String,String> readSettings(File inputFile) {
-    HashMap<String,String> outgoing = new HashMap<String,String>();
-    if (inputFile.exists()) {
-      String lines[] = PApplet.loadStrings(inputFile);
-      readSettings(inputFile.toString(), lines, outgoing);
+  static public Map<String, String> readSettings(File inputFile) {
+    if (!inputFile.exists()) {
+      System.err.println(inputFile + " does not exist.");
+      return null;
     }
-    return outgoing;
+    String lines[] = PApplet.loadStrings(inputFile);
+    if (lines == null) {
+      System.err.println("Could not read " + inputFile);
+      return null;
+    }
+    return readSettings(inputFile.toString(), lines);
   }
 
 
@@ -2436,9 +2334,13 @@ public class Base {
    * Parse a String array that contains attribute/value pairs separated
    * by = (the equals sign). The # (hash) symbol is used to denote comments.
    * Comments can be anywhere on a line. Blank lines are ignored.
+   * In 3.0a6, no longer taking a blank HahMap as param; no cases in the main
+   * PDE code of adding to a (Hash)Map. Also returning the Map instead of void.
+   * Both changes modify the method signature, but this was only used by the
+   * contrib classes. 
    */
-  static public void readSettings(String filename, String[] lines,
-                                  HashMap<String, String> settings) {
+  static public Map<String, String> readSettings(String filename, String[] lines) {
+    Map<String, String> settings = new HashMap<>();
     for (String line : lines) {
       // Remove comments
       int commentMarker = line.indexOf('#');
@@ -2462,6 +2364,7 @@ public class Base {
         }
       }
     }
+    return settings;
   }
 
 

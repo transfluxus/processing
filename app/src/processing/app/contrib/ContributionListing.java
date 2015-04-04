@@ -23,6 +23,7 @@ package processing.app.contrib;
 
 import java.io.*;
 import java.net.*;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -42,6 +43,7 @@ public class ContributionListing {
   ArrayList<ContributionChangeListener> listeners;
   ArrayList<AvailableContribution> advertisedContributions;
   Map<String, List<Contribution>> librariesByCategory;
+  public Map<String, Contribution> librariesByImportHeader;
   ArrayList<Contribution> allContributions;
   boolean hasDownloadedLatestList;
   boolean hasListDownloadFailed;
@@ -52,6 +54,7 @@ public class ContributionListing {
     listeners = new ArrayList<ContributionChangeListener>();
     advertisedContributions = new ArrayList<AvailableContribution>();
     librariesByCategory = new HashMap<String, List<Contribution>>();
+    librariesByImportHeader = new HashMap<String, Contribution>();
     allContributions = new ArrayList<Contribution>();
     downloadingListingLock = new ReentrantLock();
 
@@ -63,7 +66,7 @@ public class ContributionListing {
   }
 
 
-  static ContributionListing getInstance() {
+  public static ContributionListing getInstance() {
     if (singleInstance == null) {
       synchronized (ContributionListing.class) {
         if (singleInstance == null) {
@@ -118,6 +121,14 @@ public class ContributionListing {
         }
       }
 
+      if (oldLib.getImports() != null) {
+        for (String importName : oldLib.getImports()) {
+          if (librariesByImportHeader.containsKey(importName)) {
+            librariesByImportHeader.put(importName, newLib);
+          }
+        }
+      }
+
       for (int i = 0; i < allContributions.size(); i++) {
         if (allContributions.get(i) == oldLib) {
           allContributions.set(i, newLib);
@@ -130,6 +141,11 @@ public class ContributionListing {
 
 
   private void addContribution(Contribution contribution) {
+    if (contribution.getImports() != null) {
+      for (String importName : contribution.getImports()) {
+        librariesByImportHeader.put(importName, contribution);
+      }
+    }
     for (String category : contribution.getCategories()) {
       if (librariesByCategory.containsKey(category)) {
         List<Contribution> list = librariesByCategory.get(category);
@@ -152,6 +168,11 @@ public class ContributionListing {
     for (String category : contribution.getCategories()) {
       if (librariesByCategory.containsKey(category)) {
         librariesByCategory.get(category).remove(contribution);
+      }
+    }
+    if (contribution.getImports() != null) {
+      for (String importName : contribution.getImports()) {
+        librariesByImportHeader.remove(importName);
       }
     }
     allContributions.remove(contribution);
@@ -217,7 +238,7 @@ public class ContributionListing {
 
 
   protected List<Contribution> getFilteredLibraryList(String category, List<String> filters) {
-    ArrayList<Contribution> filteredList = 
+    ArrayList<Contribution> filteredList =
       new ArrayList<Contribution>(allContributions);
 
     Iterator<Contribution> it = filteredList.iterator();
@@ -309,9 +330,9 @@ public class ContributionListing {
 
 
   protected List<Contribution> getCompatibleContributionList(List<Contribution> filteredLibraries, boolean filter) {
-    ArrayList<Contribution> filteredList = 
+    ArrayList<Contribution> filteredList =
       new ArrayList<Contribution>(filteredLibraries);
-    
+
     if (!filter)
       return filteredList;
 
@@ -385,8 +406,16 @@ public class ContributionListing {
         }
 
         if (!progress.isFinished()) {
-          ContributionManager.download(url, listingFile, progress);
+          File tempContribFile = Base.getSettingsFile("contributions_temp.txt");
+          tempContribFile.setWritable(true);
+          ContributionManager.download(url, tempContribFile, progress);
           if (!progress.isCanceled() && !progress.isError()) {
+            try {
+              Files.deleteIfExists(listingFile.toPath());
+              listingFile = new File(Files.move(tempContribFile.toPath(), tempContribFile.toPath().resolveSibling(listingFile.toPath())).toString());
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
             hasDownloadedLatestList = true;
             hasListDownloadFailed = false;
             setAdvertisedList(listingFile);
@@ -408,7 +437,7 @@ public class ContributionListing {
     }
     return false;
   }
-  
+
   boolean hasUpdates(Base base) {
     for (ModeContribution m : base.getModeContribs())
       if (hasUpdates(m))
@@ -450,7 +479,7 @@ public class ContributionListing {
     else
       return null;
   }
-  
+
 
 
   boolean hasDownloadedLatestList() {
@@ -470,7 +499,7 @@ public class ContributionListing {
 //    return s.toLowerCase().replaceAll("^\\p{Lower}", "");
 //  }
 
-  
+
 //  /**
 //   * @return the proper, valid name of this category to be displayed in the UI
 //   *         (e.g. "Typography / Geometry"). "Unknown" if the category null.
@@ -499,34 +528,31 @@ public class ContributionListing {
 
       int start = 0;
       while (start < lines.length) {
-//        // Only consider 'invalid' lines. These lines contain the type of
-//        // software: library, tool, mode
-//        if (!lines[start].contains("=")) {
         String type = lines[start];
         ContributionType contribType = ContributionType.fromName(type);
         if (contribType == null) {
           System.err.println("Error in contribution listing file on line " + (start+1));
-          return outgoing;
+          // Scan forward for the next blank line
+          int end = ++start;
+          while (end < lines.length && lines[end].trim().length() != 0) {
+            end++;
+          }
+          start = end + 1;
+
+        } else {
+          // Scan forward for the next blank line
+          int end = ++start;
+          while (end < lines.length && lines[end].trim().length() != 0) {
+            end++;
+          }
+
+          String[] contribLines = PApplet.subset(lines, start, end-start);
+
+          Map<String, String> contribParams = Base.readSettings(file.getName(), contribLines);
+
+          outgoing.add(new AvailableContribution(contribType, contribParams));
+          start = end + 1;
         }
-
-        // Scan forward for the next blank line
-        int end = ++start;
-        while (end < lines.length && !lines[end].equals("")) {
-          end++;
-        }
-
-        int length = end - start;
-        String[] contribLines = new String[length];
-        System.arraycopy(lines, start, contribLines, 0, length);
-
-        HashMap<String,String> contribParams = new HashMap<String,String>();
-        Base.readSettings(file.getName(), contribLines, contribParams);
-
-        outgoing.add(new AvailableContribution(contribType, contribParams));
-        start = end + 1;
-//        } else {
-//          start++;
-//        }
       }
     }
     return outgoing;
