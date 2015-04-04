@@ -22,9 +22,6 @@ public class PAppChild extends PApplet {
     line((s*frameCount)%width,0,(s*frameCount)%width,height);
   }
 
-  public PApplet pa() {
-    return (PApplet) this;
-  }
 
 
   public void setS(int s) {
@@ -37,9 +34,9 @@ public class PAppChild extends PApplet {
     System.out.println("sw "+ sw);
   }
 
- // publi
-
-  public void sw2(int sw) {
+ // access private doesnt work yet
+  // static supermethods neither.
+  private void sw2(int sw) {
     strokeWeight(sw);
     System.out.println("sw "+ sw);
   }

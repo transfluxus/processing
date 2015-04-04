@@ -4,10 +4,10 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.InputStreamReader;
 
-import javax.script.Invocable;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 
 import processing.core.PApplet;
 import processing.test.PAppChild;
@@ -18,24 +18,21 @@ public class Test1 {
     ScriptEngineManager engineManager = new ScriptEngineManager();
     ScriptEngine engine = engineManager.getEngineByName("nashorn");
     engine.eval("function sum(a, b) { return a + b; }");
-    System.out.println(engine.eval("sum(1, 2);"));
+    //System.out.println(engine.eval("sum(1, 2);"));
 
-    engine.eval(new FileReader("test.js"));
-    Invocable invocable = (Invocable) engine;
-    System.out.println(invocable.invokeFunction("cool", "5"));
+    // thought the type or Package stuff would be necessary, but it isnt...
+    //engine.eval(new FileReader("test.js"));
+
+    //Invocable invocable = (Invocable) engine;
+    //System.out.println(invocable.invokeFunction("cool", "5"));
 
     PAppChild pap = new PAppChild();
     PApplet.runSketch(new String[] {"processing.test.PAppChild"}, pap);
-    engine.getBindings(ScriptContext.ENGINE_SCOPE).put("m", (PApplet)pap);
-//    engine.getBindings(ScriptContext.ENGINE_SCOPE).put("mp", (PApplet)pap.super);
+    engine.getBindings(ScriptContext.ENGINE_SCOPE).put("p",pap);
     pap.getFrame().setLocation(800, 200);
 
-//  PApplet pap = new PApplet();
-//  PApplet.runSketch(new String[] {"processing.core.PApplet"}, pap);
-//  engine.getBindings(ScriptContext.ENGINE_SCOPE).put("manager", pap);
-
-    //final ScriptEngine s = new ScriptEngineManager().getEngineByExtension("js");
-    //s.eval("manager.test(); manager.test2();");
+    // check if it works:
+    engine.eval("p.stroke(255,240,0);");
 
     BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
     String line = ".";
@@ -44,8 +41,13 @@ public class Test1 {
       line = br.readLine();
       //System.out.println(line);
       if(line.startsWith("#"))
-        line = "m."+line.substring(1);
+        line = "p."+line.substring(1);
+      try {
       Object o =engine.eval(line);
+      } catch(ScriptException exc) {
+        System.err.println("Careful, you almost broke something: "+
+      System.getProperty("line.separator")+exc.getMessage());
+      }
       //if(o != null)
      // System.out.println(o);
     }
