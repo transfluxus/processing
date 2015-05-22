@@ -80,6 +80,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 
+
 // used by loadImage() functions
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -100,6 +101,7 @@ import java.util.zip.*;
 
 import processing.data.JSONArray;
 import processing.data.JSONObject;
+import processing.data.StringList;
 import processing.data.Table;
 import processing.data.XML;
 import processing.event.Event;
