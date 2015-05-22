@@ -9,12 +9,29 @@ public class PAppChild extends PApplet {
     size(500,500);
     enableMultiKey();
     stroke(255);
+    frame.setVisible(false);
+    frame.setLocation(displayWidth-width, 100);
+ frame.setVisible(true);
   }
 
  public int s = 1;
 
+ public boolean bg = false;
+
+ public boolean isBg() {
+ return bg;
+}
+
+
+
+public void setBg(boolean bg) {
+ this.bg = bg;
+}
+
   @Override
   public void draw() {
+    if(bg)
+      background(0);
     if(keyPressed(UP) && keyPressed(65))
       println("jo");
    // rect(20,20,100,200);
@@ -46,16 +63,29 @@ public class PAppChild extends PApplet {
     println(keyCode);
   }
 
-  public int f(int a) {
+  public int f1(int a) {
     println(s);
     rect(20,20,200,200);
     return a*a;
   }
 
-  public PApplet sup() {
-    return (PApplet) this;
+  protected int f2(int a) {
+    println(s);
+    rect(20,20,200,200);
+    return a*a;
   }
 
+  private int f3(int a) {
+    println(s);
+    rect(20,20,200,200);
+    return a*a;
+  }
+/*
+  public boolean bg() {
+    background(0);
+    return true;
+  }
+*/
   @Override
   public void exit() {
     System.exit(0);

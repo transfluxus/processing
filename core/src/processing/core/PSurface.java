@@ -3,7 +3,7 @@
 /*
   Part of the Processing project - http://processing.org
 
-  Copyright (c) 2014 The Processing Foundation
+  Copyright (c) 2014-15 The Processing Foundation
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -22,10 +22,6 @@
 
 package processing.core;
 
-import java.awt.Canvas;
-import java.awt.Color;
-import java.awt.Frame;
-
 
 public interface PSurface {
   /**
@@ -41,17 +37,25 @@ public interface PSurface {
   // Background default needs to be different from the default value in
   // PGraphics.backgroundColor, otherwise size(100, 100) bg spills over.
   // https://github.com/processing/processing/issues/2297
-  static final Color WINDOW_BGCOLOR = new Color(0xDD, 0xDD, 0xDD);
+  //static final Color WINDOW_BGCOLOR = new Color(0xDD, 0xDD, 0xDD);
+  static final int WINDOW_BGCOLOR = 0xffDDDDDD;
 
   // renderer that doesn't draw to the screen
-  public void initOffscreen();
+  public void initOffscreen(PApplet sketch);
 
-  public Canvas initCanvas(PApplet sketch);
+  // considering removal in favor of separate Component classes for appropriate renderers
+  // (i.e. for Java2D or a generic Image surface, but not PDF, debatable for GL or FX)
+  //public Component initComponent(PApplet sketch);
 
-  public Frame initFrame(PApplet sketch, Color backgroundColor,
-                         int deviceIndex, boolean fullScreen, boolean spanDisplays);
+  //public Frame initFrame(PApplet sketch, Color backgroundColor,
+  public void initFrame(PApplet sketch, int backgroundColor,
+                        int deviceIndex, boolean fullScreen, boolean spanDisplays);
 
   //
+
+  // Just call these on an AWT Frame object stored in PApplet.
+  // Silly, but prevents a lot of rewrite and extra methods for little benefit.
+  // However, maybe prevents us from having to document the 'frame' variable?
 
   /** Set the window (and dock, or whatever necessary) title. */
   public void setTitle(String title);
@@ -69,10 +73,57 @@ public interface PSurface {
   public void placeWindow(int[] location, int[] editorLocation);
 
   //public void placeFullScreen(boolean hideStop);
-  public void placePresent(Color stopColor);
+  public void placePresent(int stopColor);
 
   // Sketch is running from the PDE, set up messaging back to the PDE
   public void setupExternalMessages();
+
+  //
+
+  // sets displayWidth/Height inside PApplet
+  //public void checkDisplaySize();
+
+  public void setSize(int width, int height);
+
+  /**
+   * Called by {@link PApplet#createGraphics} to initialize the
+   * {@link PGraphics#image} object with an image that's compatible with this
+   * drawing surface/display/hardware.
+   * @param gr PGraphics object whose image will be set
+   * @param wide
+   * @param high
+   */
+  // create pixel buffer (pulled out for offscreen graphics)
+  //public void initImage(PGraphics gr, int wide, int high);
+  // create pixel buffer, called from allocate() to produce a compatible image for rendering efficiently
+//  public void initImage(PGraphics gr);
+
+  //public Component getComponent();
+
+  /**
+   * Sometimes smoothing must be set at the drawing surface level
+   * not just inside the renderer itself.
+   */
+  public void setSmooth(int level);
+
+  public void setFrameRate(float fps);
+
+  // called on the first frame so that the now-visible drawing surface can
+  // receive key and mouse events
+  public void requestFocus();
+
+//  // finish rendering to the screen (called by PApplet)
+//  public void blit();
+
+  //
+
+  public void setCursor(int kind);
+
+  public void setCursor(PImage image, int hotspotX, int hotspotY);
+
+  public void showCursor();
+
+  public void hideCursor();
 
   //
 
@@ -95,35 +146,4 @@ public interface PSurface {
   public boolean stopThread();
 
   public boolean isStopped();
-
-  //
-
-  // sets displayWidth/Height inside PApplet
-  //public void checkDisplaySize();
-
-  public void setSize(int width, int height);
-
-  public void setSmooth(int level);
-
-  public void setFrameRate(float fps);
-
-  // called on the first frame so that the now-visible drawing surface can
-  // receive key and mouse events
-  public void requestFocus();
-
-  // finish rendering to the screen (called by PApplet)
-  public void blit();
-
-  //
-
-  public void setCursor(int kind);
-
-  public void setCursor(PImage image, int hotspotX, int hotspotY);
-
-  public void showCursor();
-
-  public void hideCursor();
-
-  //
-
 }

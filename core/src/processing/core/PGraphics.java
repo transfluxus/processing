@@ -168,7 +168,7 @@ public class PGraphics extends PImage implements PConstants {
   /// true if defaults() has been called a first time
   protected boolean settingsInited;
 
-  /// true if defaults() has been called a first time
+  /// true if settings should be re-applied on next beginDraw()
   protected boolean reapplySettings;
 
   /// set to a PGraphics object being used inside a beginRaw/endRaw() block
@@ -516,6 +516,9 @@ public class PGraphics extends PImage implements PConstants {
    */
   public Image image;
 
+  /** Surface object that we're talking to */
+  protected PSurface surface;
+
   // ........................................................
 
   // internal color for setting/calculating
@@ -653,7 +656,7 @@ public class PGraphics extends PImage implements PConstants {
    * vertex() calls will be based on coordinates that are
    * based on the IMAGE or NORMALIZED.
    */
-  public int textureMode    = IMAGE;
+  public int textureMode = IMAGE;
 
   /**
    * Current horizontal coordinate for texture, will always
@@ -683,21 +686,21 @@ public class PGraphics extends PImage implements PConstants {
 
   // INTERNAL
 
+  // Most renderers will only override the default implementation of one or
+  // two of the setXxxx() methods, so they're broken out here since the
+  // default implementations for each are simple, obvious, and common.
+  // They're also separate to avoid a monolithic and fragile constructor.
 
-  /**
-   * Constructor for the PGraphics object. Use this to ensure that
-   * the defaults get set properly. In a subclass, use this(w, h)
-   * as the first line of a subclass' constructor to properly set
-   * the internal fields and defaults.
-   *
-   * @nowebref
-   */
+
   public PGraphics() {
+    // Allows subclasses to override
   }
 
 
   public void setParent(PApplet parent) {  // ignore
     this.parent = parent;
+    // Some renderers (OpenGL) need to know what smoothing level will be used
+    // before the rendering surface is even created.
     quality = parent.sketchQuality();
   }
 
@@ -734,7 +737,7 @@ public class PGraphics extends PImage implements PConstants {
    * This was formerly handled by the constructor, but instead it's been broken
    * out so that setParent/setPrimary/setPath can be handled differently.
    *
-   * Important that this is ignored by preproc.pl because otherwise it will
+   * Important: this is ignored by the Methods task because otherwise it will
    * override setSize() in PApplet/Applet/Component, which will 1) not call
    * super.setSize(), and 2) will cause the renderer to be resized from the
    * event thread (EDT), causing a nasty crash as it collides with the
@@ -744,17 +747,20 @@ public class PGraphics extends PImage implements PConstants {
     width = w;
     height = h;
 
+    /** {@link PImage.pixelFactor} set in {@link PImage#PImage()} */
     pixelWidth = width * pixelFactor;
     pixelHeight = height * pixelFactor;
 
-//    allocate();
-    reapplySettings();
+//    if (surface != null) {
+//      allocate();
+//    }
+//    reapplySettings();
+    reapplySettings = true;
   }
 
 
 //  /**
-//   * Allocate memory for this renderer. Generally will need to be implemented
-//   * for all renderers.
+//   * Allocate memory or an image buffer for this renderer.
 //   */
 //  protected void allocate() { }
 
@@ -771,7 +777,7 @@ public class PGraphics extends PImage implements PConstants {
 
 
   public PSurface createSurface() {  // ignore
-    return new PSurfaceAWT(this);
+    return surface = new PSurfaceAWT(this);
   }
 
 
@@ -789,7 +795,7 @@ public class PGraphics extends PImage implements PConstants {
    * @param renderer The PGraphics renderer associated to the image
    * @param storage The metadata required by the renderer
    */
-  public void setCache(PImage image, Object storage) {
+  public void setCache(PImage image, Object storage) {  // ignore
     cacheMap.put(image, storage);
   }
 
@@ -802,7 +808,7 @@ public class PGraphics extends PImage implements PConstants {
    * @param renderer The PGraphics renderer associated to the image
    * @return metadata stored for the specified renderer
    */
-  public Object getCache(PImage image) {
+  public Object getCache(PImage image) {  // ignore
     return cacheMap.get(image);
   }
 
@@ -811,7 +817,7 @@ public class PGraphics extends PImage implements PConstants {
    * Remove information associated with this renderer from the cache, if any.
    * @param renderer The PGraphics renderer whose cache data should be removed
    */
-  public void removeCache(PImage image) {
+  public void removeCache(PImage image) {  // ignore
     cacheMap.remove(image);
   }
 
@@ -957,7 +963,7 @@ public class PGraphics extends PImage implements PConstants {
 
     settingsInited = true;
     // defaultSettings() overlaps reapplySettings(), don't do both
-    //reapplySettings = false;
+    reapplySettings = false;
   }
 
 
@@ -1494,6 +1500,7 @@ public class PGraphics extends PImage implements PConstants {
     vertexCount++;
   }
 
+
   /**
    * Used by renderer subclasses or PShape to efficiently pass in already
    * formatted vertex information.
@@ -1608,6 +1615,7 @@ public class PGraphics extends PImage implements PConstants {
     showMissingWarning("beginContour");
   }
 
+
   /**
    * @webref shape:vertex
    */
@@ -1619,6 +1627,7 @@ public class PGraphics extends PImage implements PConstants {
   public void endShape() {
     endShape(OPEN);
   }
+
 
   /**
    * ( begin auto-generated from endShape.xml )
@@ -1640,9 +1649,11 @@ public class PGraphics extends PImage implements PConstants {
   }
 
 
+
   //////////////////////////////////////////////////////////////
 
   // SHAPE I/O
+
 
   /**
    * @webref shape
@@ -1653,6 +1664,7 @@ public class PGraphics extends PImage implements PConstants {
   public PShape loadShape(String filename) {
     return loadShape(filename, null);
   }
+
 
   /**
    * @nowebref
@@ -1668,6 +1680,7 @@ public class PGraphics extends PImage implements PConstants {
 
   // SHAPE CREATION
 
+
   /**
    * @webref shape
    * @see PShape
@@ -1675,34 +1688,114 @@ public class PGraphics extends PImage implements PConstants {
    * @see PApplet#loadShape(String)
    */
   public PShape createShape() {
-    showMissingWarning("createShape");
-    return null;
+    // Defaults to GEOMETRY (rather than GROUP like the default constructor)
+    // because that's how people will use it within a sketch.
+    return createShape(PShape.GEOMETRY);
   }
 
 
-  public PShape createShape(PShape source) {
-    showMissingWarning("createShape");
-    return null;
-  }
-
-
-  /**
-   * @param type either POINTS, LINES, TRIANGLES, TRIANGLE_FAN, TRIANGLE_STRIP, QUADS, QUAD_STRIP
-   */
+  // POINTS, LINES, TRIANGLES, TRIANGLE_FAN, TRIANGLE_STRIP, QUADS, QUAD_STRIP
   public PShape createShape(int type) {
-    showMissingWarning("createShape");
-    return null;
+    // If it's a PRIMITIVE, it needs the 'params' field anyway
+    if (type == PConstants.GROUP ||
+        type == PShape.PATH ||
+        type == PShape.GEOMETRY) {
+      return createShapeFamily(type);
+    }
+    final String msg =
+      "Only GROUP, PShape.PATH, and PShape.GEOMETRY work with createShape()";
+    throw new IllegalArgumentException(msg);
+  }
+
+
+  /** Override this method to return an appropriate shape for your renderer */
+  protected PShape createShapeFamily(int type) {
+    return new PShape(this, type);
+//    showMethodWarning("createShape()");
+//    return null;
   }
 
 
   /**
-   * @param kind either LINE, TRIANGLE, RECT, ELLIPSE, ARC, SPHERE, BOX
+   * @param kind either POINT, LINE, TRIANGLE, QUAD, RECT, ELLIPSE, ARC, BOX, SPHERE
    * @param p parameters that match the kind of shape
    */
   public PShape createShape(int kind, float... p) {
-    showMissingWarning("createShape");
-    return null;
+    int len = p.length;
+
+    if (kind == POINT) {
+      if (is3D() && len != 2 && len != 3) {
+        throw new IllegalArgumentException("Use createShape(POINT, x, y) or createShape(POINT, x, y, z)");
+      } else if (len != 2) {
+        throw new IllegalArgumentException("Use createShape(POINT, x, y)");
+      }
+      return createShapePrimitive(kind, p);
+
+    } else if (kind == LINE) {
+      if (is3D() && len != 4 && len != 6) {
+        throw new IllegalArgumentException("Use createShape(LINE, x1, y1, x2, y2) or createShape(LINE, x1, y1, z1, x2, y2, z1)");
+      } else if (len != 4) {
+        throw new IllegalArgumentException("Use createShape(LINE, x1, y1, x2, y2)");
+      }
+      return createShapePrimitive(kind, p);
+
+    } else if (kind == TRIANGLE) {
+      if (len != 6) {
+        throw new IllegalArgumentException("Use createShape(TRIANGLE, x1, y1, x2, y2, x3, y3)");
+      }
+      return createShapePrimitive(kind, p);
+
+    } else if (kind == QUAD) {
+      if (len != 8) {
+        throw new IllegalArgumentException("Use createShape(QUAD, x1, y1, x2, y2, x3, y3, x4, y4)");
+      }
+      return createShapePrimitive(kind, p);
+
+    } else if (kind == RECT) {
+      if (len != 4 && len != 5 && len != 8 && len != 9) {
+        throw new IllegalArgumentException("Wrong number of parameters for createShape(RECT), see the reference");
+      }
+      return createShapePrimitive(kind, p);
+
+    } else if (kind == ELLIPSE) {
+      if (len != 4 && len != 5) {
+        throw new IllegalArgumentException("Use createShape(ELLIPSE, x, y, w, h) or createShape(ELLIPSE, x, y, w, h, mode)");
+      }
+      return createShapePrimitive(kind, p);
+
+    } else if (kind == ARC) {
+      if (len != 6 && len != 7) {
+        throw new IllegalArgumentException("Use createShape(ARC, x, y, w, h, start, stop)");
+      }
+      return createShapePrimitive(kind, p);
+
+    } else if (kind == BOX) {
+      if (!is3D()) {
+        throw new IllegalArgumentException("createShape(BOX) is not supported in 2D");
+      } else if (len != 1 && len != 3) {
+        throw new IllegalArgumentException("Use createShape(BOX, size) or createShape(BOX, width, height, depth)");
+      }
+      return createShapePrimitive(kind, p);
+
+    } else if (kind == SPHERE) {
+      if (!is3D()) {
+        throw new IllegalArgumentException("createShape(SPHERE) is not supported in 2D");
+      } else if (len != 1) {
+        throw new IllegalArgumentException("Use createShape(SPHERE, radius)");
+      }
+      return createShapePrimitive(kind, p);
+    }
+    throw new IllegalArgumentException("Unknown shape type passed to createShape()");
   }
+
+
+  /** Override this to have a custom shape object used by your renderer. */
+  protected PShape createShapePrimitive(int kind, float... p) {
+//    showMethodWarning("createShape()");
+//    return null;
+    return new PShape(this, kind, p);
+  }
+
 
 
   //////////////////////////////////////////////////////////////
@@ -1747,6 +1840,7 @@ public class PGraphics extends PImage implements PConstants {
   public void shader(PShader shader) {
     showMissingWarning("shader");
   }
+
 
   /**
    * @param kind type of shader, either POINTS, LINES, or TRIANGLES

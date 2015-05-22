@@ -1,7 +1,6 @@
 package processing.opengl;
 
-import java.awt.Canvas;
-import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GraphicsConfiguration;
@@ -77,12 +76,13 @@ public class PSurfaceLWJGL implements PSurface {
 
 
   @Override
-  public void initOffscreen() {
+  public void initOffscreen(PApplet sketch) {
   }
 
 
+  /*
   @Override
-  public Canvas initCanvas(PApplet sketch) {
+  public Canvas initComponent(PApplet sketch) {
     this.sketch = sketch;
 
     sketchWidth = sketch.sketchWidth();
@@ -100,10 +100,11 @@ public class PSurfaceLWJGL implements PSurface {
     }
     return null;
   }
+  */
 
 
   @Override
-  public Frame initFrame(PApplet sketch, Color backgroundColor,
+  public void initFrame(PApplet sketch, int backgroundColor,
                          int deviceIndex, boolean fullScreen, boolean spanDisplays) {
     this.sketch = sketch;
 
@@ -213,8 +214,8 @@ public class PSurfaceLWJGL implements PSurface {
 //    sketchWidth = sketch.width = sketch.sketchWidth();
 //    sketchHeight = sketch.height = sketch.sketchHeight();
 
-    frame = new DummyFrame();
-    return frame;
+//    frame = new DummyFrame();
+//    return frame;
   }
 
 
@@ -276,8 +277,9 @@ public class PSurfaceLWJGL implements PSurface {
   public void placeWindow(int[] location, int[] editorLocation) {
     if (location != null) {
       // a specific location was received from the Runner
-      // (applet has been run more than once, user placed window)
+      // (the sketch has been run more than once/the user moved the window)
       frame.setLocation(location[0], location[1]);
+
     } else if (editorLocation != null) {
       Dimension window = new Dimension(sketchWidth, sketchHeight);
 
@@ -319,7 +321,7 @@ public class PSurfaceLWJGL implements PSurface {
   float offsetX;
   float offsetY;
   @Override
-  public void placePresent(Color stopColor) {
+  public void placePresent(int stopColor) {
 
     if (sketchWidth < screenRect.width || sketchHeight < screenRect.height) {
 //      System.err.println("WILL USE FBO");
@@ -415,6 +417,15 @@ public class PSurfaceLWJGL implements PSurface {
   }
 
 
+//  @Override
+//  public void initImage(PGraphics graphics) {
+//    // TODO not sure yet how to implement [fry]
+//  }
+  public Component getComponent() {
+    return frame;
+  }
+
+
   @Override
   public void setSmooth(int level) {
     System.err.println("set smooth " + level);
@@ -443,10 +454,10 @@ public class PSurfaceLWJGL implements PSurface {
   }
 
 
-  @Override
-  public void blit() {
-    // Nothing to do here
-  }
+//  @Override
+//  public void blit() {
+//    // Nothing to do here
+//  }
 
 
   @Override
@@ -596,28 +607,30 @@ public class PSurfaceLWJGL implements PSurface {
   }
 
 
-  @SuppressWarnings("serial")
-  class DummyFrame extends Frame {
+//  @SuppressWarnings("serial")
+//  class DummyFrame extends Frame {
+//
+//    public DummyFrame() {
+//      super();
+//    }
+//
+//    @Override
+//    public void setResizable(boolean resizable) {
+//      Display.setResizable(resizable);
+//    }
+//
+//    @Override
+//    public void setVisible(boolean visible) {
+//      System.err.println("Cannot set visibility of window in OpenGL");
+//    }
+//
+//    @Override
+//    public void setTitle(String title) {
+//      Display.setTitle(title);
+//    }
+//  }
 
-    public DummyFrame() {
-      super();
-    }
 
-    @Override
-    public void setResizable(boolean resizable) {
-      Display.setResizable(resizable);
-    }
-
-    @Override
-    public void setVisible(boolean visible) {
-      System.err.println("Cannot set visibility of window in OpenGL");
-    }
-
-    @Override
-    public void setTitle(String title) {
-      Display.setTitle(title);
-    }
-  }
 
   ///////////////////////////////////////////////////////////
 

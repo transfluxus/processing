@@ -3,7 +3,7 @@
 /*
   Part of the Processing project - http://processing.org
 
-  Copyright (c) 2014 The Processing Foundation
+  Copyright (c) 2014-15 The Processing Foundation
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -36,11 +36,11 @@ import processing.event.KeyEvent;
 import processing.event.MouseEvent;
 
 
-public class PSurfaceAWT implements PSurface {
+public class PSurfaceAWT extends PSurfaceNone {
   GraphicsDevice displayDevice;
 
   // used for canvas to determine whether resizable or not
-  boolean resizable;  // default is false
+//  boolean resizable;  // default is false
 
   // Internally, we know it's always a JFrame (not just a Frame)
   JFrame frame;
@@ -48,48 +48,47 @@ public class PSurfaceAWT implements PSurface {
   // Note that x and y may not be zero, depending on the display configuration
   Rectangle screenRect;
 
-  // disabled on retina inside init()
-  boolean useActive = true;
-//  boolean useActive = false;
-//  boolean useStrategy = true;
-  boolean useStrategy = false;
-  Canvas canvas;
+  // 3.0a5 didn't use strategy, and active was shut off during init() w/ retina
+  boolean useStrategy = true;
 
-  PApplet sketch;
+//  Canvas canvas;
+  Component canvas;
+
   PGraphics graphics;
 
   int sketchWidth;
   int sketchHeight;
-
-  Thread thread;
-  boolean paused;
-  Object pauseObject = new Object();
-
-  /** As of release 0116, frameRate(60) is called as a default */
-  protected float frameRateTarget = 60;
-  protected long frameRatePeriod = 1000000000L / 60L;
 
 
   public PSurfaceAWT(PGraphics graphics) {
     this.graphics = graphics;
 
     if (checkRetina()) {
+//      System.out.println("retina in use");
+
       // The active-mode rendering seems to be 2x slower, so disable it
       // with retina. On a non-retina machine, however, useActive seems
       // the only (or best) way to handle the rendering.
-      useActive = false;
+//      useActive = false;
+//      canvas = new JPanel(true) {
+//        @Override
+//        public void paint(Graphics screen) {
+////          if (!sketch.insideDraw) {
+//          screen.drawImage(PSurfaceAWT.this.graphics.image, 0, 0, sketchWidth, sketchHeight, null);
+////          }
+//        }
+//      };
+      // Under 1.8 and the current 3.0a6 threading regime, active mode w/o
+      // strategy is far faster, but perhaps only because it's blitting with
+      // flicker--pushing pixels out before the screen has finished rendering.
+//      useStrategy = false;
+    }
+    canvas = new SmoothCanvas();
+    if (useStrategy) {
+      canvas.setIgnoreRepaint(true);
     }
 
-    createCanvas();
-    addListeners();
-  }
-
-
-  void createCanvas() {
-    canvas = new SmoothCanvas();
-    canvas.setIgnoreRepaint(true);  // ??
-
-    // send tab keys through to the PApplet
+    // Pass tab key to the sketch, rather than moving between components
     canvas.setFocusTraversalKeysEnabled(false);
 
     canvas.addComponentListener(new ComponentAdapter() {
@@ -100,13 +99,17 @@ public class PSurfaceAWT implements PSurface {
         }
       }
     });
+    addListeners();
   }
 
 
   /**
-   * Handle grabbing the focus from the parent applet. Other renderers can
-   * override this if handling needs to be different.
+   * Handle grabbing the focus on startup. Other renderers can override this
+   * if handling needs to be different. For the AWT, the request is invoked
+   * later on the EDT. Other implementations may not require that, so the
+   * invokeLater() happens in here rather than requiring the caller to wrap it.
    */
+  @Override
   public void requestFocus() {
     // for 2.0a6, moving this request to the EDT
     EventQueue.invokeLater(new Runnable() {
@@ -154,7 +157,8 @@ public class PSurfaceAWT implements PSurface {
 
     @Override
     public Dimension getMaximumSize() {
-      return resizable ? super.getMaximumSize() : getPreferredSize();
+      //return resizable ? super.getMaximumSize() : getPreferredSize();
+      return frame.isResizable() ? super.getMaximumSize() : getPreferredSize();
     }
 
 
@@ -182,13 +186,28 @@ public class PSurfaceAWT implements PSurface {
 
 
     @Override
-    public void paint(Graphics g) {
+    public void paint(Graphics screen) {
 //      System.out.println("painting");
 //    validate();
-      render();
+      if (useStrategy) {
+        render();
+
+      } else {
+//        new Exception("painting").printStackTrace(System.out);
+//        if (graphics.image != null) { // && !sketch.insideDraw) {
+        if (onscreen != null) {
+//          synchronized (graphics.image) {
+          // Needs the width/height to be set so that retina images are properly scaled down
+//          screen.drawImage(graphics.image, 0, 0, sketchWidth, sketchHeight, null);
+          synchronized (offscreenLock) {
+            screen.drawImage(onscreen, 0, 0, sketchWidth, sketchHeight, null);
+          }
+        }
+      }
     }
+  }
 
-
+    /*
     @Override
     public void addNotify() {
 //      System.out.println("adding notify");
@@ -196,74 +215,19 @@ public class PSurfaceAWT implements PSurface {
       // prior to Java 7 on OS X, this no longer works [121222]
 //    createBufferStrategy(2);
     }
-
-
-    /*
-    protected synchronized void render_example() {
-      System.out.println("render(), bounds are " + getBounds());
-      if (getBufferStrategy() == null) {  // whole block [121222]
-        System.out.println("creating a strategy");
-        createBufferStrategy(2);
-      }
-      BufferStrategy strategy = getBufferStrategy();
-      if (strategy == null) {
-        return;
-      }
-      // Render single frame
-      do {
-        // The following loop ensures that the contents of the drawing buffer
-        // are consistent in case the underlying surface was recreated
-        do {
-          Graphics draw = strategy.getDrawGraphics();
-          //Insets i = getInsets();
-          //int w = (int)(((double)(getWidth() - i.left - i.right))/2+0.5);
-          //int h = (int)(((double)(getHeight() - i.top - i.bottom))/2+0.5);
-          Insets i = new Insets(0, 0, 0, 0);
-          int w = getWidth() / 2;
-          int h = getHeight() / 2;
-
-          if (false) {
-            draw.setColor(Color.YELLOW);
-            draw.fillRect(i.left, i.top + h, w, getHeight() - h);
-            draw.fillRect(i.left + w, i.top, getWidth() - w, h);
-            draw.setColor(Color.BLACK);
-            draw.fillRect(i.left, i.top, w, h);
-            draw.fillRect(i.left + w, i.top + h, getWidth() - w, getHeight() - h);
-          } else {
-            draw.setColor(Color.WHITE);
-            draw.fillRect(i.left, i.top, getWidth(), getHeight());
-
-            draw.setColor(Color.BLACK);
-            draw.setFont(new Font("SansSerif", Font.PLAIN, 50));
-            draw.drawString("this is some text", 50, 100);
-
-//          draw.setColor(Color.BLACK);
-//          int mx = Math.max(getWidth(), getHeight());
-//          for (int x = -getWidth(); x < getWidth(); x += 5) {
-//            draw.drawLine(x, 0, x + mx, mx);
-//          }
-          }
-
-          draw.dispose();
-
-          // Repeat the rendering if the drawing buffer contents
-          // were restored
-          System.out.println("restored " + strategy.contentsRestored());
-        } while (strategy.contentsRestored());
-
-        // Display the buffer
-        System.out.println("showing");
-        strategy.show();
-
-        // Repeat the rendering if the drawing buffer was lost
-        System.out.println("lost " + strategy.contentsLost());
-        System.out.println();
-      } while (strategy.contentsLost());
-    }
     */
 
 
-    protected synchronized void render() {
+  protected synchronized void render() {
+      //System.out.println("render() top");
+
+      /*
+      if (!EventQueue.isDispatchThread()) {
+        //throw new IllegalStateException("render() called outside the EDT");
+        //System.err.println("render() called outside the EDT");
+        new Exception("render() called outside the EDT").printStackTrace();
+      }
+      */
 //      if (canvas == null) {
 //        removeListeners(this);
 //        canvas = new Canvas();
@@ -278,132 +242,127 @@ public class PSurfaceAWT implements PSurface {
       // not sure why this was here, can't be good
       //canvas.setBounds(0, 0, sketch.width, sketch.height);
 
-      if (!canvas.isDisplayable()) {
+    if (!canvas.isDisplayable()) {
 //        System.out.println("no peer.. holding");
-        return;
-      }
-
-//      System.out.println("render(), canvas bounds are " + canvas.getBounds());
-      if (canvas.getBufferStrategy() == null) {  // whole block [121222]
-//        System.out.println("creating a strategy");
-        canvas.createBufferStrategy(2);
-      }
-      BufferStrategy strategy = canvas.getBufferStrategy();
-//      System.out.println(strategy);
-      if (strategy == null) {
-        return;
-      }
-      // Render single frame
-      do {
-        // The following loop ensures that the contents of the drawing buffer
-        // are consistent in case the underlying surface was recreated
-        do {
-          Graphics draw = strategy.getDrawGraphics();
-          //draw.drawImage(pg.image, 0, 0, sketch.width, sketch.height, null);
-          // draw to width/height, since this may be a 2x image
-          draw.drawImage(graphics.image, 0, 0, sketchWidth, sketchHeight, null);
-          draw.dispose();
-
-          // Repeat the rendering if the drawing buffer contents
-          // were restored
-//          System.out.println("restored " + strategy.contentsRestored());
-        } while (strategy.contentsRestored());
-
-        // Display the buffer
-//        System.out.println("showing");
-        strategy.show();
-
-        // Repeat the rendering if the drawing buffer was lost
-//        System.out.println("lost " + strategy.contentsLost());
-//        System.out.println();
-      } while (strategy.contentsLost());
-    }
-  }
-
-
-  /*
-  @Override
-  public void update(Graphics screen) {
-    paint(screen);
-  }
-
-
-  @Override
-  public void paint(Graphics screen) {
-//    int r = (int) random(10000);
-//    System.out.println("into paint " + r);
-    //super.paint(screen);
-
-    // ignore the very first call to paint, since it's coming
-    // from the o.s., and the applet will soon update itself anyway.
-    if (frameCount == 0) {
-//      println("Skipping frame");
-      // paint() may be called more than once before things
-      // are finally painted to the screen and the thread gets going
       return;
     }
-    // without ignoring the first call, the first several frames
-    // are confused because paint() gets called in the midst of
-    // the initial nextFrame() call, so there are multiple
-    // updates fighting with one another.
 
-    // make sure the screen is visible and usable
-    // (also prevents over-drawing when using PGraphicsOpenGL)
-
-//    if (useActive) {
-//      return;
-//    }
-
-//    if (insideDraw) {
-//      new Exception().printStackTrace(System.out);
-//    }
-    if (!insideDraw && (g != null) && (g.image != null)) {
-      if (useStrategy) {
-        render();
-      } else {
-//        System.out.println("drawing to screen");
-        //screen.drawImage(g.image, 0, 0, null);  // not retina friendly
-        screen.drawImage(g.image, 0, 0, width, height, null);
+    if (graphics.image == null) {
+      if (PApplet.DEBUG) {
+        new Exception("image is null, returning").printStackTrace(System.out);
       }
-    } else {
-      debug(insideDraw + " " + g + " " + ((g != null) ? g.image : "-"));
+      return;
     }
+
+    Canvas c = (Canvas) canvas;
+//      System.out.println("render(), canvas bounds are " + canvas.getBounds());
+    if (c.getBufferStrategy() == null) {  // whole block [121222]
+//        System.out.println("creating a strategy");
+      c.createBufferStrategy(2);
+    }
+    BufferStrategy strategy = c.getBufferStrategy();
+//      System.out.println(strategy);
+    if (strategy == null) {
+      return;
+    }
+    // Render single frame
+    do {
+      // The following loop ensures that the contents of the drawing buffer
+      // are consistent in case the underlying surface was recreated
+      do {
+        Graphics2D draw = (Graphics2D) strategy.getDrawGraphics();
+        //draw.drawImage(pg.image, 0, 0, sketch.width, sketch.height, null);
+        //System.out.println("render() drawing image");
+          /*
+          while (sketch.insideDraw) {
+            System.out.println("render() yielding because inside draw");
+            //Thread.yield();
+            try {
+              Thread.sleep(1);
+            } catch (InterruptedException e) { }
+          }
+          */
+
+          // this wasn't any faster than setting the image size while drawing
+//          if (graphics.pixelFactor == 2) {
+//            draw.scale(0.5, 0.5);
+//          }
+
+        // draw to width/height, since this may be a 2x image
+        draw.drawImage(graphics.image, 0, 0, sketchWidth, sketchHeight, null);
+//          draw.drawImage(graphics.image, 0, 0, null);
+        draw.dispose();
+
+        // Repeat the rendering if the drawing buffer contents
+        // were restored
+//          System.out.println("restored " + strategy.contentsRestored());
+      } while (strategy.contentsRestored());
+
+      // Display the buffer
+//        System.out.println("showing");
+      strategy.show();
+
+      // Repeat the rendering if the drawing buffer was lost
+//        System.out.println("lost " + strategy.contentsLost());
+//        System.out.println();
+    } while (strategy.contentsLost());
+//      System.out.println("render() bottom");
   }
-*/
 
 
-  public void blit() {
-//    System.out.println("blit");
-    ((SmoothCanvas) canvas).render();  // ??
-//    canvas.repaint();
-    /*
-    if (canvas.getGraphicsConfiguration() != null) {
-      GraphicsDevice device = canvas.getGraphicsConfiguration().getDevice();
-      if (device != displayDevice) {
-        System.out.println("display device changed from " + displayDevice + " to " + device);
-      }
-    }
+  Object offscreenLock = new Object();
+  BufferedImage offscreen;
+  BufferedImage onscreen;
+//  Graphics off;
 
-    if (useActive) {
-      if (useStrategy) {
-        render();
-      } else {
-        Graphics screen = canvas.getGraphics();
-        if (screen != null) {
-          screen.drawImage(g.image, 0, 0, sketch.width, sketch.height, null);
-        }
-      }
+
+  protected void blit() {
+    // Other folks that call render() (i.e. paint()) are already on the EDT.
+    // We need to be using the EDT since we're messing with the Canvas
+    // object and BufferStrategy and friends.
+    //EventQueue.invokeLater(new Runnable() {
+    //public void run() {
+    //((SmoothCanvas) canvas).render();
+    //}
+    //});
+
+    if (useStrategy) {
+      // Not necessary to be on the EDT to update BufferStrategy
+      //((SmoothCanvas) canvas).render();
+      render();
     } else {
-      canvas.repaint();
+      if (graphics.image != null) {
+        BufferedImage graphicsImage = (BufferedImage) graphics.image;
+        if (offscreen == null ||
+          offscreen.getWidth() != graphicsImage.getWidth() ||
+          offscreen.getHeight() != graphicsImage.getHeight()) {
+          System.out.println("creating new image");
+          offscreen = (BufferedImage)
+            canvas.createImage(graphicsImage.getWidth(),
+                               graphicsImage.getHeight());
+//          off = offscreen.getGraphics();
+        }
+//        synchronized (offscreen) {
+        Graphics2D off = (Graphics2D) offscreen.getGraphics();
+//        off.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1));
+        off.drawImage(graphicsImage, 0, 0, null);
+//        }
+        off.dispose();
+        synchronized (offscreenLock) {
+          BufferedImage temp = onscreen;
+          onscreen = offscreen;
+          offscreen = temp;
+        }
+        canvas.repaint();
+      }
     }
-//  getToolkit().sync();  // force repaint now (proper method)
-    */
   }
 
 
   // what needs to happen here?
-  public void initOffscreen() {
-
+  @Override
+  public void initOffscreen(PApplet sketch) {
+    this.sketch = sketch;
   }
 
   /*
@@ -415,7 +374,9 @@ public class PSurfaceAWT implements PSurface {
   }
   */
 
-  public Canvas initCanvas(PApplet sketch) {
+  /*
+  @Override
+  public Component initComponent(PApplet sketch) {
     this.sketch = sketch;
 
     // needed for getPreferredSize() et al
@@ -424,10 +385,12 @@ public class PSurfaceAWT implements PSurface {
 
     return canvas;
   }
+  */
 
 
-  public Frame initFrame(PApplet sketch, Color backgroundColor,
-                         int deviceIndex, boolean fullScreen, boolean spanDisplays) {
+  @Override
+  public void initFrame(PApplet sketch, int backgroundColor,
+                        int deviceIndex, boolean fullScreen, boolean spanDisplays) {
     this.sketch = sketch;
 
     GraphicsEnvironment environment =
@@ -489,12 +452,12 @@ public class PSurfaceAWT implements PSurface {
 
     // Removed code above, also removed from what's now in the placeXxxx()
     // methods. Not sure why it was being double-set; hopefully anachronistic.
-    if (backgroundColor == null) {
+    if (backgroundColor == 0) {
       backgroundColor = WINDOW_BGCOLOR;
     }
-    frame.getContentPane().setBackground(backgroundColor);
+    frame.getContentPane().setBackground(new Color(backgroundColor, false));
 
-    // Set the trimmings around the image
+    // Put the p5 logo in the Frame's corner to override the Java coffee cup.
     setIconImage(frame);
 
     // For 0149, moving this code (up to the pack() method) before init().
@@ -553,19 +516,21 @@ public class PSurfaceAWT implements PSurface {
     // http://code.google.com/p/processing/issues/detail?id=467
     frame.setResizable(false);
 
-    return frame;
+//    return frame;
   }
 
 
   /** Set the window (and dock, or whatever necessary) title. */
+  @Override
   public void setTitle(String title) {
     frame.setTitle(title);
   }
 
 
   /** Set true if we want to resize things (default is not resizable) */
+  @Override
   public void setResizable(boolean resizable) {
-    this.resizable = resizable;  // really only used for canvas
+    //this.resizable = resizable;  // really only used for canvas
 
     if (frame != null) {
       frame.setResizable(resizable);
@@ -573,6 +538,7 @@ public class PSurfaceAWT implements PSurface {
   }
 
 
+  @Override
   public void setVisible(boolean visible) {
     frame.setVisible(visible);
 
@@ -596,7 +562,8 @@ public class PSurfaceAWT implements PSurface {
 
 
   //public void placeFullScreen(boolean hideStop) {
-  public void placePresent(Color stopColor) {
+  @Override
+  public void placePresent(int stopColor) {
     // After the pack(), the screen bounds are gonna be 0s
     frame.setBounds(screenRect);
     canvas.setBounds((screenRect.width - sketchWidth) / 2,
@@ -608,9 +575,9 @@ public class PSurfaceAWT implements PSurface {
 //      macosxFullScreenToggle(frame);
 //    }
 
-    if (stopColor != null) {
+    if (stopColor != 0) {
       Label label = new Label("stop");
-      label.setForeground(stopColor);
+      label.setForeground(new Color(stopColor, false));
       label.addMouseListener(new MouseAdapter() {
         @Override
         public void mousePressed(java.awt.event.MouseEvent e) {
@@ -629,6 +596,7 @@ public class PSurfaceAWT implements PSurface {
   }
 
 
+  @Override
   public void placeWindow(int[] location) {
     setFrameSize(); //sketchWidth, sketchHeight);
 
@@ -668,12 +636,14 @@ public class PSurfaceAWT implements PSurface {
 
     // all set for rockin
     if (sketch.getGraphics().displayable()) {
-      setVisible(true);
+      frame.setVisible(true);
     }
   }
 
 
   private void setCanvasSize() {
+//    System.out.format("setting canvas size %d %d%n", sketchWidth, sketchHeight);
+//    new Exception().printStackTrace(System.out);
     int contentW = Math.max(sketchWidth, MIN_WINDOW_WIDTH);
     int contentH = Math.max(sketchHeight, MIN_WINDOW_HEIGHT);
 
@@ -708,6 +678,7 @@ public class PSurfaceAWT implements PSurface {
   }
 
 
+  @Override
   public void placeWindow(int[] location, int[] editorLocation) {
     //Dimension window = setFrameSize(sketchWidth, sketchHeight);
     Dimension window = setFrameSize(); //sketchWidth, sketchHeight);
@@ -770,77 +741,33 @@ public class PSurfaceAWT implements PSurface {
 
     // TODO this is much too late... why even create the enormous frame for PDF?
     if (sketch.getGraphics().displayable()) {
-      setVisible(true);
-    }
-  }
-
-
-  public void startThread() {
-    if (thread == null) {
-      thread = new AnimationThread();
-      thread.start();
-    } else {
-      throw new IllegalStateException("Thread already started in PSurfaceAWT");
-    }
-  }
-
-
-  public boolean stopThread() {
-    if (thread == null) {
-      return false;
-    }
-    thread = null;
-    return true;
-  }
-
-
-  public boolean isStopped() {
-    return thread == null;
-  }
-
-
-  // sets a flag to pause the thread when ready
-  public void pauseThread() {
-    PApplet.debug("PApplet.run() paused, calling object wait...");
-    paused = true;
-  }
-
-
-  // halts the animation thread if the pause flag is set
-  protected void checkPause() {
-    if (paused) {
-      synchronized (pauseObject) {
-        try {
-          pauseObject.wait();
-//          PApplet.debug("out of wait");
-        } catch (InterruptedException e) {
-          // waiting for this interrupt on a start() (resume) call
-        }
-      }
-    }
-//    PApplet.debug("done with pause");
-  }
-
-
-  public void resumeThread() {
-    paused = false;
-    synchronized (pauseObject) {
-      pauseObject.notifyAll();  // wake up the animation thread
+      frame.setVisible(true);
     }
   }
 
 
   // needs to resize the frame, which will resize the canvas, and so on...
+  @Override
   public void setSize(int wide, int high) {
-//    System.out.format("frame visible %b, setSize(%d, %d) %n", frame.isVisible(), wide, high);
-//    new Exception().printStackTrace(System.out);
+    if (PApplet.DEBUG) {
+      //System.out.format("frame visible %b, setSize(%d, %d) %n", frame.isVisible(), wide, high);
+      new Exception(String.format("setSize(%d, %d)", wide, high)).printStackTrace(System.out);
+    }
+
+    //if (wide == sketchWidth && high == sketchHeight) {  // doesn't work on launch
+    if (wide == sketch.width && high == sketch.height) {
+      if (PApplet.DEBUG) {
+        new Exception("w/h unchanged " + wide + " " + high).printStackTrace(System.out);
+      }
+      return;  // unchanged, don't rebuild everything
+    }
 
     sketchWidth = wide;
     sketchHeight = high;
 
 //    canvas.setSize(wide, high);
 //    frame.setSize(wide, high);
-    if (frame != null) {  // canvas only
+    if (frame != null) {  // skip if just a canvas
       setFrameSize(); //wide, high);
     }
     setCanvasSize();
@@ -848,74 +775,78 @@ public class PSurfaceAWT implements PSurface {
 //      frame.setLocationRelativeTo(null);
 //    }
 
+    //initImage(graphics, wide, high);
+
+    //throw new RuntimeException("implement me, see readme.md");
+    sketch.width = wide;
+    sketch.height = high;
+
+    // set PGraphics variables for width/height/pixelWidth/pixelHeight
+    graphics.setSize(wide, high);
+//    System.out.println("out of setSize()");
+  }
+
+
+  //public void initImage(PGraphics gr, int wide, int high) {
+  /*
+  @Override
+  public void initImage(PGraphics graphics) {
     GraphicsConfiguration gc = canvas.getGraphicsConfiguration();
     // If not realized (off-screen, i.e the Color Selector Tool), gc will be null.
     if (gc == null) {
-      System.err.println("GraphicsConfiguration null in setSize()");
+      System.err.println("GraphicsConfiguration null in initImage()");
       GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
       gc = ge.getDefaultScreenDevice().getDefaultConfiguration();
     }
 
     // Formerly this was broken into separate versions based on offscreen or
     // not, but we may as well create a compatible image; it won't hurt, right?
-    int factor = graphics.pixelFactor;
-    graphics.image = gc.createCompatibleImage(wide * factor, high * factor);
-
-    //throw new RuntimeException("implement me, see readme.md");
-    sketch.width = wide;
-    sketch.height = high;
-
-    // sets internal variables for width/height/pixelWidth/pixelHeight
-    graphics.setSize(wide, high);
+    int wide = graphics.width * graphics.pixelFactor;
+    int high = graphics.height * graphics.pixelFactor;
+    graphics.image = gc.createCompatibleImage(wide, high);
   }
+  */
 
 
+//  @Override
+//  public Component getComponent() {
+//    return canvas;
+//  }
+
+
+  @Override
   public void setSmooth(int level) {
   }
 
 
   private boolean checkRetina() {
     if (PApplet.platform == PConstants.MACOSX) {
-    // This should probably be reset each time there's a display change.
-    // A 5-minute search didn't turn up any such event in the Java API.
-    // Also, should we use the Toolkit associated with the editor window?
+      // This should probably be reset each time there's a display change.
+      // A 5-minute search didn't turn up any such event in the Java 7 API.
+      // Also, should we use the Toolkit associated with the editor window?
       final String javaVendor = System.getProperty("java.vendor");
-      if (javaVendor.contains("Apple")) {
-        Float prop = (Float)
-          canvas.getToolkit().getDesktopProperty("apple.awt.contentScaleFactor");
-        if (prop != null) {
-          return prop == 2;
-        }
-      } else if (javaVendor.contains("Oracle")) {
-        String version = System.getProperty("java.version");  // 1.7.0_40
-        String[] m = PApplet.match(version, "1.(\\d).*_(\\d+)");
+      if (javaVendor.contains("Oracle")) {
+        GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice device = env.getDefaultScreenDevice();
 
-        // Make sure this is Oracle Java 7u40 or later
-        if (m != null &&
-          PApplet.parseInt(m[1]) >= 7 &&
-          PApplet.parseInt(m[1]) >= 40) {
-          GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-          GraphicsDevice device = env.getDefaultScreenDevice();
+        try {
+          Field field = device.getClass().getDeclaredField("scale");
+          if (field != null) {
+            field.setAccessible(true);
+            Object scale = field.get(device);
 
-          try {
-            Field field = device.getClass().getDeclaredField("scale");
-            if (field != null) {
-              field.setAccessible(true);
-              Object scale = field.get(device);
-
-              if (scale instanceof Integer && ((Integer)scale).intValue() == 2) {
-                return true;
-              }
+            if (scale instanceof Integer && ((Integer)scale).intValue() == 2) {
+              return true;
             }
-          } catch (Exception ignore) { }
-        }
+          }
+        } catch (Exception ignore) { }
       }
     }
     return false;
   }
 
 
-  // get the bounds for all displays
+  /** Get the bounds rectangle for all displays. */
   static Rectangle getDisplaySpan() {
     Rectangle bounds = new Rectangle();
     GraphicsEnvironment environment =
@@ -953,6 +884,7 @@ public class PSurfaceAWT implements PSurface {
    * (so that it will be saved by the PDE for the next run) and
    * notify on quit. See more notes in the Worker class.
    */
+  @Override
   public void setupExternalMessages() {
 
     frame.addComponentListener(new ComponentAdapter() {
@@ -1394,113 +1326,17 @@ public class PSurfaceAWT implements PSurface {
 //    addListeners(comp);
 //  }
 
-  public void setFrameRate(float fps) {
-    frameRateTarget = fps;
-    frameRatePeriod = (long) (1000000000.0 / frameRateTarget);
-    //g.setFrameRate(fps);
-  }
-
-
-  class AnimationThread extends Thread {
-
-    public AnimationThread() {
-      super("Animation Thread");
-    }
-
-    /**
-     * Main method for the primary animation thread.
-     * <A HREF="http://java.sun.com/products/jfc/tsc/articles/painting/">Painting in AWT and Swing</A>
-     */
-    @Override
-    public void run() {  // not good to make this synchronized, locks things up
-      long beforeTime = System.nanoTime();
-      long overSleepTime = 0L;
-
-      int noDelays = 0;
-      // Number of frames with a delay of 0 ms before the
-      // animation thread yields to other running threads.
-      final int NO_DELAYS_PER_YIELD = 15;
-
-      // If size un-initialized, might be a Canvas. Call setSize() here since
-      // we now have a parent object that this Canvas can use as a peer.
-      if (graphics.image == null) {
-//        System.out.format("it's null, sketchW/H already set to %d %d%n", sketchWidth, sketchHeight);
-        setSize(sketchWidth, sketchHeight);
-//        System.out.format("  but now, sketchW/H changed to %d %d%n", sketchWidth, sketchHeight);
-      }
-
-      // un-pause the sketch and get rolling
-      sketch.start();
-
-      while ((Thread.currentThread() == thread) && !sketch.finished) {
-        checkPause();
-
-        // Don't resize the renderer from the EDT (i.e. from a ComponentEvent),
-        // otherwise it may attempt a resize mid-render.
-//        Dimension currentSize = canvas.getSize();
-//        if (currentSize.width != sketchWidth || currentSize.height != sketchHeight) {
-//          System.err.format("need to resize from %s to %d, %d%n", currentSize, sketchWidth, sketchHeight);
-//        }
-
-        // render a single frame
-//        if (g != null) {
-        sketch.handleDraw();
-//        }
-
-        if (sketch.frameCount == 1) {
-          requestFocus();
-        }
-
-        // wait for update & paint to happen before drawing next frame
-        // this is necessary since the drawing is sometimes in a
-        // separate thread, meaning that the next frame will start
-        // before the update/paint is completed
-
-        long afterTime = System.nanoTime();
-        long timeDiff = afterTime - beforeTime;
-        //System.out.println("time diff is " + timeDiff);
-        long sleepTime = (frameRatePeriod - timeDiff) - overSleepTime;
-
-        if (sleepTime > 0) {  // some time left in this cycle
-          try {
-            Thread.sleep(sleepTime / 1000000L, (int) (sleepTime % 1000000L));
-            noDelays = 0;  // Got some sleep, not delaying anymore
-          } catch (InterruptedException ex) { }
-
-          overSleepTime = (System.nanoTime() - afterTime) - sleepTime;
-
-        } else {    // sleepTime <= 0; the frame took longer than the period
-          overSleepTime = 0L;
-          noDelays++;
-
-          if (noDelays > NO_DELAYS_PER_YIELD) {
-            Thread.yield();   // give another thread a chance to run
-            noDelays = 0;
-          }
-        }
-
-        beforeTime = System.nanoTime();
-      }
-
-      sketch.dispose();  // call to shutdown libs?
-
-      // If the user called the exit() function, the window should close,
-      // rather than the sketch just halting.
-      if (sketch.exitCalled) {
-        sketch.exitActual();
-      }
-    }
-  }
 
 
   // . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
 
-  int cursorType = PConstants.ARROW; // cursor type
-  boolean cursorVisible = true; // cursor visibility flag
+  int cursorType = PConstants.ARROW;
+  boolean cursorVisible = true;
   Cursor invisibleCursor;
 
 
+  @Override
   public void setCursor(int kind) {
     // Swap the HAND cursor because MOVE doesn't seem to be available on OS X
     // https://github.com/processing/processing/issues/2358
@@ -1513,27 +1349,25 @@ public class PSurfaceAWT implements PSurface {
   }
 
 
+  @Override
   public void setCursor(PImage img, int x, int y) {
-    // don't set this as cursor type, instead use cursor_type
-    // to save the last cursor used in case cursor() is called
+    // Don't set cursorType, instead use cursorType to save the last
+    // regular cursor type used for when cursor() is called.
     //cursor_type = Cursor.CUSTOM_CURSOR;
-    Image jimage =
-      canvas.getToolkit().createImage(new MemoryImageSource(img.width, img.height,
-                                        img.pixels, 0, img.width));
-    Point hotspot = new Point(x, y);
-    Toolkit tk = Toolkit.getDefaultToolkit();
-    Cursor cursor = tk.createCustomCursor(jimage, hotspot, "Custom Cursor");
+    Cursor cursor =
+      canvas.getToolkit().createCustomCursor((Image) img.getNative(),
+                                             new Point(x, y),
+                                             "custom");
     canvas.setCursor(cursor);
     cursorVisible = true;
-
   }
 
 
+  @Override
   public void showCursor() {
-    // maybe should always set here? seems dangerous, since
-    // it's likely that java will set the cursor to something
-    // else on its own, and the applet will be stuck b/c bagel
-    // thinks that the cursor is set to one particular thing
+    // Maybe should always set here? Seems dangerous, since it's likely that
+    // Java will set the cursor to something else on its own, and the sketch
+    // will be stuck b/c p5 thinks the cursor is set to one particular thing.
     if (!cursorVisible) {
       cursorVisible = true;
       canvas.setCursor(Cursor.getPredefinedCursor(cursorType));
@@ -1541,9 +1375,10 @@ public class PSurfaceAWT implements PSurface {
   }
 
 
+  @Override
   public void hideCursor() {
-    // in 0216, just re-hide it?
-//  if (!cursorVisible) return;  // don't hide if already hidden.
+    // Because the OS may have shown the cursor on its own,
+    // don't return if 'cursorVisible' is set to true. [rev 0216]
 
     if (invisibleCursor == null) {
       BufferedImage cursorImg =
@@ -1551,11 +1386,20 @@ public class PSurfaceAWT implements PSurface {
       invisibleCursor =
         canvas.getToolkit().createCustomCursor(cursorImg, new Point(8, 8), "blank");
     }
-    // was formerly 16x16, but the 0x0 was added by jdf as a fix
-    // for macosx, which wasn't honoring the invisible cursor
-//  cursor(invisibleCursor, 8, 8);
     canvas.setCursor(invisibleCursor);
     cursorVisible = false;
+  }
+
+
+  @Override
+  public Thread createThread() {
+    return new AnimationThread() {
+      @Override
+      public void render() {
+        sketch.handleDraw();
+        blit();
+      }
+    };
   }
 
 

@@ -3,7 +3,8 @@
 /*
   Part of the Processing project - http://processing.org
 
-  Copyright (c) 2004-14 Ben Fry and Casey Reas
+  Copyright (c) 2012-15 The Processing Foundation
+  Copyright (c) 2004-12 Ben Fry and Casey Reas
   Copyright (c) 2001-04 Massachusetts Institute of Technology
 
   This program is free software; you can redistribute it and/or
@@ -46,9 +47,9 @@ import processing.core.*;
 public class Base {
   // Added accessors for 0218 because the UpdateCheck class was not properly
   // updating the values, due to javac inlining the static final values.
-  static private final int REVISION = 233;
+  static private final int REVISION = 235;
   /** This might be replaced by main() if there's a lib/version.txt file. */
-  static private String VERSION_NAME = "0233"; //$NON-NLS-1$
+  static private String VERSION_NAME = "0235"; //$NON-NLS-1$
   /** Set true if this a proper release rather than a numbered revision. */
 //  static private boolean RELEASE = false;
 
@@ -1275,14 +1276,14 @@ public class Base {
       return false;  // let's not go there
     }
 
-    String[] list = folder.list();
+    String[] fileList = folder.list();
     // If a bad folder or unreadable or whatever, this will come back null
-    if (list == null) {
+    if (fileList == null) {
       return false;
     }
 
     // Alphabetize the list, since it's not always alpha order
-    Arrays.sort(list, String.CASE_INSENSITIVE_ORDER);
+    Arrays.sort(fileList, String.CASE_INSENSITIVE_ORDER);
 
 //    ActionListener listener = new ActionListener() {
 //        public void actionPerformed(ActionEvent e) {
@@ -1301,8 +1302,8 @@ public class Base {
     //menu.addActionListener(listener);
 
     boolean found = false;
-
-    for (String name : list) {
+    for (String name : fileList) {
+      //Skip hidden files
       if (name.charAt(0) == '.') {
         continue;
       }
@@ -1317,18 +1318,14 @@ public class Base {
       if (subfolder.isDirectory()) {
         File entry = checkSketchFolder(subfolder, name);
         if (entry != null) {
-//          DefaultMutableTreeNode item = new DefaultMutableTreeNode(name);
           DefaultMutableTreeNode item =
             new DefaultMutableTreeNode(new SketchReference(name, entry));
-//          item.addActionListener(listener);
-//          item.setActionCommand(entry.getAbsolutePath());
-//          menu.add(item);
+
           node.add(item);
           found = true;
 
         } else {
           // not a sketch folder, but maybe a subfolder containing sketches
-//          JMenu submenu = new JMenu(name);
           DefaultMutableTreeNode subnode = new DefaultMutableTreeNode(name);
           // needs to be separate var otherwise would set ifound to false
           boolean anything = addSketches(subnode, subfolder);
@@ -2211,7 +2208,7 @@ public class Base {
           // This works for Windows, Linux, and Apple's Java 6 on OS X.
           processingRoot = jarFolder.getParentFile();
         } else if (Base.isMacOS()) {
-          // This works for Java 8 on OS X. We don't have things inside a 'lib' 
+          // This works for Java 8 on OS X. We don't have things inside a 'lib'
           // folder on OS X. Adding it caused more problems than it was worth.
           processingRoot = jarFolder;
         }
@@ -2270,9 +2267,9 @@ public class Base {
   static public InputStream getLibStream(String filename) throws IOException {
     return new FileInputStream(getLibFile(filename));
   }
-  
-  
-  // Note: getLibImage() has moved to Toolkit 
+
+
+  // Note: getLibImage() has moved to Toolkit
 
 
   // . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -2318,7 +2315,7 @@ public class Base {
    */
   static public Map<String, String> readSettings(File inputFile) {
     if (!inputFile.exists()) {
-      System.err.println(inputFile + " does not exist.");
+      if (DEBUG) System.err.println(inputFile + " does not exist.");
       return null;
     }
     String lines[] = PApplet.loadStrings(inputFile);
@@ -2337,7 +2334,7 @@ public class Base {
    * In 3.0a6, no longer taking a blank HahMap as param; no cases in the main
    * PDE code of adding to a (Hash)Map. Also returning the Map instead of void.
    * Both changes modify the method signature, but this was only used by the
-   * contrib classes. 
+   * contrib classes.
    */
   static public Map<String, String> readSettings(String filename, String[] lines) {
     Map<String, String> settings = new HashMap<>();
@@ -2409,7 +2406,7 @@ public class Base {
     try {
       // fix from cjwant to prevent symlinks from being destroyed.
       File canon = file.getCanonicalFile();
-      // assign the var as second step since previous line may throw exception   
+      // assign the var as second step since previous line may throw exception
       file = canon;
     } catch (IOException e) {
       throw new IOException("Could not resolve canonical representation of " +
@@ -2423,7 +2420,7 @@ public class Base {
     if (error) {
       throw new IOException("Error while trying to save " + file);
     }
-    
+
     // remove the old file before renaming the temp file
     if (file.exists()) {
       boolean result = file.delete();
@@ -2434,7 +2431,7 @@ public class Base {
     }
     boolean result = temp.renameTo(file);
     if (!result) {
-      throw new IOException("Could not replace " + file.getAbsolutePath() + 
+      throw new IOException("Could not replace " + file.getAbsolutePath() +
                             " with " + temp.getAbsolutePath());
     }
   }
@@ -2883,8 +2880,8 @@ public class Base {
       e.printStackTrace();
     }
   }
-  
-  
+
+
   static public void loge(String message) {
     if (DEBUG) {
       System.out.println(message);

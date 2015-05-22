@@ -3,7 +3,7 @@
 /*
   Part of the Processing project - http://processing.org
 
-  Copyright (c) 2012-14 The Processing Foundation
+  Copyright (c) 2012-15 The Processing Foundation
   Copyright (c) 2004-12 Ben Fry and Casey Reas
   Copyright (c) 2001-04 Massachusetts Institute of Technology
 
@@ -39,15 +39,10 @@ import processing.core.*;
 
 /**
  * Window for modifying preferences.
- * <P>
- * This is ugly GUI code that uses exact layout. This was done in frustration
- * one evening (and pre-Swing), but that's long since past, and the code
- * should instead be ported to a proper Swing layout like Group or BoxLayout.
- * <A HREF="https://github.com/processing/processing/issues/67">See here</A>.
  */
 public class PreferencesFrame {
   JFrame dialog;
-  int wide, high;
+  GroupLayout layout;
 
   static final Integer[] FONT_SIZES = { 10, 12, 14, 18, 24, 36, 48 };
 
@@ -56,12 +51,11 @@ public class PreferencesFrame {
   JTextField presentColorHex;
   JCheckBox editorAntialiasBox;
   JCheckBox deletePreviousBox;
-  JCheckBox whinyBox;
   JCheckBox memoryOverrideBox;
   JTextField memoryField;
   JCheckBox checkUpdatesBox;
   JComboBox<Integer> fontSizeField;
-  JComboBox<Integer> consoleSizeField;
+  JComboBox<Integer> consoleFontSizeField;
   JCheckBox inputMethodBox;
   JCheckBox autoAssociateBox;
 
@@ -81,6 +75,8 @@ public class PreferencesFrame {
   String[] monoFontFamilies;
   JComboBox<String> fontSelectionBox;
 
+  JButton okButton;
+
   /** Base object so that updates can be applied to the list of editors. */
   Base base;
 
@@ -89,42 +85,32 @@ public class PreferencesFrame {
     this.base = base;
     //dialog = new JDialog(editor, "Preferences", true);
     dialog = new JFrame(Language.text("preferences"));
-    dialog.setResizable(false);
-
     Container pain = dialog.getContentPane();
-    pain.setLayout(null);
+    layout = new GroupLayout(pain);
+    layout.setAutoCreateGaps(true);
+    layout.setAutoCreateContainerGaps(true);
 
-    final int GUI_BETWEEN = Preferences.GUI_BETWEEN;
-    final int GUI_BIG = Preferences.GUI_BIG;
-    final int GUI_SMALL = Preferences.GUI_SMALL;
+    pain.setLayout(layout);
+
+//    final int GUI_BETWEEN = Preferences.GUI_BETWEEN;
+//    final int GUI_BIG = Preferences.GUI_BIG;
+//    final int GUI_SMALL = Preferences.GUI_SMALL;
     final int BUTTON_WIDTH = Preferences.BUTTON_WIDTH;
+    final int BORDER = Base.isMacOS() ? 20 : 13;
 
-    int top = GUI_BIG;
-    int left = GUI_BIG;
-    int right = 0;
-
-    JLabel label;
-    JButton button; //, button2;
-    //JComboBox combo;
-    Dimension d, d2; //, d3;
-    int h, vmax;
+    JLabel sketchbookLocationLabel, restartProcessingLabel;
+    JButton browseButton; //, button2;
 
 
     // Sketchbook location:
     // [...............................]  [ Browse ]
 
-    label = new JLabel(Language.text("preferences.sketchbook_location")+":");
-    pain.add(label);
-    d = label.getPreferredSize();
-    label.setBounds(left, top, d.width, d.height);
-    top += d.height; // + GUI_SMALL;
+    sketchbookLocationLabel = new JLabel(Language.text("preferences.sketchbook_location")+":");
 
     sketchbookLocationField = new JTextField(40);
-    pain.add(sketchbookLocationField);
-    d = sketchbookLocationField.getPreferredSize();
 
-    button = new JButton(Preferences.PROMPT_BROWSE);
-    button.addActionListener(new ActionListener() {
+    browseButton = new JButton(Preferences.PROMPT_BROWSE);
+    browseButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           File dflt = new File(sketchbookLocationField.getText());
           PApplet.selectFolder(Language.text("preferences.sketchbook_location.popup"),
@@ -132,26 +118,12 @@ public class PreferencesFrame {
                                PreferencesFrame.this, dialog);
         }
       });
-    pain.add(button);
-    d2 = button.getPreferredSize();
-
-    // take max height of all components to vertically align em
-    vmax = Math.max(d.height, d2.height);
-    sketchbookLocationField.setBounds(left, top + (vmax-d.height)/2,
-                                      d.width, d.height);
-    h = left + d.width + GUI_SMALL;
-    button.setBounds(h, top + (vmax-d2.height)/2,
-                     d2.width, d2.height);
-
-    right = Math.max(right, h + d2.width + GUI_BIG);
-    top += vmax + GUI_BETWEEN;
-
 
     // Language: [ English ] (requires restart of Processing)
 
-    Container languageBox = Box.createHorizontalBox();
+
+
     JLabel languageLabel = new JLabel(Language.text("preferences.language")+": ");
-    languageBox.add(languageLabel);
     languageSelectionBox = new JComboBox<String>();
 
     Map<String, String> languages = Language.getLanguages();
@@ -164,14 +136,7 @@ public class PreferencesFrame {
       }
     }
     languageSelectionBox.setModel(new DefaultComboBoxModel<String>(languageSelection));
-    languageBox.add(languageSelectionBox);
-    label = new JLabel(" ("+Language.text("preferences.requires_restart")+")");
-    languageBox.add(label);
-    pain.add(languageBox);
-    d = languageBox.getPreferredSize();
-    languageBox.setBounds(left, top, d.width, d.height);
-    top += d.height + GUI_BETWEEN;
-
+    restartProcessingLabel = new JLabel(" ("+Language.text("preferences.requires_restart")+")");
 
     // Editor and console font [ Source Code Pro ]
 
@@ -183,59 +148,28 @@ public class PreferencesFrame {
     // operations, so it should also probably be cached between runs and
     // updated in the background.
 
-    Container fontBox = Box.createHorizontalBox();
     JLabel fontLabel = new JLabel(Language.text("preferences.editor_and_console_font")+": ");
     final String fontTip = "<html>" + Language.text("preferences.editor_and_console_font.tip");
     fontLabel.setToolTipText(fontTip);
-    fontBox.add(fontLabel);
     // get a wide name in there before getPreferredSize() is called
     fontSelectionBox = new JComboBox<String>(new String[] { Toolkit.getMonoFontName() });
     fontSelectionBox.setToolTipText(fontTip);
-//    fontSelectionBox.addItem(Toolkit.getMonoFont(size, style));
     //updateDisplayList();
     fontSelectionBox.setEnabled(false);  // don't enable until fonts are loaded
-    fontBox.add(fontSelectionBox);
-//    fontBox.add(Box.createHorizontalGlue());
-    pain.add(fontBox);
-    d = fontBox.getPreferredSize();
-    fontBox.setBounds(left, top, d.width + 150, d.height);
-//    fontBox.setBounds(left, top, dialog.getWidth() - left*2, d.height);
-    top += d.height + GUI_BETWEEN;
-
 
     // Editor font size [ 12 ]  Console font size [ 10 ]
 
-    Container box = Box.createHorizontalBox();
-    label = new JLabel(Language.text("preferences.editor_font_size")+": ");
-    box.add(label);
+    JLabel fontSizelabel = new JLabel(Language.text("preferences.editor_font_size")+": ");
     fontSizeField = new JComboBox<Integer>(FONT_SIZES);
-//    fontSizeField = new JComboBox<Integer>(FONT_SIZES);
-    fontSizeField.setEditable(true);
-    box.add(fontSizeField);
-    box.add(Box.createHorizontalStrut(GUI_BETWEEN));
 
-    label = new JLabel(Language.text("preferences.console_font_size")+": ");
-
-    box.add(label);
-//    consoleSizeField = new JComboBox<Integer>(FONT_SIZES);
-    consoleSizeField = new JComboBox<Integer>(FONT_SIZES);
-    consoleSizeField.setEditable(true);
-    box.add(consoleSizeField);
-
-    pain.add(box);
-    d = box.getPreferredSize();
-    box.setBounds(left, top, d.width, d.height);
+    JLabel consoleFontSizeLabel = new JLabel(Language.text("preferences.console_font_size")+": ");
+    consoleFontSizeField = new JComboBox<Integer>(FONT_SIZES);
     fontSizeField.setSelectedItem(Preferences.getFont("editor.font.size"));
-    top += d.height + GUI_BETWEEN;
 
-
-    Container colorBox = Box.createHorizontalBox();
-
-    label = new JLabel(Language.text("preferences.background_color")+": ");
-    colorBox.add(label);
+    JLabel backgroundColorLabel = new JLabel(Language.text("preferences.background_color")+": ");
 
     final String colorTip = "<html>" + Language.text("preferences.background_color.tip");
-    label.setToolTipText(colorTip);
+    backgroundColorLabel.setToolTipText(colorTip);
 
     presentColor = new JTextField("      ");
     presentColor.setOpaque(true);
@@ -334,29 +268,11 @@ public class PreferencesFrame {
       }
     });
 
-    label = new JLabel("#");
-    colorBox.add(label);
-    colorBox.add(presentColorHex);
-    colorBox.add(Box.createHorizontalStrut(GUI_SMALL + 2 / 3 * GUI_SMALL));
-    colorBox.add(presentColor);
-
-    pain.add(colorBox);
-    d = colorBox.getPreferredSize();
-    colorBox.setBounds(left, top, d.width, d.height);
-
-    top += d.height + GUI_BETWEEN;
-
+    JLabel hashLabel = new JLabel("#");
 
     // [ ] Use smooth text in editor window
 
     editorAntialiasBox = new JCheckBox(Language.text("preferences.use_smooth_text"));
-    pain.add(editorAntialiasBox);
-    d = editorAntialiasBox.getPreferredSize();
-    // adding +10 because ubuntu + jre 1.5 truncating items
-    editorAntialiasBox.setBounds(left, top, d.width + 10, d.height);
-    right = Math.max(right, left + d.width);
-    top += d.height + GUI_BETWEEN;
-
 
     // [ ] Enable complex text input (for Japanese et al, requires restart)
 
@@ -364,81 +280,50 @@ public class PreferencesFrame {
       new JCheckBox(Language.text("preferences.enable_complex_text_input")+
                     " ("+Language.text("preferences.enable_complex_text_input_example")+
                     ", "+Language.text("preferences.requires_restart")+")");
-    pain.add(inputMethodBox);
-    d = inputMethodBox.getPreferredSize();
-    inputMethodBox.setBounds(left, top, d.width + 10, d.height);
-    right = Math.max(right, left + d.width);
-    top += d.height + GUI_BETWEEN;
-
 
     // [ ] Continuously check for errors - PDE X
 
     errorCheckerBox =
       new JCheckBox(Language.text("preferences.continuously_check"));
 
-    pain.add(errorCheckerBox);
-    d = errorCheckerBox.getPreferredSize();
-    errorCheckerBox.setBounds(left, top, d.width + 10, d.height);
-    //right = Math.max(right, left + d.width);
-    //top += d.height + GUI_BETWEEN;
-    int warningLeft = left + d.width;
-
-
     // [ ] Show Warnings - PDE X
 
     warningsCheckerBox =
       new JCheckBox(Language.text("preferences.show_warnings"));
-    pain.add(warningsCheckerBox);
-    d = warningsCheckerBox.getPreferredSize();
-    warningsCheckerBox.setBounds(warningLeft, top, d.width + 10, d.height);
-    right = Math.max(right, warningLeft + d.width);
-    top += d.height + GUI_BETWEEN;
-
 
     // [ ] Enable Code Completion - PDE X
 
     codeCompletionBox =
       new JCheckBox(Language.text("preferences.code_completion") +
                     " Ctrl-" + Language.text("preferences.cmd_space"));
-    pain.add(codeCompletionBox);
-    d = codeCompletionBox.getPreferredSize();
-    codeCompletionBox.setBounds(left, top, d.width + 10, d.height);
-//    codeCompletionBox.addActionListener(new ActionListener() {
-//
-//      @Override
-//      public void actionPerformed(ActionEvent e) {
-//        // Disble code completion trigger option if completion is disabled
-//        codeCompletionTriggerBox.setEnabled(codeCompletionBox.isSelected());
-//      }
-//    });
+////    codeCompletionBox.addActionListener(new ActionListener() {
+////
+////      @Override
+////      public void actionPerformed(ActionEvent e) {
+////        // Disble code completion trigger option if completion is disabled
+////        codeCompletionTriggerBox.setEnabled(codeCompletionBox.isSelected());
+////      }
+////    });
 
-//    int toggleLeft = left + d.width;
+////    int toggleLeft = left + d.width;
 
-    // [ ] Toggle Code Completion Trigger - PDE X. No longer needed (Manindra)
+    //// [ ] Toggle Code Completion Trigger - PDE X. No longer needed (Manindra)
 
-//    codeCompletionTriggerBox =
-//      new JCheckBox(Language.text("preferences.trigger_with")+" Ctrl-"+Language.text("preferences.cmd_space"));
-//    pain.add(codeCompletionTriggerBox);
-//    d = codeCompletionTriggerBox.getPreferredSize();
-//    codeCompletionTriggerBox.setBounds(toggleLeft, top, d.width + 10, d.height);
-//    right = Math.max(right, toggleLeft + d.width);
-    top += d.height + GUI_BETWEEN;
+////    codeCompletionTriggerBox =
+////      new JCheckBox(Language.text("preferences.trigger_with")+" Ctrl-"+Language.text("preferences.cmd_space"));
+////    pain.add(codeCompletionTriggerBox);
+////    d = codeCompletionTriggerBox.getPreferredSize();
+////    codeCompletionTriggerBox.setBounds(toggleLeft, top, d.width + 10, d.height);
+////    right = Math.max(right, toggleLeft + d.width);
 
     // [ ] Show import suggestions - PDE X
 
     importSuggestionsBox =
       new JCheckBox(Language.text("preferences.suggest_imports"));
-    pain.add(importSuggestionsBox);
-    d = importSuggestionsBox.getPreferredSize();
-    importSuggestionsBox.setBounds(left, top, d.width + 10, d.height);
-    right = Math.max(right, left + d.width);
-    top += d.height + GUI_BETWEEN;
 
     // [ ] Increase maximum available memory to [______] MB
 
-    Container memoryBox = Box.createHorizontalBox();
     memoryOverrideBox = new JCheckBox(Language.text("preferences.increase_max_memory")+": ");
-    memoryBox.add(memoryOverrideBox);
     memoryField = new JTextField(4);
     memoryOverrideBox.addChangeListener(new ChangeListener() {
       @Override
@@ -446,175 +331,208 @@ public class PreferencesFrame {
         memoryField.setEnabled(memoryOverrideBox.isSelected());
       }
     });
-    memoryBox.add(memoryField);
-    memoryBox.add(new JLabel(" MB"));
-    pain.add(memoryBox);
-    d = memoryBox.getPreferredSize();
-    memoryBox.setBounds(left, top, d.width, d.height);
-    top += d.height + GUI_BETWEEN;
-
+    JLabel mbLabel = new JLabel("MB");
 
     // [ ] Delete previous application folder on export
 
     deletePreviousBox =
-    new JCheckBox(Language.text("preferences.delete_previous_folder_on_export"));
-    pain.add(deletePreviousBox);
-    d = deletePreviousBox.getPreferredSize();
-    deletePreviousBox.setBounds(left, top, d.width + 10, d.height);
-    right = Math.max(right, left + d.width);
-    top += d.height + GUI_BETWEEN;
-
-
-    // [ ] Hide tab/toolbar background image
-
-    whinyBox = new JCheckBox(Language.text("preferences.hide_toolbar_background_image")+
-                             " ("+Language.text("preferences.requires_restart")+")");
-    pain.add(whinyBox);
-    d = whinyBox.getPreferredSize();
-    whinyBox.setBounds(left, top, d.width + 10, d.height);
-    right = Math.max(right, left + d.width);
-    top += d.height + GUI_BETWEEN;
-
+      new JCheckBox(Language.text("preferences.delete_previous_folder_on_export"));
 
     // [ ] Check for updates on startup
 
-    checkUpdatesBox = new JCheckBox(Language.text("preferences.check_for_updates_on_startup"));
-    pain.add(checkUpdatesBox);
-    d = checkUpdatesBox.getPreferredSize();
-    checkUpdatesBox.setBounds(left, top, d.width + 10, d.height);
-    right = Math.max(right, left + d.width);
-    top += d.height + GUI_BETWEEN;
-
+    checkUpdatesBox =
+      new JCheckBox(Language.text("preferences.check_for_updates_on_startup"));
 
     // Run sketches on display [  1 ]
 
-    Container displayBox = Box.createHorizontalBox();
     JLabel displayLabel = new JLabel(Language.text("preferences.run_sketches_on_display")+": ");
     final String tip = "<html>" + Language.text("preferences.run_sketches_on_display.tip");
     displayLabel.setToolTipText(tip);
-    displayBox.add(displayLabel);
     displaySelectionBox = new JComboBox<String>();
     updateDisplayList();  // needs to happen here for getPreferredSize()
-    displayBox.add(displaySelectionBox);
-    pain.add(displayBox);
-    d = displayBox.getPreferredSize();
-    displayBox.setBounds(left, top, d.width, d.height);
-    top += d.height + GUI_BETWEEN;
-
 
     // [ ] Automatically associate .pde files with Processing
 
-    if (Base.isWindows()) {
       autoAssociateBox =
         new JCheckBox(Language.text("preferences.automatically_associate_pde_files"));
-      pain.add(autoAssociateBox);
-      d = autoAssociateBox.getPreferredSize();
-      autoAssociateBox.setBounds(left, top, d.width + 10, d.height);
-      right = Math.max(right, left + d.width);
-      top += d.height + GUI_BETWEEN;
-    }
-
+      autoAssociateBox.setVisible(false);
 
     // More preferences are in the ...
 
-    label = new JLabel(Language.text("preferences.file") + ":");
-    pain.add(label);
-    d = label.getPreferredSize();
-    label.setForeground(Color.gray);
-    label.setBounds(left, top, d.width, d.height);
-    right = Math.max(right, left + d.width);
-    top += d.height; // + GUI_SMALL;
+    JLabel morePreferenceLabel = new JLabel(Language.text("preferences.file") + ":");
+    morePreferenceLabel.setForeground(Color.gray);
 
-    label = new JLabel(Preferences.getPreferencesPath());
-    final JLabel clickable = label;
-    label.addMouseListener(new MouseAdapter() {
+    JLabel preferencePathLabel = new JLabel(Preferences.getPreferencesPath());
+    final JLabel clickable = preferencePathLabel;
+    preferencePathLabel.addMouseListener(new MouseAdapter() {
         public void mousePressed(MouseEvent e) {
           Base.openFolder(Base.getSettingsFolder());
         }
 
+        // Light this up in blue like a hyperlink
         public void mouseEntered(MouseEvent e) {
           clickable.setForeground(new Color(0, 0, 140));
         }
 
+        // Set the text back to black when the mouse is outside
         public void mouseExited(MouseEvent e) {
           clickable.setForeground(Color.BLACK);
         }
       });
-    pain.add(label);
-    d = label.getPreferredSize();
-    label.setBounds(left, top, d.width, d.height);
-    right = Math.max(right, left + d.width);
-    top += d.height;
 
-    label = new JLabel("(" + Language.text("preferences.file.hint") + ")");
-    pain.add(label);
-    d = label.getPreferredSize();
-    label.setForeground(Color.gray);
-    label.setBounds(left, top, d.width, d.height);
-    right = Math.max(right, left + d.width);
-    top += d.height; // + GUI_SMALL;
+    JLabel preferenceHintLabel = new JLabel("(" + Language.text("preferences.file.hint") + ")");
+    preferenceHintLabel.setForeground(Color.gray);
 
+    // [  OK  ] [ Cancel ]
 
-    // [  OK  ] [ Cancel ]  maybe these should be next to the message?
-
-    button = new JButton(Preferences.PROMPT_OK);
-    button.addActionListener(new ActionListener() {
+    okButton = new JButton(Preferences.PROMPT_OK);
+    okButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           applyFrame();
           disposeFrame();
         }
       });
-    pain.add(button);
-    d2 = button.getPreferredSize();
-    int BUTTON_HEIGHT = d2.height;
 
-    h = right - (BUTTON_WIDTH + GUI_SMALL + BUTTON_WIDTH);
-    button.setBounds(h, top, BUTTON_WIDTH, BUTTON_HEIGHT);
-    h += BUTTON_WIDTH + GUI_SMALL;
-
-    button = new JButton(Preferences.PROMPT_CANCEL);
-    button.addActionListener(new ActionListener() {
+    JButton cancelButton = new JButton(Preferences.PROMPT_CANCEL);
+    cancelButton.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           disposeFrame();
         }
       });
-    pain.add(button);
-    button.setBounds(h, top, BUTTON_WIDTH, BUTTON_HEIGHT);
 
-    top += BUTTON_HEIGHT + GUI_BETWEEN;
+    layout.setHorizontalGroup(layout.createSequentialGroup() // sequential group for border + mainContent + border
+      .addGap(BORDER)
+      .addGroup(layout.createParallelGroup() // parallel group for rest of the components
+          .addComponent(sketchbookLocationLabel)
+          .addGroup(layout.createSequentialGroup()
+                      .addComponent(sketchbookLocationField)
+                      .addComponent(browseButton))
+          .addGroup(layout.createSequentialGroup()
+                      .addComponent(languageLabel)
+                      .addComponent(languageSelectionBox,GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE) // This makes the component non-resizable in the X direction
+                      .addComponent(restartProcessingLabel))
+          .addGroup(layout.createSequentialGroup()
+                      .addComponent(fontLabel)
+                      .addComponent(fontSelectionBox, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+          .addGroup(GroupLayout.Alignment.LEADING,
+                       layout.createSequentialGroup()
+                      .addComponent(fontSizelabel)
+                      .addComponent(fontSizeField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                      .addComponent(consoleFontSizeLabel)
+                      .addComponent(consoleFontSizeField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+          .addGroup(layout.createSequentialGroup()
+                      .addComponent(backgroundColorLabel)
+                      .addComponent(hashLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                      .addGap(0)
+                      .addComponent(presentColorHex, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                      .addComponent(presentColor, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+          .addComponent(editorAntialiasBox)
+          .addComponent(inputMethodBox)
+          .addGroup(layout.createSequentialGroup()
+                      .addComponent(errorCheckerBox)
+                      .addComponent(warningsCheckerBox))
+          .addComponent(codeCompletionBox)
+          .addComponent(importSuggestionsBox)
+          .addGroup(layout.createSequentialGroup()
+                        .addComponent(memoryOverrideBox)
+                        .addComponent(memoryField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                        .addComponent(mbLabel))
+          .addComponent(deletePreviousBox)
+          .addComponent(checkUpdatesBox)
+          .addGroup(layout.createSequentialGroup()
+                      .addComponent(displayLabel)
+                      .addComponent(displaySelectionBox, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+          )
+          .addComponent(autoAssociateBox)
+          .addComponent(morePreferenceLabel)
+          .addComponent(preferencePathLabel)
+          .addComponent(preferenceHintLabel)
+          .addGroup(GroupLayout.Alignment.TRAILING ,layout.createSequentialGroup() // Trailing so that the buttons are to the right
+                      .addComponent(okButton, BUTTON_WIDTH, GroupLayout.DEFAULT_SIZE, BUTTON_WIDTH) // Ok and Cancel buttton are now of size BUTTON_WIDTH
+                      .addComponent(cancelButton, BUTTON_WIDTH, GroupLayout.DEFAULT_SIZE, BUTTON_WIDTH)
+          ))
+      .addGap(BORDER)
+    );
 
+    layout.setVerticalGroup(layout.createSequentialGroup() // sequential group for border + mainContent + border
+      .addGap(BORDER)
+      .addComponent(sketchbookLocationLabel)
+      .addGroup(layout.createParallelGroup()
+                  .addComponent(sketchbookLocationField)
+                  .addComponent(browseButton))
+      .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                  .addComponent(languageLabel)
+                  .addComponent(languageSelectionBox)
+                  .addComponent(restartProcessingLabel))
+      .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER).
+                  addComponent(fontLabel)
+                  .addComponent(fontSelectionBox))
+      .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                  .addComponent(fontSizelabel)
+                  .addComponent(fontSizeField)
+                  .addComponent(consoleFontSizeLabel)
+                  .addComponent(consoleFontSizeField))
+      .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                  .addComponent(backgroundColorLabel)
+                  .addComponent(hashLabel)
+                  .addComponent(presentColorHex)
+                  .addComponent(presentColor))
+      .addComponent(editorAntialiasBox)
+      .addComponent(inputMethodBox)
+      .addGroup(layout.createParallelGroup()
+                  .addComponent(errorCheckerBox)
+                  .addComponent(warningsCheckerBox))
+      .addComponent(codeCompletionBox)
+      .addComponent(importSuggestionsBox)
+      .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                .addComponent(memoryOverrideBox)
+                .addComponent(memoryField)
+                .addComponent(mbLabel))
+      .addComponent(deletePreviousBox)
+      .addComponent(checkUpdatesBox)
+      .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                  .addComponent(displayLabel)
+                  .addComponent(displaySelectionBox))
+      .addComponent(autoAssociateBox)
+      .addComponent(morePreferenceLabel)
+      .addGap(0)
+      .addComponent(preferencePathLabel)
+      .addGap(0)
+      .addComponent(preferenceHintLabel)
+      .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                  .addComponent(okButton)
+                  .addComponent(cancelButton))
+      .addGap(BORDER)
+      );
 
-    // finish up
-
-    wide = right + GUI_BIG;
-    high = top + GUI_SMALL;
-
-
+    if (Base.isWindows()){
+      autoAssociateBox.setVisible(true);
+    }
     // closing the window is same as hitting cancel button
 
     dialog.addWindowListener(new WindowAdapter() {
-        public void windowClosing(WindowEvent e) {
-          disposeFrame();
-        }
-      });
+      public void windowClosing(WindowEvent e) {
+        disposeFrame();
+      }
+    });
 
     ActionListener disposer = new ActionListener() {
-        public void actionPerformed(ActionEvent actionEvent) {
-          disposeFrame();
-        }
-      };
+      public void actionPerformed(ActionEvent actionEvent) {
+        disposeFrame();
+      }
+    };
+    // finish up
+    
     Toolkit.registerWindowCloseKeys(dialog.getRootPane(), disposer);
     Toolkit.setIcon(dialog);
+    dialog.setResizable(false);
+    dialog.pack();
+    dialog.setLocationRelativeTo(null);
 
-    Dimension screen = Toolkit.getScreenSize();
-    dialog.setLocation((screen.width - wide) / 2,
-                      (screen.height - high) / 2);
-
-    dialog.pack(); // get insets
-    Insets insets = dialog.getInsets();
-    dialog.setSize(wide + insets.left + insets.right,
-                  high + insets.top + insets.bottom);
-
+    // Workaround for OS X, which breaks the layout when these are set earlier
+    // https://github.com/processing/processing/issues/3212
+    fontSizeField.setEditable(true);
+    consoleFontSizeField.setEditable(true);
 
     // handle window closing commands for ctrl/cmd-W or hitting ESC.
 
@@ -638,9 +556,9 @@ public class PreferencesFrame {
   }
 
 
-  public Dimension getPreferredSize() {
-    return new Dimension(wide, high);
-  }
+//  public Dimension getPreferredSize() {
+//    return new Dimension(wide, high);
+//  }
 
 
   // .................................................................
@@ -664,13 +582,6 @@ public class PreferencesFrame {
 
     Preferences.setBoolean("export.delete_target_folder", //$NON-NLS-1$
                            deletePreviousBox.isSelected());
-
-    boolean wine = whinyBox.isSelected();
-    Preferences.setBoolean("header.hide.image", wine); //$NON-NLS-1$
-    Preferences.setBoolean("buttons.hide.image", wine); //$NON-NLS-1$
-    // Could iterate through editors here and repaint them all, but probably
-    // requires a doLayout() call, and that may have different effects on
-    // each platform, and nobody wants to debug/support that.
 
     // if the sketchbook path has changed, rebuild the menus
     String oldPath = Preferences.getSketchbookPath();
@@ -741,7 +652,7 @@ public class PreferencesFrame {
     }
 
     try {
-      Object selection = consoleSizeField.getSelectedItem();
+      Object selection = consoleFontSizeField.getSelectedItem();
       if (selection instanceof String) {
         // Replace with Integer version
         selection = Integer.parseInt((String) selection);
@@ -749,8 +660,8 @@ public class PreferencesFrame {
       Preferences.set("console.font.size", String.valueOf(selection));
 
     } catch (NumberFormatException e) {
-      Base.log("Ignoring invalid font size " + consoleSizeField); //$NON-NLS-1$
-      consoleSizeField.setSelectedItem(Preferences.getInteger("console.font.size"));
+      Base.log("Ignoring invalid font size " + consoleFontSizeField); //$NON-NLS-1$
+      consoleFontSizeField.setSelectedItem(Preferences.getInteger("console.font.size"));
     }
 
     Preferences.setColor("run.present.bgcolor", presentColor.getBackground());
@@ -788,9 +699,6 @@ public class PreferencesFrame {
     sketchbookLocationField.setText(Preferences.getSketchbookPath());
     checkUpdatesBox.setSelected(Preferences.getBoolean("update.check")); //$NON-NLS-1$
 
-    whinyBox.setSelected(Preferences.getBoolean("header.hide.image") || //$NON-NLS-1$
-                         Preferences.getBoolean("buttons.hide.image")); //$NON-NLS-1$
-
     updateDisplayList();
     int displayNum = Preferences.getInteger("run.display"); //$NON-NLS-1$
     if (displayNum >= 0 && displayNum < displayCount) {
@@ -798,14 +706,15 @@ public class PreferencesFrame {
     }
 
     // This takes a while to load, so run it from a separate thread
-    EventQueue.invokeLater(new Runnable() {
+    //EventQueue.invokeLater(new Runnable() {
+    new Thread(new Runnable() {
       public void run() {
         initFontList();
       }
-    });
+    }).start();
 
     fontSizeField.setSelectedItem(Preferences.getInteger("editor.font.size"));
-    consoleSizeField.setSelectedItem(Preferences.getInteger("console.font.size"));
+    consoleFontSizeField.setSelectedItem(Preferences.getInteger("console.font.size"));
 
     presentColor.setBackground(Preferences.getColor("run.present.bgcolor"));
     presentColorHex.setText(Preferences.get("run.present.bgcolor").substring(1));
@@ -819,6 +728,14 @@ public class PreferencesFrame {
     if (autoAssociateBox != null) {
       autoAssociateBox.setSelected(Preferences.getBoolean("platform.auto_file_type_associations")); //$NON-NLS-1$
     }
+    // The OK Button has to be set as the default button every time the 
+    // PrefWindow is to be displayed
+    dialog.getRootPane().setDefaultButton(okButton);
+
+    // The pack is called again here second time to fix layout bugs
+    // the bugs are not due to groupLayout but due to HTML rendering of components
+    // more info can be found here -> https://netbeans.org/bugzilla/show_bug.cgi?id=79967
+    dialog.pack();
 
     dialog.setVisible(true);
   }
@@ -843,13 +760,20 @@ public class PreferencesFrame {
   void initFontList() {
     if (monoFontFamilies == null) {
       monoFontFamilies = Toolkit.getMonoFontFamilies();
-      fontSelectionBox.setModel(new DefaultComboBoxModel<String>(monoFontFamilies));
-      String family = Preferences.get("editor.font.family");
 
-      // Set a reasonable default, in case selecting the family fails
-      fontSelectionBox.setSelectedItem("Monospaced");
-      fontSelectionBox.setSelectedItem(family);
-      fontSelectionBox.setEnabled(true);
+      EventQueue.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          fontSelectionBox.setModel(new DefaultComboBoxModel<String>(monoFontFamilies));
+          String family = Preferences.get("editor.font.family");
+
+          // Set a reasonable default, in case selecting the family fails
+          fontSelectionBox.setSelectedItem("Monospaced");
+          // Now try to select the family (will fail silently, see prev line)
+          fontSelectionBox.setSelectedItem(family);
+          fontSelectionBox.setEnabled(true);
+        }
+      });
     }
   }
 

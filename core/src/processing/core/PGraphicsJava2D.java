@@ -137,6 +137,13 @@ public class PGraphicsJava2D extends PGraphics {
 //  }
 
 
+//  @Override
+//  protected void allocate() {
+//    //surface.initImage(this, width, height);
+//    surface.initImage(this);
+//  }
+
+
   /*
   @Override
   protected void allocate() {
@@ -239,8 +246,8 @@ public class PGraphicsJava2D extends PGraphics {
 
   @Override
   public PSurface createSurface() {
-    //return (surface = new PSurfaceAWT());
-    return new PSurfaceAWT(this);
+    return surface = new PSurfaceAWT(this);
+//    return new PSurfaceAWT(this);
   }
 
 
@@ -267,15 +274,50 @@ public class PGraphicsJava2D extends PGraphics {
 
 //  Graphics2D g2old;
 
+  public Graphics2D checkImage() {
+    if (image == null ||
+      ((BufferedImage) image).getWidth() != width*pixelFactor ||
+      ((BufferedImage) image).getHeight() != height*pixelFactor) {
+//      ((VolatileImage) image).getWidth() != width ||
+//      ((VolatileImage) image).getHeight() != height) {
+//        image = new BufferedImage(width * pixelFactor, height * pixelFactor
+//                                  format == RGB ?  BufferedImage.TYPE_INT_ARGB);
+
+      GraphicsConfiguration gc = null;
+      if (surface != null) {
+        Component comp = null;  //surface.getComponent();
+        if (comp == null) {
+//          System.out.println("component null, but parent.frame is " + parent.frame);
+          comp = parent.frame;
+        }
+        if (comp != null) {
+          gc = comp.getGraphicsConfiguration();
+        }
+      }
+      // If not realized (off-screen, i.e the Color Selector Tool), gc will be null.
+      if (gc == null) {
+        System.err.println("GraphicsConfiguration null in initImage()");
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        gc = ge.getDefaultScreenDevice().getDefaultConfiguration();
+      }
+
+      // Formerly this was broken into separate versions based on offscreen or
+      // not, but we may as well create a compatible image; it won't hurt, right?
+      int wide = width * pixelFactor;
+      int high = height * pixelFactor;
+//      System.out.println("re-creating image");
+      image = gc.createCompatibleImage(wide, high);
+//      image = gc.createCompatibleVolatileImage(wide, high);
+      //image = surface.getComponent().createImage(width, height);
+    }
+    return (Graphics2D) image.getGraphics();
+  }
+
+
   @Override
   public void beginDraw() {
-    // TODO this will happen when it's offscreen.. need a better option here
-    if (image == null ||
-        ((BufferedImage) image).getWidth() != width ||
-        ((BufferedImage) image).getHeight() != height) {
-      image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-    }
-    g2 = (Graphics2D) image.getGraphics();
+    g2 = checkImage();
+    //g2 = (Graphics2D) image.getGraphics();
 
     // Calling getGraphics() seems to nuke the smoothing settings
     smooth(quality);
@@ -498,12 +540,19 @@ public class PGraphicsJava2D extends PGraphics {
 
   //////////////////////////////////////////////////////////////
 
-  // SHAPES
-
-
-  //////////////////////////////////////////////////////////////
-
   // SHAPE CREATION
+
+
+  @Override
+  protected PShape createShapeFamily(int type) {
+    return new PShape(this, type);
+  }
+
+
+  @Override
+  protected PShape createShapePrimitive(int kind, float... p) {
+    return new PShape(this, kind, p);
+  }
 
 
 //  @Override
@@ -512,25 +561,8 @@ public class PGraphicsJava2D extends PGraphics {
 //  }
 
 
-  @Override
-  public PShape createShape() {
-    return createShape(PShape.GEOMETRY);
-  }
-
-
-  @Override
-  public PShape createShape(int type) {
-    return createShapeImpl(this, type);
-  }
-
-
-  @Override
-  public PShape createShape(int kind, float... p) {
-    return createShapeImpl(this, kind, p);
-  }
-
-
-  static protected PShape createShapeImpl(PGraphicsJava2D pg, int type) {
+  /*
+  protected PShape createShapeImpl(PGraphicsJava2D pg, int type) {
     PShape shape = null;
     if (type == PConstants.GROUP) {
       shape = new PShape(pg, PConstants.GROUP);
@@ -539,11 +571,14 @@ public class PGraphicsJava2D extends PGraphics {
     } else if (type == PShape.GEOMETRY) {
       shape = new PShape(pg, PShape.GEOMETRY);
     }
-    shape.set3D(false);
+    // defaults to false, don't assign it and make complexity for overrides
+    //shape.set3D(false);
     return shape;
   }
+   */
 
 
+  /*
   static protected PShape createShapeImpl(PGraphicsJava2D pg,
                                                 int kind, float... p) {
     PShape shape = null;
@@ -610,9 +645,18 @@ public class PGraphicsJava2D extends PGraphics {
       shape.setParams(p);
     }
 
-    shape.set3D(false);
+    // defaults to false, don't assign it and make complexity for overrides
+    //shape.set3D(false);
+
     return shape;
   }
+  */
+
+
+
+  //////////////////////////////////////////////////////////////
+
+  // SHAPES
 
 
   @Override
@@ -1397,9 +1441,9 @@ public class PGraphicsJava2D extends PGraphics {
 
 
   @Override
-  public void smooth(int antialias) {
-    this.quality = antialias;
-    if (antialias == 0) {
+  public void smooth(int quality) {
+    this.quality = quality;
+    if (quality == 0) {
       noSmooth();
     } else {
       smooth();
@@ -1410,6 +1454,7 @@ public class PGraphicsJava2D extends PGraphics {
   @Override
   public void noSmooth() {
     smooth = false;
+    quality = 0;  // https://github.com/processing/processing/issues/3113
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                         RenderingHints.VALUE_ANTIALIAS_OFF);
     g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,

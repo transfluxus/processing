@@ -733,6 +733,8 @@ public class JavaEditor extends Editor {
       platformName = "Linux (" + Base.getNativeBits() + "-bit)";
     }
 
+    final String javaPlatform =
+      PApplet.split(System.getProperty("java.version"), '.')[1];
     boolean embed = Preferences.getBoolean("export.application.embed_java");
     final String embedWarning =
       "<html><div width=\"" + divWidth + "\"><font size=\"2\">" +
@@ -744,7 +746,8 @@ public class JavaEditor extends Editor {
       "<html><div width=\"" + divWidth + "\"><font size=\"2\">" +
 //      "<html><body><font size=2>" +
       "Users on all platforms will have to install the latest " +
-      "version of Java 7 from <a href=\"\">http://java.com/download</a>. " +
+      "version of Java " + javaPlatform +
+      " from <a href=\"\">http://java.com/download</a>. " +
       "<br/>&nbsp;";
       //"from <a href=\"http://java.com/download\">java.com/download</a>.";
     final JLabel warningLabel = new JLabel(embed ? embedWarning : nopeWarning);
@@ -1388,7 +1391,9 @@ public class JavaEditor extends Editor {
     JMenuItem item;
 
     // "use the debugger" sounds too colloquial, and "enable" sounds too technical
-    enableDebug = Toolkit.newJCheckBoxMenuItem("Enable Debugger", KeyEvent.VK_D);
+    enableDebug =
+      Toolkit.newJCheckBoxMenuItem(Language.text("menu.debug.enable"),
+                                   KeyEvent.VK_D);
     //new JCheckBoxMenuItem(Language.text("menu.debug.show_debug_toolbar"));
     enableDebug.setSelected(false);
     enableDebug.addActionListener(new ActionListener() {
@@ -2378,12 +2383,12 @@ public class JavaEditor extends Editor {
 
 
   public void statusBusy() {
-    statusNotice("Debugger busy...");
+    statusNotice(Language.text("editor.status.debug.busy"));
   }
 
 
   public void statusHalted() {
-    statusNotice("Debugger halted.");
+    statusNotice(Language.text("editor.status.debug.halt"));
   }
 
 
@@ -2554,23 +2559,21 @@ public class JavaEditor extends Editor {
 
   public String[] baseCode;
 
-  final static int SPACE_AMOUNT = 0;
-
   UDPTweakClient tweakClient;
 
 
-  public void startInteractiveMode() {
+  protected void startInteractiveMode() {
     getJavaTextArea().startInteractiveMode();
   }
 
 
   //public void stopInteractiveMode(ArrayList<Handle> handles[]) {
-  public void stopInteractiveMode(List<List<Handle>> handles) {
+  protected void stopInteractiveMode(List<List<Handle>> handles) {
     tweakClient.shutdown();
     getJavaTextArea().stopInteractiveMode();
 
     // remove space from the code (before and after)
-    removeSpacesFromCode();
+    //removeSpacesFromCode();
 
     // check which tabs were modified
     boolean modified = false;
@@ -2584,9 +2587,10 @@ public class JavaEditor extends Editor {
 
     if (modified) {
       // ask to keep the values
-      int ret = Base.showYesNoQuestion(this, "Tweak Mode",
-                  "Keep the changes?",
-                  "You changed some values in your sketch. Would you like to keep the changes?");
+      int ret =
+        Base.showYesNoQuestion(this, Language.text("tweak_mode"),
+                               Language.text("tweak_mode.keep_changes.line1"),
+                               Language.text("tweak_mode.keep_changes.line2"));
       if (ret == 1) {
         // NO! don't keep changes
         loadSavedCode();
@@ -2618,9 +2622,8 @@ public class JavaEditor extends Editor {
         // save the sketch
         try {
           sketch.save();
-        }
-        catch (IOException e) {
-          Base.showWarning("Tweak Mode", "Could not save the modified sketch!", e);
+        } catch (IOException e) {
+          Base.showWarning("Error", "Could not save the modified sketch.", e);
         }
 
         // repaint the editor header (show the modified tabs)
@@ -2636,7 +2639,7 @@ public class JavaEditor extends Editor {
   }
 
 
-  public void updateInterface(List<List<Handle>> handles,
+  protected void updateInterface(List<List<Handle>> handles,
                               List<List<ColorControlBox>> colorBoxes) {
     getJavaTextArea().updateInterface(handles, colorBoxes);
   }
@@ -2656,24 +2659,17 @@ public class JavaEditor extends Editor {
   }
 
 
-  public void initBaseCode() {
+  protected void initBaseCode() {
     SketchCode[] code = sketch.getCode();
-
-    String space = new String();
-
-    for (int i=0; i<SPACE_AMOUNT; i++) {
-      space += "\n";
-    }
 
     baseCode = new String[code.length];
     for (int i = 0; i < code.length; i++) {
       baseCode[i] = new String(code[i].getSavedProgram());
-      baseCode[i] = space + baseCode[i] + space;
     }
   }
 
 
-  public void initEditorCode(List<List<Handle>> handles, boolean withSpaces) {
+  protected void initEditorCode(List<List<Handle>> handles, boolean withSpaces) {
     SketchCode[] sketchCode = sketch.getCode();
     for (int tab=0; tab<baseCode.length; tab++) {
         // beautify the numbers
@@ -2722,29 +2718,32 @@ public class JavaEditor extends Editor {
   }
 
 
+  /*
   private void removeSpacesFromCode() {
     SketchCode[] code = sketch.getCode();
     for (int i=0; i<code.length; i++) {
       String c = code[i].getProgram();
-      c = c.substring(SPACE_AMOUNT, c.length() - SPACE_AMOUNT);
+      //c = c.substring(SPACE_AMOUNT, c.length() - SPACE_AMOUNT);
       code[i].setProgram(c);
-      /* Wild Hack: set document to null so the text editor will refresh
-         the program contents when the document tab is being clicked */
+      // TODO Wild Hack: set document to null so the text editor will refresh
+      // the program contents when the document tab is being clicked
       code[i].setDocument(null);
     }
     // this will update the current code
     setCode(sketch.getCurrentCode());
   }
+  */
 
 
   /**
    * Replace all numbers with variables and add code to initialize
    * these variables and handle update messages.
    */
-  //public boolean automateSketch(Sketch sketch, ArrayList<Handle> handles[])
-  public boolean automateSketch(Sketch sketch, List<List<Handle>> handles) {
+  protected boolean automateSketch(Sketch sketch, SketchParser parser) {
     SketchCode[] code = sketch.getCode();
 
+    List<List<Handle>> handles = parser.allHandles;
+    
     if (code.length < 1) {
       return false;
     }
@@ -2753,8 +2752,8 @@ public class JavaEditor extends Editor {
       return false;
     }
 
-    int setupStartPos = SketchParser.getSetupStart(baseCode[0]);
-    if (setupStartPos < 0) {
+    int setupEndPos = SketchParser.getSetupEnd(baseCode[0]);
+    if (setupEndPos < 0) {
       return false;
     }
 
@@ -2796,7 +2795,7 @@ public class JavaEditor extends Editor {
       }
       code[tab].setProgram(c);
     }
-
+    
     // add the main header to the code in the first tab
     String c = code[0].getProgram();
 
@@ -2851,8 +2850,8 @@ public class JavaEditor extends Editor {
       " tweakmode_initAllVars();\n"+
       " tweakmode_initCommunication();\n\n";
 
-    setupStartPos = SketchParser.getSetupStart(c);
-    c = replaceString(c, setupStartPos, setupStartPos, addToSetup);
+    setupEndPos = SketchParser.getSetupEnd(c);
+    c = replaceString(c, setupEndPos, setupEndPos, addToSetup);
 
     code[0].setProgram(header + c);
 

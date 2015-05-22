@@ -26,6 +26,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
+import javax.swing.GroupLayout.Group;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
@@ -35,10 +36,10 @@ import javax.swing.text.Document;
  */
 public class FindReplace extends JFrame {
 
-  static final int EDGE = Base.isMacOS() ? 20 : 13;
-  static final int SMALL = 6;
-  // 12 is correct for Mac, other numbers may be required for other platforms
-  static final int BUTTON_GAP = 12;
+  static final int BORDER = Base.isMacOS() ? 20 : 13;
+//  static final int SMALL = 6;
+//  12 is correct for Mac, other numbers may be required for other platforms
+//  static final int BUTTON_GAP = 12;
 
   Editor editor;
 
@@ -65,22 +66,14 @@ public class FindReplace extends JFrame {
 
   public FindReplace(Editor editor) {
     super(Language.text("find"));
-    setResizable(false);
     this.editor = editor;
 
     Container pain = getContentPane();
-    pain.setLayout(null);
 
     JLabel findLabel = new JLabel(Language.text("find.find"));
     JLabel replaceLabel = new JLabel(Language.text("find.replace_with"));
-    Dimension labelDimension = replaceLabel.getPreferredSize();
-
-    pain.add(findLabel);
-    pain.add(replaceLabel);
-
-    pain.add(findField = new JTextField());
-    pain.add(replaceField = new JTextField());
-    int fieldHeight = findField.getPreferredSize().height;
+    findField = new JTextField();
+    replaceField = new JTextField();
 
     if (findString != null) findField.setText(findString);
     if (replaceString != null) replaceField.setText(replaceString);
@@ -92,7 +85,6 @@ public class FindReplace extends JFrame {
         }
       });
     ignoreCaseBox.setSelected(ignoreCase);
-    pain.add(ignoreCaseBox);
 
     allTabsBox = new JCheckBox(Language.text("find.all_tabs"));
     allTabsBox.addActionListener(new ActionListener() {
@@ -102,7 +94,6 @@ public class FindReplace extends JFrame {
       });
     allTabsBox.setSelected(allTabs);
     allTabsBox.setEnabled(true);
-    pain.add(allTabsBox);
 
     wrapAroundBox = new JCheckBox(Language.text("find.wrap_around"));
     wrapAroundBox.addActionListener(new ActionListener() {
@@ -111,10 +102,13 @@ public class FindReplace extends JFrame {
         }
       });
     wrapAroundBox.setSelected(wrapAround);
-    pain.add(wrapAroundBox);
 
-    JPanel buttons = new JPanel();
-    buttons.setLayout(new FlowLayout(FlowLayout.CENTER,BUTTON_GAP, 0));
+    GroupLayout layout = new GroupLayout(pain);
+    pain.setLayout(layout);
+    layout.setAutoCreateGaps(true);
+    layout.setAutoCreateContainerGaps(true);
+
+    Group buttonsHorizontalGroup = layout.createSequentialGroup(); // To hold the buttons in the specified order depending on the OS
 
     replaceAllButton = new JButton(Language.text("find.btn.replace_all"));
     replaceButton = new JButton(Language.text("find.btn.replace"));
@@ -124,80 +118,77 @@ public class FindReplace extends JFrame {
 
     // ordering is different on mac versus pc
     if (Base.isMacOS()) {
-      buttons.add(replaceAllButton);
-      buttons.add(replaceButton);
-      buttons.add(replaceAndFindButton);
-      buttons.add(previousButton);
-      buttons.add(findButton);
-
-      // to fix ugliness.. normally macosx java 1.3 puts an
-      // ugly white border around this object, so turn it off.
-      buttons.setBorder(null);
+      buttonsHorizontalGroup.addComponent(replaceAllButton)
+        .addComponent(replaceButton)
+        .addComponent(replaceAndFindButton)
+        .addComponent(previousButton)
+        .addComponent(findButton);
 
     } else {
-      buttons.add(findButton);
-      buttons.add(previousButton);
-      buttons.add(replaceAndFindButton);
-      buttons.add(replaceButton);
-      buttons.add(replaceAllButton);
+      buttonsHorizontalGroup.addComponent(findButton)
+        .addComponent(previousButton)
+        .addComponent(replaceAndFindButton)
+        .addComponent(replaceButton)
+        .addComponent(replaceAllButton);
     }
-    pain.add(buttons);
     setFound(false);
 
-    Dimension buttonsDimension = buttons.getPreferredSize();
-    int visibleButtonWidth = buttonsDimension.width - 2 * BUTTON_GAP;
-    int fieldWidth = visibleButtonWidth - (labelDimension.width + SMALL);
+    Group buttonsVerticalGroup = layout.createParallelGroup(); // Creates group for arranging buttons vertically
+    buttonsVerticalGroup.addComponent(findButton)
+    .addComponent(previousButton)
+    .addComponent(replaceAndFindButton)
+    .addComponent(replaceButton)
+    .addComponent(replaceAllButton);
 
-   // +1 since it's better to tend downwards
-    int yoff = (1 + fieldHeight - labelDimension.height) / 2;
+    layout.setHorizontalGroup(layout
+        .createSequentialGroup()
+        .addGap(BORDER)
+        .addGroup(layout.createParallelGroup()
+            .addGroup(GroupLayout.Alignment.TRAILING, // TRAILING makes everything right alinged 
+                layout.createSequentialGroup()
+                    .addGap(replaceLabel.getPreferredSize().width
+                        - findLabel.getPreferredSize().width)
+                    .addComponent(findLabel)
+                    .addComponent(findField))
+            .addGroup(GroupLayout.Alignment.TRAILING,
+                layout.createSequentialGroup()
+                    .addComponent(replaceLabel)
+                    .addGroup(layout.createParallelGroup()
+                        .addComponent(replaceField)
+                        .addGroup(GroupLayout.Alignment.LEADING,
+                                  layout.createSequentialGroup()
+                                      .addComponent(ignoreCaseBox)
+                                      .addComponent(allTabsBox)
+                                      .addComponent(wrapAroundBox)
+                                      .addGap(0))))
+            .addGroup(GroupLayout.Alignment.CENTER,buttonsHorizontalGroup))
+        .addGap(BORDER)
+    );
 
-    int ypos = EDGE;
-
-    int labelWidth = findLabel.getPreferredSize().width;
-    findLabel.setBounds(EDGE + (labelDimension.width-labelWidth), ypos + yoff, //  + yoff was added to the wrong field
-                        labelWidth, labelDimension.height);
-    findField.setBounds(EDGE + labelDimension.width + SMALL, ypos,
-                        fieldWidth, fieldHeight);
-
-    ypos += fieldHeight + SMALL;
-
-    labelWidth = replaceLabel.getPreferredSize().width;
-    replaceLabel.setBounds(EDGE + (labelDimension.width-labelWidth), ypos + yoff,
-                           labelWidth, labelDimension.height);
-    replaceField.setBounds(EDGE + labelDimension.width + SMALL, ypos,
-                           fieldWidth, fieldHeight);
-
-    ypos += fieldHeight + SMALL;
-
-    final int third = (fieldWidth - SMALL*2) / 3;
-    ignoreCaseBox.setBounds(EDGE + labelDimension.width + SMALL,
-                            ypos,
-                            third, fieldHeight);
-
-    allTabsBox.setBounds(EDGE + labelDimension.width + SMALL + third + SMALL,
-                         ypos,
-                         third, fieldHeight);
-
-    //wrapAroundBox.setBounds(EDGE + labelDimension.width + SMALL + (fieldWidth-SMALL)/2 + SMALL,
-    wrapAroundBox.setBounds(EDGE + labelDimension.width + SMALL + third*2 + SMALL*2,
-                            ypos,
-                            third, fieldHeight);
-
-    ypos += fieldHeight + SMALL;
-
-    buttons.setBounds(EDGE-BUTTON_GAP, ypos,
-                      buttonsDimension.width, buttonsDimension.height);
-
-    ypos += buttonsDimension.height + EDGE;
-
-    int wide = visibleButtonWidth + EDGE*2;
-    int high = ypos;
-
-    pack();
-    Insets insets = getInsets();
-    setSize(wide + insets.left + insets.right,high + insets.top + insets.bottom);
+//    layout.linkSize(SwingConstants.HORIZONTAL, findButton, replaceButton, replaceAllButton, replaceAndFindButton, previousButton);
+    
+    layout.setVerticalGroup(layout.createSequentialGroup()
+      .addGap(BORDER)
+      .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+          .addComponent(findLabel)
+          .addComponent(findField))
+      .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+          .addComponent(replaceLabel)
+          .addComponent(replaceField))
+      .addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+          .addComponent(ignoreCaseBox)
+          .addComponent(allTabsBox)
+          .addComponent(wrapAroundBox))
+          .addGroup(buttonsVerticalGroup)
+      .addGap(BORDER) 
+      );
 
     setLocationRelativeTo(null); // center
+    Dimension size = layout.preferredLayoutSize(pain);
+    setSize(size.width, size.height);
+    Dimension screen = Toolkit.getScreenSize();
+    setLocation((screen.width - size.width) / 2,
+                      (screen.height - size.height) / 2);
 
     replaceButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -240,27 +231,29 @@ public class FindReplace extends JFrame {
 
     setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
     addWindowListener(new WindowAdapter() {
-        public void windowClosing(WindowEvent e) {
-          handleClose();
-        }
-      });
+      public void windowClosing(WindowEvent e) {
+        handleClose();
+      }
+    });
     Toolkit.registerWindowCloseKeys(getRootPane(), new ActionListener() {
-        public void actionPerformed(ActionEvent actionEvent) {
-          //hide();
-          handleClose();
-        }
-      });
+      public void actionPerformed(ActionEvent actionEvent) {
+        handleClose();
+      }
+    });
     Toolkit.setIcon(this);
 
     // hack to to get first field to focus properly on osx
     addWindowListener(new WindowAdapter() {
-        public void windowActivated(WindowEvent e) {
-          //System.out.println("activating");
-          /*boolean ok =*/ findField.requestFocusInWindow();
-          //System.out.println("got " + ok);
-          findField.selectAll();
-        }
-      });
+      public void windowActivated(WindowEvent e) {
+        //System.out.println("activating");
+        /*boolean ok =*/ findField.requestFocusInWindow();
+        //System.out.println("got " + ok);
+        findField.selectAll();
+      }
+    });
+    pack();
+    setResizable(true);
+    setLocationRelativeTo(null);
   }
 
 
@@ -320,11 +313,11 @@ public class FindReplace extends JFrame {
             }
 
             try {
-              Document doc = sketch.getCode(tabIndex + 1).getDocument(); 
+              Document doc = sketch.getCode(tabIndex + 1).getDocument();
               if(doc != null) {
                 text = doc.getText(0, doc.getLength()); // this thing has the latest changes
               }
-              else { 
+              else {
                 text = sketch.getCode(tabIndex + 1).getProgram(); // not this thing.
               }
             } catch (BadLocationException e) {
@@ -371,11 +364,11 @@ public class FindReplace extends JFrame {
               break;
             }
             try {
-              Document doc = sketch.getCode(tabIndex - 1).getDocument(); 
+              Document doc = sketch.getCode(tabIndex - 1).getDocument();
               if(doc != null) {
                 text = doc.getText(0, doc.getLength()); // this thing has the latest changes
               }
-              else { 
+              else {
                 text = sketch.getCode(tabIndex - 1).getProgram(); // not this thing.
               }
             } catch (BadLocationException e) {
@@ -454,11 +447,11 @@ public class FindReplace extends JFrame {
     editor.setSelection(0, 0);
 
     boolean foundAtLeastOne = false;
-    int startTab = -1, startIndex = -1, c = 50000; 
+    int startTab = -1, startIndex = -1, c = 50000;
     // you couldn't seriously be replacing 50K times o_O
     while (--c > 0) {
       if (find(false, false)) {
-        if(editor.getSketch().getCurrentCodeIndex() == startTab 
+        if(editor.getSketch().getCurrentCodeIndex() == startTab
           && editor.getSelectionStart() == startIndex){
           // we've reached where we started, so stop the replace
           Toolkit.beep();

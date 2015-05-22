@@ -2156,6 +2156,32 @@ public class PGraphicsOpenGL extends PGraphics {
 
   //////////////////////////////////////////////////////////////
 
+  // CREATE SHAPE
+
+
+  @Override
+  protected PShape createShapeFamily(int type) {
+    PShape shape = new PShapeOpenGL(this, type);
+    if (is3D()) {
+      shape.set3D(true);
+    }
+    return shape;
+  }
+
+
+  @Override
+  protected PShape createShapePrimitive(int kind, float... p) {
+    PShape shape = new PShapeOpenGL(this, kind, p);
+    if (is3D()) {
+      shape.set3D(true);
+    }
+    return shape;
+  }
+
+
+
+  //////////////////////////////////////////////////////////////
+
   // VERTEX SHAPES
 
 
@@ -8863,9 +8889,6 @@ public class PGraphicsOpenGL extends PGraphics {
         indices[indCount + 1] = vert1 - detailU;
         indices[indCount + 2] = vert1 - 1;
         indCount += 3;
-
-        addEdge(vert1 - detailU, vert1 - 1, true, true);
-        addEdge(vert1 - 1, vert1, true, true);
       }
 
       // Northern cap -------------------------------------------------------

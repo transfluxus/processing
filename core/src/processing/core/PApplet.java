@@ -3,9 +3,9 @@
 /*
  Part of the Processing project - http://processing.org
 
- Copyright (c) 2012-14 The Processing Foundation
- Copyright (c) 2004-12 Ben Fry and Casey Reas
- Copyright (c) 2001-04 Massachusetts Institute of Technology
+  Copyright (c) 2012-15 The Processing Foundation
+  Copyright (c) 2004-12 Ben Fry and Casey Reas
+  Copyright (c) 2001-04 Massachusetts Institute of Technology
 
  This library is free software; you can redistribute it and/or
  modify it under the terms of the GNU Lesser General Public
@@ -25,14 +25,17 @@
 package processing.core;
 
 // used for setting bg colors and whatnot
-import java.awt.Canvas;
-import java.awt.Color;
+//import java.awt.Color;
+// Component is further up the chain than Canvas
+//import java.awt.Component;
 // use for the link() command (and maybe open()?)
+
+// these are used for various methods (url opening, file selection, etc)
+// how many more can we remove?
 import java.awt.Desktop;
 import java.awt.EventQueue;
 import java.awt.FileDialog;
 import java.awt.Font;
-// for the Frame object (deprecate?)
 import java.awt.Frame;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -79,12 +82,24 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+
 // used by loadImage() functions
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 // used by desktopFile() method
 import javax.swing.filechooser.FileSystemView;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.xml.sax.SAXException;
+
+import java.io.*;
+import java.lang.reflect.*;
+import java.net.*;
+import java.text.*;
+import java.util.*;
+import java.util.regex.*;
+import java.util.zip.*;
 
 import processing.data.JSONArray;
 import processing.data.JSONObject;
@@ -104,26 +119,33 @@ import processing.opengl.PShader;
  * Window Size and Full Screen</A> page on the Wiki has useful information about
  * sizing, multiple displays, full screen, etc.
  * <p/>
- * Processing uses active mode rendering in all cases. All animation tasks
- * happen on the "Processing Animation Thread". The setup() and draw() methods
- * are handled by that thread, and events (like mouse movement and key presses,
- * which are fired by the event dispatch thread or EDT) are queued to be safely
- * handled at the end of draw(). For code that needs to run on the EDT, use
- * EventQueue.invokeLater(). When doing so, be careful to synchronize between
- * that code (since invokeLater() will make your code run from the EDT) and the
- * Processing animation thread. Use of a callback function or the registerXxx()
- * methods in PApplet can help ensure that your code doesn't do something
- * naughty.
+ * Processing uses active mode rendering. All animation tasks happen on the
+ * "Processing Animation Thread". The setup() and draw() methods are handled
+ * by that thread, and events (like mouse movement and key presses, which are
+ * fired by the event dispatch thread or EDT) are queued to be safely handled
+ * at the end of draw().
  * <p/>
- * As of Processing 2.0, we have discontinued support for versions of Java prior
- * to 1.6. We don't have enough people to support it, and for a project of our
- * (tiny) size, we should be focusing on the future, rather than working around
- * legacy Java code.
+ * Starting with 3.0a6, blit operations are on the EDT, so as not to cause
+ * GUI problems with Swing and AWT. In the case of the default renderer, the
+ * sketch renders to an offscreen image, then the EDT is asked to bring that
+ * image to the screen.
+ * <p/>
+ * For code that needs to run on the EDT, use EventQueue.invokeLater(). When
+ * doing so, be careful to synchronize between that code and the Processing
+ * animation thread. That is, you can't call Processing methods from the EDT
+ * or at any random time from another thread. Use of a callback function or
+ * the registerXxx() methods in PApplet can help ensure that your code doesn't
+ * do something naughty.
  * <p/>
  * As of Processing 3.0, we have removed Applet as the base class for PApplet.
  * This means that we can remove lots of legacy code, however one downside is
  * that it's no longer possible (without extra code) to embed a PApplet into
  * another Java application.
+ * <p/>
+ * As of Processing 3.0, we have discontinued support for versions of Java
+ * prior to 1.8. We don't have enough people to support it, and for a
+ * project of our (tiny) size, we should be focusing on the future, rather
+ * than working around legacy Java code.
  */
 public class PApplet implements PConstants {
 //public class PApplet extends Applet
@@ -237,8 +259,9 @@ public class PApplet implements PConstants {
   public String[] args;
 
   /**
-   * Path to sketch folder. Previously undocumented, made private in 3.0a5 so
-   * that people use the sketchPath() method and it's inited properly.
+   * Path to sketch folder. Previously undocumented, made private in 3.0a5
+   * so that people use the sketchPath() method and it's inited properly.
+   * Call sketchPath() once to set the default.
    */
   private String sketchPath;
 
@@ -248,7 +271,7 @@ public class PApplet implements PConstants {
 
 //  static final boolean DEBUG = true;
 
-  /** Default width and height for applet when not specified */
+  /** Default width and height for sketch when not specified */
   static public final int DEFAULT_WIDTH = 100;
 
   static public final int DEFAULT_HEIGHT = 100;
@@ -834,10 +857,18 @@ public class PApplet implements PConstants {
 //    width = g.width;
 //    height = g.height;
 
-    // prior to 3a5, thread was started here
     surface.startThread();
   }
 
+
+
+  // Named quality instead of smooth to avoid people trying to set (or get)
+  // the current smooth level this way. Also that smooth(number) isn't really
+  // public or well-known API. It's specific to the capabilities of the
+  // rendering surface, and somewhat independent of whether the sketch is
+  // smoothing at any given time. It's also a bit like getFill() would return
+  // true/false for whether fill was enabled, getFillColor() would return the
+  // color itself. Or at least that's what I can recall at the moment. [fry]
   public int sketchQuality() {
     return 2;
   }
@@ -1584,9 +1615,7 @@ public class PApplet implements PConstants {
    *
    */
   public PGraphics createGraphics(int w, int h, String renderer) {
-    PGraphics pg = makeGraphics(w, h, renderer, null, false);
-    //pg.parent = this;  // make save() work
-    return pg;
+    return createGraphics(w, h, renderer, null);
   }
 
   /**
@@ -1596,29 +1625,39 @@ public class PApplet implements PConstants {
    * @param path
    *          the name of the file (can be an absolute or relative path)
    */
-  public PGraphics createGraphics(int w, int h, String renderer, String path) {
+
+  public PGraphics createGraphics(int w, int h,
+                                  String renderer, String path) {
+    return makeGraphics(w, h, renderer, savePath(path), false);
+    /*
+
     if (path != null) {
       path = savePath(path);
     }
     PGraphics pg = makeGraphics(w, h, renderer, path, false);
-    pg.parent = this; // make save() work
+
+    //pg.parent = this;  // why wasn't setParent() used before 3.0a6?
+    //pg.setParent(this);  // make save() work
+    // Nevermind, parent is set in makeGraphics()
     return pg;
+    */
   }
 
 //  public PGraphics makePrimaryGraphics(int wide, int high) {
 //    return makeGraphics(wide, high, sketchRenderer(), null, true);
 //  }
 
-  /**
-   * Create default renderer, likely to be resized, but needed for surface init.
-   */
-  protected PGraphics makePrimaryGraphics() {
-    return makeGraphics(sketchWidth(), sketchHeight(), sketchRenderer(), null,
-                        true);
-  }
 
-  /** Version of createGraphics() used internally. */
-  protected PGraphics makeGraphics(int w, int h, String renderer, String path,
+
+  /**
+   * Version of createGraphics() used internally.
+   * @param path A full (not relative) path.
+   *             {@link PApplet#createGraphics} will call
+   *             {@link PApplet#savePath} first.
+   */
+  protected PGraphics makeGraphics(int w, int h,
+                                   String renderer, String path,
+
                                    boolean primary) {
 //    String openglError = external ?
 //      // This first one should no longer be possible
@@ -1647,9 +1686,14 @@ public class PApplet implements PConstants {
 
       pg.setParent(this);
       pg.setPrimary(primary);
-      if (path != null)
+
+      if (path != null) {
         pg.setPath(path);
+      }
 //      pg.setQuality(sketchQuality());
+//      if (!primary) {
+//        surface.initImage(pg, w, h);
+//      }
       pg.setSize(w, h);
 
       // everything worked, return it
@@ -1703,10 +1747,19 @@ public class PApplet implements PConstants {
         if (platform == MACOSX) {
           e.printStackTrace(System.out); // OS X bug (still true?)
         }
+        e.printStackTrace();
         throw new RuntimeException(e.getMessage());
       }
     }
   }
+
+
+
+  /** Create default renderer, likely to be resized, but needed for surface init. */
+  protected PGraphics createPrimaryGraphics() {
+    return makeGraphics(sketchWidth(), sketchHeight(), sketchRenderer(), null, true);
+  }
+
 
   /**
    * ( begin auto-generated from createImage.xml )
@@ -1760,7 +1813,10 @@ public class PApplet implements PConstants {
         return;
       }
 
+      // Store the quality setting in case it's changed during draw and the
+      // drawing context needs to be re-built before the next frame.
       int pquality = g.quality;
+
       insideDraw = true;
       g.beginDraw();
       if (recorder != null) {
@@ -1828,8 +1884,6 @@ public class PApplet implements PConstants {
         recorder.endDraw();
       }
       insideDraw = false;
-
-      surface.blit();
 
       if (frameCount != 0) {
         handleMethods("post");
@@ -3514,6 +3568,7 @@ public class PApplet implements PConstants {
         System.out.println(what);
       }
     }
+    System.out.flush();
   }
 
   static public void debug(String msg) {
@@ -3802,12 +3857,12 @@ public class PApplet implements PConstants {
     return min;
   }
 
-  /**
-   * Find the minimum value in an array. Throws an
-   * ArrayIndexOutOfBoundsException if the array is length 0.
-   *
-   * @param list
-   *          the source array
+
+
+  /*
+   * Find the minimum value in an array.
+   * Throws an ArrayIndexOutOfBoundsException if the array is length 0.
+   * @param list the source array
    * @return The minimum value
    */
   /*
@@ -5194,10 +5249,17 @@ public class PApplet implements PConstants {
   public XML loadXML(String filename, String options) {
     try {
       return new XML(createReader(filename), options);
-//      return new XML(createInput(filename), options);
-    } catch (Exception e) {
-      e.printStackTrace();
-      return null;
+
+      // can't use catch-all exception, since it might catch the
+      // RuntimException about the incorrect case sensitivity
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+
+    } catch (ParserConfigurationException e) {
+      throw new RuntimeException(e);
+
+    } catch (SAXException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -5218,9 +5280,9 @@ public class PApplet implements PConstants {
   public XML parseXML(String xmlString, String options) {
     try {
       return XML.parse(xmlString, options);
+
     } catch (Exception e) {
-      e.printStackTrace();
-      return null;
+      throw new RuntimeException(e);
     }
   }
 
@@ -5458,8 +5520,7 @@ public class PApplet implements PConstants {
    */
   public PFont loadFont(String filename) {
     if (!filename.toLowerCase().endsWith(".vlw")) {
-      throw new IllegalArgumentException(
-                                         "loadFont() only works with .vlw font files");
+      throw new IllegalArgumentException("loadFont() is for .vlw files, try createFont()");
     }
     try {
       InputStream input = createInput(filename);
@@ -5840,22 +5901,12 @@ public class PApplet implements PConstants {
    * @see PrintWriter
    */
   public BufferedReader createReader(String filename) {
-    try {
-      InputStream is = createInput(filename);
-      if (is == null) {
-        System.err.println(filename + " does not exist or could not be read");
-        return null;
-      }
-      return createReader(is);
-
-    } catch (Exception e) {
-      if (filename == null) {
-        System.err.println("Filename passed to reader() was null");
-      } else {
-        System.err.println("Couldn't create a reader for " + filename);
-      }
+    InputStream is = createInput(filename);
+    if (is == null) {
+      System.err.println(filename + " does not exist or could not be read");
+      return null;
     }
-    return null;
+    return createReader(is);
   }
 
   /**
@@ -5878,7 +5929,6 @@ public class PApplet implements PConstants {
           + file.getAbsolutePath());
       }
     }
-    //return null;
   }
 
   /**
@@ -5920,11 +5970,15 @@ public class PApplet implements PConstants {
     return createWriter(saveFile(filename));
   }
 
+
   /**
    * @nowebref I want to print lines to a file. I have RSI from typing these
    *           eight lines of code so many times.
    */
   static public PrintWriter createWriter(File file) {
+    if (file == null) {
+      throw new RuntimeException("File passed to createWriter() was null");
+    }
     try {
       createPath(file); // make sure in-between folders exist
       OutputStream output = new FileOutputStream(file);
@@ -5934,15 +5988,9 @@ public class PApplet implements PConstants {
       return createWriter(output);
 
     } catch (Exception e) {
-      if (file == null) {
-        throw new RuntimeException("File passed to createWriter() was null");
-      } else {
-        e.printStackTrace();
-        throw new RuntimeException("Couldn't create a writer for "
-          + file.getAbsolutePath());
-      }
+      throw new RuntimeException("Couldn't create a writer for " +
+                                 file.getAbsolutePath(), e);
     }
-    //return null;
   }
 
   /**
@@ -5964,12 +6012,14 @@ public class PApplet implements PConstants {
 
   // FILE INPUT
 
-  /**
-   * @deprecated As of release 0136, use createInput() instead.
-   */
-  public InputStream openStream(String filename) {
-    return createInput(filename);
-  }
+
+  // Removed for 3.0a8
+//  /**
+//   * @deprecated As of release 0136, use createInput() instead.
+//   */
+//  public InputStream openStream(String filename) {
+//    return createInput(filename);
+//  }
 
   /**
    * ( begin auto-generated from createInput.xml )
@@ -9297,8 +9347,8 @@ public class PApplet implements PConstants {
    * the 'args' array when not null.
    * @param mainClass name of the class to load (with package if any)
    * @param args command line arguments to pass to the sketch's 'args' array.
-   *             Note that this is *not* the same as the args passed to PApplet
-   *             such as --display and others.
+   *             Note that this is *not* the same as the args passed to (and
+   *             understood by) PApplet such as --display.
    */
   static public void main(final String mainClass, final String[] sketchArgs) {
     String[] args = new String[] { mainClass };
@@ -9310,7 +9360,6 @@ public class PApplet implements PConstants {
 
 
 
-  /*
   static public void runSketch(final String[] args,
                                final PApplet constructedApplet) {
     EventQueue.invokeLater(new Runnable() {
@@ -9319,11 +9368,14 @@ public class PApplet implements PConstants {
       }
     });
   }
-  */
 
 
-  static public void runSketch(final String[] args,
-                               final PApplet constructedApplet) {
+  /**
+   * Moving this to the EDT for 3.0a6 because that's the proper thing to do
+   * when messing with AWT/Swing components. And boy, do we mess with 'em.
+   */
+  static protected void runSketchEDT(final String[] args,
+                                  final PApplet constructedApplet) {
     // Supposed to help with flicker, but no effect on OS X.
     // TODO IIRC this helped on Windows, but need to double check.
     System.setProperty("sun.awt.noerasebackground", "true");
@@ -9341,8 +9393,9 @@ public class PApplet implements PConstants {
     int[] editorLocation = null;
 
     String name = null;
-    Color backgroundColor = null;
-    Color stopColor = Color.GRAY;
+    int backgroundColor = 0;
+    //int stopColor = java.awt.Color.GRAY.getRGB();
+    int stopColor = 0xff808080;
     boolean hideStop = false;
 
     int displayIndex = -1; // -1 means use default, b/c numbered from 0
@@ -9367,14 +9420,12 @@ public class PApplet implements PConstants {
           displayIndex = parseInt(value, -1);
 
         } else if (param.equals(ARGS_BGCOLOR)) {
-          if (value.charAt(0) == '#')
-            value = value.substring(1);
-          backgroundColor = new Color(Integer.parseInt(value, 16));
+          if (value.charAt(0) == '#') value = value.substring(1);
+          backgroundColor = 0xff000000 | Integer.parseInt(value, 16);
 
         } else if (param.equals(ARGS_STOP_COLOR)) {
-          if (value.charAt(0) == '#')
-            value = value.substring(1);
-          stopColor = new Color(Integer.parseInt(value, 16));
+          if (value.charAt(0) == '#') value = value.substring(1);
+          stopColor = 0xff000000 | Integer.parseInt(value, 16);
 
         } else if (param.equals(ARGS_SKETCH_FOLDER)) {
           folder = value;
@@ -9464,8 +9515,9 @@ public class PApplet implements PConstants {
 //    Frame frame =
 //      surface.initFrame(applet, backgroundColor,
 //                        displayIndex, present, spanDisplays);
-    PSurface surface = applet.initSurface(backgroundColor, displayIndex,
-                                          fullScreen, spanDisplays);
+
+    PSurface surface =
+      applet.initSurface(backgroundColor, displayIndex, fullScreen, spanDisplays);
 
 //    applet.frame = frame;
 //    frame.setTitle(name);
@@ -9480,20 +9532,20 @@ public class PApplet implements PConstants {
 //    // In a static mode app, this will be after setup() has completed,
 //    // and the empty draw() has set "finished" to true.
 //    // TODO make sure this won't hang if the applet has an exception.
-//    while (applet.defaultSize && !applet.finished) {
-//      //System.out.println("default size");
-//      try {
-//        Thread.sleep(5);
-//
-//      } catch (InterruptedException e) {
-//        //System.out.println("interrupt");
-//      }
-//    }
+    while (applet.defaultSize && !applet.finished) {
+      //System.out.println("default size");
+      try {
+        Thread.sleep(5);
+
+      } catch (InterruptedException e) {
+        //System.out.println("interrupt");
+      }
+    }
 
     if (fullScreen) {
       //surface.placeFullScreen(hideStop);
       if (hideStop) {
-        stopColor = null; // they'll get the hint
+        stopColor = 0;  // they'll get the hint
       }
       surface.placePresent(stopColor);
     } else {
@@ -9505,7 +9557,8 @@ public class PApplet implements PConstants {
     }
   }
 
-  protected PSurface initSurface(Color backgroundColor, int displayIndex,
+
+  protected PSurface initSurface(int backgroundColor, int displayIndex,
                                  boolean present, boolean spanDisplays) {
 //    try {
 //      String renderer = applet.sketchRenderer();
@@ -9516,11 +9569,41 @@ public class PApplet implements PConstants {
 //    } catch (Exception e) {
 //      throw new RuntimeException(e);
 //    }
-    g = makePrimaryGraphics();
+    g = createPrimaryGraphics();
     surface = g.createSurface();
-    frame = surface.initFrame(this, backgroundColor, displayIndex, present,
-                              spanDisplays);
-    surface.setTitle(getClass().getName());
+    if (g.displayable()) {
+      frame = new Frame() {
+        @Override
+        public void setResizable(boolean resizable) {
+          deprecationWarning("setResizable");
+          surface.setResizable(resizable);
+        }
+
+        @Override
+        public void setVisible(boolean visible) {
+          deprecationWarning("setVisible");
+          surface.setVisible(visible);
+        }
+
+        @Override
+        public void setTitle(String title) {
+          deprecationWarning("setTitle");
+          surface.setTitle(title);
+        }
+
+        private void deprecationWarning(String method) {
+          PGraphics.showWarning("Use surface." + method + "() instead of " +
+                                "frame." + method + " in Processing 3");
+        }
+      };
+
+      surface.initFrame(this, backgroundColor, displayIndex, present, spanDisplays);
+      surface.setTitle(getClass().getName());
+      //frame.setTitle(getClass().getName());
+//    } else {
+//      // TODO necessary?
+//      surface.initOffscreen(this);
+    }
 
     init();
 
@@ -9530,6 +9613,11 @@ public class PApplet implements PConstants {
     // moving it to init() 141114
     //applet.start();
 
+    // Removing this for 3.0a6. sketchWidth/Height() methods should give us
+    // good values for most cases, and removes the hackery seen here.
+    // TODO May need to keep since setup() may take a while, so why not have
+    //      it first render offscreen before showing.
+    /*
     // Wait until the applet has figured out its width.
     // In a static mode app, this will be after setup() has completed,
     // and the empty draw() has set "finished" to true.
@@ -9543,6 +9631,8 @@ public class PApplet implements PConstants {
         //System.out.println("interrupt");
       }
     }
+    */
+
 //    System.out.println("out of default size loop, " + width + " " + height);
     // convenience to avoid another 'get' from the static main() method
     return surface;
@@ -9557,22 +9647,22 @@ public class PApplet implements PConstants {
 //    }
 //  }
 
-  /**
-   * Return a Canvas object that can be embedded into other Java GUIs. This is
-   * necessary because PApplet no longer subclasses Component.
-   *
-   * <pre>
-   * PApplet sketch = new EmbedSketch();
-   *
-   * Canvas canvas = sketch.getCanvas();
-   * // add the canvas object to your project and validate() it
-   * sketch.init()  // start the animation thread
-   */
-  public Canvas getCanvas() {
-    g = makePrimaryGraphics();
-    surface = g.createSurface();
-    return surface.initCanvas(this);
-  }
+
+//  /**
+//   * Return a Canvas object that can be embedded into other Java GUIs.
+//   * This is necessary because PApplet no longer subclasses Component.
+//   *
+//   * <pre>
+//   * PApplet sketch = new EmbedSketch();
+//   * Canvas canvas = sketch.getCanvas();
+//   * // add the canvas object to your project and validate() it
+//   * sketch.init()  // start the animation thread
+//   */
+//  public Component getComponent() {
+//    g = createPrimaryGraphics();
+//    surface = g.createSurface();
+//    return surface.initComponent(this);
+//  }
 
   /** Convenience method, should only be called by PSurface subclasses. */
   static public void hideMenuBar() {
@@ -9832,49 +9922,7 @@ public class PApplet implements PConstants {
 
   // public functions for processing.core
 
-  /**
-   * Store data of some kind for the renderer that requires extra metadata of
-   * some kind. Usually this is a renderer-specific representation of the image
-   * data, for instance a BufferedImage with tint() settings applied for
-   * PGraphicsJava2D, or resized image data and OpenGL texture indices for
-   * PGraphicsOpenGL.
-   *
-   * @param renderer
-   *          The PGraphics renderer associated to the image
-   * @param storage
-   *          The metadata required by the renderer
-   */
-  public void setCache(PImage image, Object storage) {
-    if (recorder != null)
-      recorder.setCache(image, storage);
-    g.setCache(image, storage);
-  }
 
-  /**
-   * Get cache storage data for the specified renderer. Because each renderer
-   * will cache data in different formats, it's necessary to store cache data
-   * keyed by the renderer object. Otherwise, attempting to draw the same image
-   * to both a PGraphicsJava2D and a PGraphicsOpenGL will cause errors.
-   *
-   * @param renderer
-   *          The PGraphics renderer associated to the image
-   * @return metadata stored for the specified renderer
-   */
-  public Object getCache(PImage image) {
-    return g.getCache(image);
-  }
-
-  /**
-   * Remove information associated with this renderer from the cache, if any.
-   *
-   * @param renderer
-   *          The PGraphics renderer whose cache data should be removed
-   */
-  public void removeCache(PImage image) {
-    if (recorder != null)
-      recorder.removeCache(image);
-    g.removeCache(image);
-  }
 
   public PGL beginPGL() {
     return g.beginPGL();
@@ -10245,24 +10293,21 @@ public class PApplet implements PConstants {
     return g.createShape();
   }
 
-  public PShape createShape(PShape source) {
-    return g.createShape(source);
-  }
 
-  /**
-   * @param type
-   *          either POINTS, LINES, TRIANGLES, TRIANGLE_FAN, TRIANGLE_STRIP,
-   *          QUADS, QUAD_STRIP
-   */
   public PShape createShape(int type) {
     return g.createShape(type);
   }
 
   /**
+<<<<<<< HEAD
    * @param kind
    *          either LINE, TRIANGLE, RECT, ELLIPSE, ARC, SPHERE, BOX
    * @param p
    *          parameters that match the kind of shape
+=======
+   * @param kind either POINT, LINE, TRIANGLE, QUAD, RECT, ELLIPSE, ARC, BOX, SPHERE
+   * @param p parameters that match the kind of shape
+>>>>>>> 6cb769b8194394690955fb0efc81bedce4379412
    */
   public PShape createShape(int kind, float... p) {
     return g.createShape(kind, p);

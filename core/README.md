@@ -26,6 +26,9 @@ We're removing `Applet` as the base class for `PApplet` and redoing the entire r
 #### Retina/HiDPI/2x drawing and displays
 * Documentation changes [here](https://github.com/processing/processing-docs/issues/170)
 
+#### The Event Dispatch Thread
+The current source starts putting AWT (and Swing, if any) calls on the [EDT](https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html), per Oracle's statements in Java's documentation. Actual rendering in the default renderer happens off the EDT, but the EDT is used to blit the image to the screen (or resize windows, etc). Looking for more consistent cross-platform results by doing this.
+
 ## The Mess
 
 The rest of this document are my notes while I'm making changes.
@@ -36,6 +39,15 @@ The rest of this document are my notes while I'm making changes.
 3. present (sketch is smaller, color the rest of the screen; does not work with multiple screens at once)
 4. full screen (sketch same as screen size)
 5. all screens (sketch spans all screens)
+
+#### alternate version
+1. pde sketch
+2. standalone sketch (exported)
+3. running from Eclipse
+4. size command?
+5. renderer change?
+6. renderer that draws to screen (Java2D) or not (PDF)
+7. OpenGL or not
 
 resize events: 
 Frame > Canvas > PGraphics > PApplet

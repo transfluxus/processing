@@ -29,6 +29,8 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.swing.ImageIcon;
+
 import processing.app.*;
 import processing.mode.java.runner.Runner;
 import processing.mode.java.tweak.SketchParser;
@@ -46,6 +48,17 @@ public class JavaMode extends Mode {
 
     initLogger();
     loadPreferences();
+    loadIcons();
+  }
+  
+  /**
+   * Needed by code completion panel. See {@link processing.mode.java.pdex.CompletionPanel}
+   */
+  private void loadIcons(){
+    classIcon = loadIcon("theme/icon_class_obj.png");
+    methodIcon = loadIcon("theme/icon_methpub_obj.png");
+    fieldIcon = loadIcon("theme/icon_field_protected_obj.png");
+    localVarIcon = loadIcon("theme/icon_field_default_obj.png");
   }
 
 
@@ -154,11 +167,11 @@ public class JavaMode extends Mode {
                             RunnerListener listener,
                             final boolean present) throws SketchException {
     final JavaEditor editor = (JavaEditor)listener;
-    boolean launchInteractive = false;
 
     if (isSketchModified(sketch)) {
       editor.deactivateRun();
-      Base.showMessage("Save", "Please save the sketch before running in Tweak Mode.");
+      Base.showMessage(Language.text("menu.file.save"),
+                       Language.text("tweak_mode.save_before_tweak"));
       return null;
     }
 
@@ -179,7 +192,7 @@ public class JavaMode extends Mode {
     final SketchParser parser = new SketchParser(editor.baseCode, requiresTweak);
 
     // add our code to the sketch
-    launchInteractive = editor.automateSketch(sketch, parser.allHandles);
+    final boolean launchInteractive = editor.automateSketch(sketch, parser);
 
     build = new JavaBuild(sketch);
     appletClassName = build.build(false);
@@ -190,8 +203,10 @@ public class JavaMode extends Mode {
           public void run() {
             runtime.launch(present);  // this blocks until finished
             // next lines are executed when the sketch quits
-            editor.initEditorCode(parser.allHandles, false);
-            editor.stopInteractiveMode(parser.allHandles);
+            if (launchInteractive) {
+                editor.initEditorCode(parser.allHandles, false);
+                editor.stopInteractiveMode(parser.allHandles);
+            }
           }
         }).start();
 
@@ -316,6 +331,11 @@ public class JavaMode extends Mode {
   static public final String prefImportSuggestEnabled = "pdex.importSuggestEnabled";
 
   static volatile public boolean enableTweak = false;
+  
+  static public ImageIcon classIcon;
+  static public ImageIcon fieldIcon;
+  static public ImageIcon methodIcon;
+  static public ImageIcon localVarIcon;
 
 
   public void loadPreferences() {

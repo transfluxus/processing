@@ -1,7 +1,6 @@
 package processing.jogl;
 
-import java.awt.Canvas;
-import java.awt.Color;
+import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.Frame;
 import java.awt.Rectangle;
@@ -60,24 +59,28 @@ public class PSurfaceJOGL implements PSurface {
   Throwable drawException;
   Object waitObject = new Object();
 
+  NewtCanvasAWT canvas;
+
+
   public PSurfaceJOGL(PGraphics graphics) {
     this.graphics = graphics;
     this.pgl = (PJOGL) ((PGraphicsOpenGL)graphics).pgl;
   }
 
-  public void initOffscreen() {
+  public void initOffscreen(PApplet sketch) {
     // TODO Auto-generated method stub
-
   }
 
-  public Canvas initCanvas(PApplet sketch) {
+
+  /*
+  public Canvas initComponent(PApplet sketch) {
     this.sketch = sketch;
 
     sketchWidth = sketch.sketchWidth();
     sketchHeight = sketch.sketchHeight();
 
     if (window != null) {
-      NewtCanvasAWT canvas = new NewtCanvasAWT(window);
+      canvas = new NewtCanvasAWT(window);
       canvas.setBounds(0, 0, window.getWidth(), window.getHeight());
 //      canvas.setBackground(new Color(pg.backgroundColor, true));
       canvas.setFocusable(true);
@@ -87,10 +90,12 @@ public class PSurfaceJOGL implements PSurface {
 
     return null;
   }
+  */
 
-  public Frame initFrame(PApplet sketch, Color backgroundColor,
-                         int deviceIndex, boolean fullScreen,
-                         boolean spanDisplays) {
+
+  public void initFrame(PApplet sketch, int backgroundColor,
+                        int deviceIndex, boolean fullScreen,
+                        boolean spanDisplays) {
     this.sketch = sketch;
 
     Display display = NewtFactory.createDisplay(null);
@@ -318,42 +323,45 @@ public class PSurfaceJOGL implements PSurface {
       // error setting the window visible, should quit...
     }
 
-    frame = new DummyFrame();
-    return frame;
+//    frame = new DummyFrame();
+//    return frame;
   }
 
-  @SuppressWarnings("serial")
-  class DummyFrame extends Frame {
+//  @SuppressWarnings("serial")
+//  class DummyFrame extends Frame {
+//
+//    public DummyFrame() {
+//      super();
+//    }
+//
+//    @Override
+//    public void setResizable(boolean resizable) {
+////      super.setResizable(resizable);
+//    }
+//
+//    @Override
+//    public void setVisible(boolean visible) {
+//      window.setVisible(visible);
+//    }
+//
+//    @Override
+//    public void setTitle(String title) {
+//      window.setTitle(title);
+//    }
+//  }
 
-    public DummyFrame() {
-      super();
-    }
 
-    @Override
-    public void setResizable(boolean resizable) {
-//      super.setResizable(resizable);
-    }
-
-    @Override
-    public void setVisible(boolean visible) {
-      window.setVisible(visible);
-    }
-
-    @Override
-    public void setTitle(String title) {
-      window.setTitle(title);
-    }
-  }
-
-
+  @Override
   public void setTitle(String title) {
     window.setTitle(title);
   }
 
+  @Override
   public void setVisible(boolean visible) {
     window.setVisible(visible);
   }
 
+  @Override
   public void setResizable(boolean resizable) {
     // TODO Auto-generated method stub
 
@@ -369,7 +377,7 @@ public class PSurfaceJOGL implements PSurface {
 
   }
 
-  public void placePresent(Color stopColor) {
+  public void placePresent(int stopColor) {
     // TODO Auto-generated method stub
 
   }
@@ -424,6 +432,10 @@ public class PSurfaceJOGL implements PSurface {
     }
   }
 
+  public Component getComponent() {
+    return canvas;
+  }
+
   public void setSmooth(int level) {
     pgl.reqNumSamples = level;
     GLCapabilities caps = new GLCapabilities(profile);
@@ -451,10 +463,6 @@ public class PSurfaceJOGL implements PSurface {
   public void requestFocus() {
     window.requestFocus();
 
-  }
-
-  public void blit() {
-    // TODO Auto-generated method stub
   }
 
   class DrawListener implements GLEventListener {

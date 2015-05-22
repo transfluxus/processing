@@ -15,7 +15,7 @@
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
 
-  You should have received a copy of the GNU General Public License along 
+  You should have received a copy of the GNU General Public License along
   with this program; if not, write to the Free Software Foundation, Inc.
   59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
@@ -26,13 +26,13 @@ import java.util.Arrays;
 import java.util.List;
 
 import processing.core.PApplet;
-
+import processing.app.Language;
 
 abstract public class Contribution {
   static final String SPECIAL_CATEGORY_NAME = "Starred";
-  static final List validCategories = 
-    Arrays.asList("3D", "Animation", "Data", "Geometry", "GUI", "Hardware", 
-                  "I/O", "Math", "Simulation", "Sound", SPECIAL_CATEGORY_NAME, "Typography", 
+  static final List validCategories =
+    Arrays.asList("3D", "Animation", "Data", "Geometry", "GUI", "Hardware",
+                  "I/O", "Math", "Simulation", "Sound", SPECIAL_CATEGORY_NAME, "Typography",
                   "Utilities", "Video & Vision", "Other");
 
   //protected String category;      // "Sound"
@@ -48,20 +48,20 @@ abstract public class Contribution {
   protected int minRevision;    //  0
   protected int maxRevision;    //  227
   protected List<String> specifiedImports; // pdf.export.*,pdf.convert.common.*
-  
-  
+
+
   // "Sound"
 //  public String getCategory() {
 //    return category;
 //  }
 
-  
+
   // "Sound", "Utilities"... see valid list in ContributionListing
   protected List<String> getCategories() {
     return categories;
   }
-  
-  
+
+
   protected String getCategoryStr() {
     StringBuilder sb = new StringBuilder();
     for (String category : categories) {
@@ -71,8 +71,8 @@ abstract public class Contribution {
     sb.deleteCharAt(sb.length()-1);  // delete last comma
     return sb.toString();
   }
-  
-  
+
+
   protected boolean hasCategory(String category) {
     if (category != null) {
       for (String c : categories) {
@@ -82,15 +82,15 @@ abstract public class Contribution {
       }
     }
     return false;
-  }  
-  
-  
+  }
+
+
   // pdf.export.*,pdf.convert.common.*
   protected List<String> getImports() {
     return specifiedImports;
   }
-  
-  
+
+
   protected String getImportStr() {
     if (specifiedImports == null || specifiedImports.isEmpty()) {
       return "";
@@ -156,7 +156,7 @@ abstract public class Contribution {
   public String getPrettyVersion() {
     return prettyVersion;
   }
-  
+
   // 1402805757
   public long getLastUpdated() {
     return lastUpdated;
@@ -179,36 +179,36 @@ abstract public class Contribution {
 
 
   abstract public ContributionType getType();
-  
-  
+
+
   public String getTypeName() {
     return getType().toString();
   }
-  
-  
+
+
   abstract public boolean isInstalled();
-  
-  
-//  /** 
+
+
+//  /**
 //   * Returns true if the type of contribution requires the PDE to restart
-//   * when being added or removed. 
+//   * when being added or removed.
 //   */
 //  public boolean requiresRestart() {
 //    return getType() == ContributionType.TOOL || getType() == ContributionType.MODE;
 //  }
-  
+
 
   boolean isRestartFlagged() {
     return false;
   }
-  
-  
+
+
   /** Overridden by LocalContribution. */
   boolean isDeletionFlagged() {
     return false;
   }
 
-  
+
   boolean isUpdateFlagged() {
     return false;
   }
@@ -217,12 +217,12 @@ abstract public class Contribution {
   /**
    * Returns true if the contribution is a starred/recommended contribution, or
    * is by the Processing Foundation.
-   * 
+   *
    * @return
    */
   boolean isSpecial() {
     try {
-      return (authorList.indexOf("The Processing Foundation") != -1 || 
+      return (authorList.indexOf("The Processing Foundation") != -1 ||
               categories.contains(SPECIAL_CATEGORY_NAME));
     } catch (NullPointerException npe) {
       return false;
@@ -230,7 +230,7 @@ abstract public class Contribution {
   }
 
 
-  /** 
+  /**
    * @return a single element list with "Unknown" as the category.
    */
   static List<String> defaultCategory() {
@@ -238,19 +238,20 @@ abstract public class Contribution {
     outgoing.add("Unknown");
     return outgoing;
   }
-  
-  
+
+
   /**
    * @return the list of categories that this contribution is part of
    *         (e.g. "Typography / Geometry"). "Unknown" if the category null.
    */
   static List<String> parseCategories(String categoryStr) {
     List<String> outgoing = new ArrayList<String>();
-    
+
     if (categoryStr != null) {
       String[] listing = PApplet.trim(PApplet.split(categoryStr, ','));
       for (String category : listing) {
         if (validCategories.contains(category)) {
+          category = translateCategory(category);
           outgoing.add(category);
         }
       }
@@ -260,8 +261,8 @@ abstract public class Contribution {
     }
     return outgoing;
   }
-  
-  
+
+
   /**
    * @return the list of imports that this contribution (library) contains.
    */
@@ -275,5 +276,12 @@ abstract public class Contribution {
       }
     }
     return (outgoing.size() > 0) ? outgoing : null;
+  }
+
+
+  static private String translateCategory(String cat) {
+    // Converts Other to other, I/O to i_o, Video & Vision to video_vision
+    String cleaned = cat.replaceAll("[\\W]+", "_").toLowerCase();
+    return Language.text("contrib.category." + cleaned);
   }
 }
