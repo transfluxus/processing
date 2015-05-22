@@ -154,7 +154,7 @@ public class ContributionManager {
               if (contribution != null) {
                 contribListing.replaceContribution(ad, contribution);
                 if (contribution.getType() == ContributionType.MODE) {
-                  ArrayList<ModeContribution> contribModes = editor.getBase().getModeContribs();
+                  List<ModeContribution> contribModes = editor.getBase().getModeContribs();
                   if (!contribModes.contains(contribution)) {
                     contribModes.add((ModeContribution) contribution);
                   }
@@ -200,9 +200,9 @@ public class ContributionManager {
   /**
    * Non-blocking call to download and install a contribution in a new thread.
    * Used when information about the progress of the download and install
-   * procedure is not of importance, such as if a contribution has to be 
+   * procedure is not of importance, such as if a contribution has to be
    * installed at startup time.
-   * 
+   *
    * @param url
    *          Direct link to the contribution.
    * @param ad
@@ -228,8 +228,7 @@ public class ContributionManager {
             if (contribution != null) {
               contribListing.replaceContribution(ad, contribution);
               if (contribution.getType() == ContributionType.MODE) {
-                ArrayList<ModeContribution> contribModes = base
-                  .getModeContribs();
+                List<ModeContribution> contribModes = base.getModeContribs();
                 if (contribModes != null && !contribModes.contains(contribution)) {
                   contribModes.add((ModeContribution) contribution);
                 }
@@ -307,16 +306,16 @@ public class ContributionManager {
    *          The list of AvailableContributions to be downloaded and installed.
    */
   public static void downloadAndInstallOnImport(final Base base,
-                                                final ArrayList<AvailableContribution> aList) {
+                                                final List<AvailableContribution> aList) {
 
     // To avoid the user from modifying stuff, since this function is only called
     // during pre-processing
     base.getActiveEditor().getTextArea().setEditable(false);
-    base.getActiveEditor().getConsole().clear();
+//    base.getActiveEditor().getConsole().clear();
 
     ArrayList<String> installedLibList = new ArrayList<String>();
 
-    // boolean variable to check if previous lib was installed successfully, 
+    // boolean variable to check if previous lib was installed successfully,
     // to give the user an idea about progress being made.
     boolean isPrevDone = false;
 
@@ -336,7 +335,7 @@ public class ContributionManager {
           try {
             // Use the console to let the user know what's happening
             // The slightly complex if-else is required to let the user know when
-            // one install is completed and the next download has begun without 
+            // one install is completed and the next download has begun without
             // interfereing with occur status messages that may arise in the meanwhile
             String statusMsg = base.getActiveEditor().getStatusMessage();
             if (isPrevDone) {
@@ -370,7 +369,7 @@ public class ContributionManager {
 
             installedLibList.add(ad.name);
             isPrevDone = true;
-            
+
             arg = "contrib.import.progress.done";
             base.getActiveEditor().statusNotice(Language.interpolate(arg,ad.name));
 
@@ -402,7 +401,7 @@ public class ContributionManager {
     while (iter.hasNext()) {
       Editor ed = iter.next();
       ed.getMode().rebuildImportMenu();
-      ed.getMode().resetExamples();
+      ed.getMode().rebuildExamplesFrame();
       ed.rebuildToolMenu();
       ed.rebuildModeMenu();
     }
@@ -602,7 +601,7 @@ public class ContributionManager {
       propFileName = "libraries.properties";
 
     for (File folder : markedForUpdate) {
-      Map<String, String> properties = 
+      Map<String, String> properties =
         Base.readSettings(new File(folder, propFileName));
       updateContribsNames.add(properties.get("name"));
       Base.removeDir(folder);

@@ -3,7 +3,7 @@
 /*
   Part of the Processing project - http://processing.org
 
-  Copyright (c) 2012-14 The Processing Foundation
+  Copyright (c) 2012-15 The Processing Foundation
   Copyright (c) 2004-12 Ben Fry and Casey Reas
   Copyright (c) 2001-04 Massachusetts Institute of Technology
 
@@ -28,20 +28,32 @@ import processing.app.syntax.*;
 import processing.app.tools.*;
 import processing.core.*;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.Frame;
+import java.awt.Image;
+import java.awt.Point;
 import java.awt.datatransfer.*;
 import java.awt.event.*;
 import java.awt.print.*;
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Stack;
 import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.plaf.basic.*;
 import javax.swing.text.*;
 import javax.swing.undo.*;
+
 
 /**
  * Main editor panel for the Processing Development Environment.
@@ -83,9 +95,9 @@ public abstract class Editor extends JFrame implements RunnerListener {
   protected JEditTextArea textarea;
   protected EditorStatus status;
   protected JSplitPane splitPane;
-  protected JPanel consolePanel;
+  protected EditorFooter footer;
   protected EditorConsole console;
-  protected EditorLineStatus lineStatus;
+//  protected EditorLineStatus lineStatus;
 
   // currently opened program
   protected Sketch sketch;
@@ -117,8 +129,8 @@ public abstract class Editor extends JFrame implements RunnerListener {
   JMenu toolsMenu;
   JMenu modeMenu;
 
-  ArrayList<ToolContribution> coreTools;
-  public ArrayList<ToolContribution> contribTools;
+  List<ToolContribution> coreTools;
+  List<ToolContribution> contribTools;
 
   Image backgroundGradient;
 
@@ -226,27 +238,14 @@ public abstract class Editor extends JFrame implements RunnerListener {
     toolbar = createToolbar();
     upper.add(toolbar);
 
-    header = new EditorHeader(this);
+    header = createHeader();
     upper.add(header);
 
     textarea = createTextArea();
     textarea.setRightClickPopup(new TextAreaPopup());
     textarea.setHorizontalOffset(JEditTextArea.leftHandGutter);
 
-    // assemble console panel, consisting of status area and the console itself
-    consolePanel = new JPanel();
-    consolePanel.setLayout(new BorderLayout());
-
-    status = new EditorStatus(this);
-    consolePanel.add(status, BorderLayout.NORTH);
-
-    console = new EditorConsole(this);
-    // windows puts an ugly border on this guy
-    console.setBorder(null);
-    consolePanel.add(console, BorderLayout.CENTER);
-
-    lineStatus = new EditorLineStatus(this);
-    consolePanel.add(lineStatus, BorderLayout.SOUTH);
+    footer = createFooter();
 
     upper.add(textarea);
 
@@ -254,7 +253,7 @@ public abstract class Editor extends JFrame implements RunnerListener {
 //    status = new EditorStatus(this);
 //    upper.add(status);
 
-    splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, upper, consolePanel);
+    splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, upper, footer);
 
     // disable this because it hides the message area, which is essential (issue #745)
     splitPane.setOneTouchExpandable(false);
@@ -263,16 +262,20 @@ public abstract class Editor extends JFrame implements RunnerListener {
     // if window increases in size, give all of increase to
     // the textarea in the upper pane
     splitPane.setResizeWeight(1D);
-    // remove any ugly borders added by PLAFs
+    // remove any ugly borders added by PLAFs (doesn't fix everything)
     splitPane.setBorder(null);
-    // necessary to let the gradient show through
-//    splitPane.setOpaque(false);
-
     // remove an ugly border around anything in a SplitPane !$*&!%
     UIManager.getDefaults().put("SplitPane.border", BorderFactory.createEmptyBorder());
+    // set the height per our gui design
+    //splitPane.setDividerSize(mode.getInteger("divider.height"));
+    splitPane.setDividerSize(EditorStatus.HIGH);
+
     // override the look of the SplitPane so that it's identical across OSes
     splitPane.setUI(new BasicSplitPaneUI() {
       public BasicSplitPaneDivider createDefaultDivider() {
+        status = new EditorStatus(this, Editor.this);
+        return status;
+        /*
         return new BasicSplitPaneDivider(this) {
           final Color dividerColor = mode.getColor("divider.color"); //new Color(204, 204, 204);
           final Color dotColor = mode.getColor("divider.dot.color"); //new Color(80, 80, 80);
@@ -295,16 +298,9 @@ public abstract class Editor extends JFrame implements RunnerListener {
             g.fillOval(x, y, dotSize, dotSize);
           }
         };
+        */
       }
     });
-
-//    EditorConsole.systemOut.println("divider default size is " + splitPane.getDividerSize());
-//    // the default size on windows is too small and kinda ugly
-//    int dividerSize = Preferences.getInteger("editor.divider.size");
-//    if (dividerSize != 0) {
-//      splitPane.setDividerSize(dividerSize);
-//    }
-    splitPane.setDividerSize(mode.getInteger("divider.height"));
 
     box.add(splitPane);
 
@@ -365,8 +361,18 @@ public abstract class Editor extends JFrame implements RunnerListener {
   }
 
 
-  protected ArrayList<ToolContribution> getCoreTools() {
+  protected List<ToolContribution> getCoreTools() {
     return coreTools;
+  }
+
+
+  public List<ToolContribution> getToolContribs() {
+    return contribTools;
+  }
+
+
+  public void removeToolContrib(ToolContribution tc) {
+    contribTools.remove(tc);
   }
 
 
@@ -410,6 +416,32 @@ public abstract class Editor extends JFrame implements RunnerListener {
   }
 
 
+  public EditorFooter createFooter() {
+    EditorFooter ef = new EditorFooter(this);
+    console = new EditorConsole(this);
+    ef.addPanel(Language.text("editor.footer.console"), console);
+    return ef;
+
+    /*
+    // assemble console panel, consisting of status area and the console itself
+    JPanel panel = new JPanel();
+    panel.setLayout(new BorderLayout());
+
+//    status = new EditorStatus(this);
+//    consolePanel.add(status, BorderLayout.NORTH);
+
+    console = new EditorConsole(this);
+    // windows puts an ugly border on this guy
+    console.setBorder(null);
+    panel.add(console, BorderLayout.CENTER);
+
+//    lineStatus = new EditorLineStatus(this);
+//    consolePanel.add(lineStatus, BorderLayout.SOUTH);
+    return panel;
+    */
+  }
+
+
   public EditorState getEditorState() {
     return state;
   }
@@ -437,6 +469,7 @@ public abstract class Editor extends JFrame implements RunnerListener {
 
     @SuppressWarnings("unchecked")
     public boolean importData(TransferHandler.TransferSupport support) {
+      System.out.println(support.getTransferable());
       int successful = 0;
 
       if (!canImport(support)) {
@@ -449,7 +482,7 @@ public abstract class Editor extends JFrame implements RunnerListener {
           new DataFlavor("text/uri-list;class=java.lang.String");
 
         if (transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-          java.util.List list = (java.util.List)
+          List list = (List)
             transferable.getTransferData(DataFlavor.javaFileListFlavor);
           for (int i = 0; i < list.size(); i++) {
             File file = (File) list.get(i);
@@ -481,9 +514,7 @@ public abstract class Editor extends JFrame implements RunnerListener {
                          "An error occurred while trying to add files to the sketch.", e);
         return false;
       }
-
       statusNotice(Language.pluralize("editor.status.drag_and_drop.files_added", successful));
-
       return true;
     }
   }
@@ -568,7 +599,18 @@ public abstract class Editor extends JFrame implements RunnerListener {
 //  }
 
 
+  public EditorHeader createHeader() {
+    return new EditorHeader(this);
+  }
+
+
   abstract public EditorToolbar createToolbar();
+
+
+  public void rebuildToolbar() {
+    toolbar.rebuild();
+    toolbar.revalidate();  // necessary to handle sub-components
+  }
 
 
   abstract public Formatter createFormatter();
@@ -1192,7 +1234,7 @@ public abstract class Editor extends JFrame implements RunnerListener {
 //  }
 
 
-  void addToolItem(final Tool tool, HashMap<String, JMenuItem> toolItems) {
+  void addToolItem(final Tool tool, Map<String, JMenuItem> toolItems) {
     String title = tool.getMenuTitle();
     final JMenuItem item = new JMenuItem(title);
     item.addActionListener(new ActionListener() {
@@ -1220,8 +1262,8 @@ public abstract class Editor extends JFrame implements RunnerListener {
   }
 
 
-  protected void addTools(JMenu menu, ArrayList<ToolContribution> tools) {
-    HashMap<String, JMenuItem> toolItems = new HashMap<String, JMenuItem>();
+  protected void addTools(JMenu menu, List<ToolContribution> tools) {
+    Map<String, JMenuItem> toolItems = new HashMap<String, JMenuItem>();
 
     for (final ToolContribution tool : tools) {
       try {
@@ -2854,6 +2896,10 @@ public abstract class Editor extends JFrame implements RunnerListener {
    * Show a notice message in the editor status bar.
    */
   public void statusNotice(String msg) {
+    if (msg == null) {
+      new IllegalArgumentException("This code called statusNotice(null)").printStackTrace();
+      msg = "";
+    }
     status.notice(msg);
   }
 
@@ -2868,7 +2914,7 @@ public abstract class Editor extends JFrame implements RunnerListener {
   /**
    * Returns the current notice message in the editor status bar.
    */
-  public String getStatusMessage(){
+  public String getStatusMessage() {
     return status.message;
   }
 
@@ -2876,7 +2922,7 @@ public abstract class Editor extends JFrame implements RunnerListener {
   /**
    * Returns the current mode of the editor status bar: NOTICE, ERR or EDIT.
    */
-  public int getStatusMode(){
+  public int getStatusMode() {
     return status.mode;
   }
 

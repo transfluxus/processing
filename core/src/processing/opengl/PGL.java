@@ -132,6 +132,7 @@ public abstract class PGL {
    * order to make sure the lines are always on top of the fill geometry */
   protected static float STROKE_DISPLACEMENT = 0.999f;
 
+
   // ........................................................
 
   // FBO layer
@@ -560,9 +561,10 @@ public abstract class PGL {
           x = (int)offsetX;
           y = (int)offsetY;
         }
+        float scale = pg.getPixelScale();
         drawTexture(TEXTURE_2D, glColorTex.get(frontTex), fboWidth, fboHeight,
                     x, y, pg.width, pg.height,
-                    0, 0, pg.width, pg.height,
+                    0, 0, (int)(scale * pg.width), (int)(scale * pg.height),
                     0, 0, pg.width, pg.height);
       }
 
@@ -657,10 +659,11 @@ public abstract class PGL {
         x = (int)offsetX;
         y = (int)offsetY;
       }
+      float scale = pg.getPixelScale();
       drawTexture(TEXTURE_2D, glColorTex.get(backTex),
                   fboWidth, fboHeight,
                   x, y, pg.width, pg.height,
-                  0, 0, pg.width, pg.height,
+                  0, 0, (int)(scale * pg.width), (int)(scale * pg.height),
                   0, 0, pg.width, pg.height);
 
       // Swapping front and back textures.
@@ -714,12 +717,14 @@ public abstract class PGL {
 
   private void createFBOLayer() {
     String ext = getString(EXTENSIONS);
+    float scale = pg.getPixelScale();
+
     if (-1 < ext.indexOf("texture_non_power_of_two")) {
-      fboWidth = pg.width;
-      fboHeight = pg.height;
+      fboWidth = (int)(scale * pg.width);
+      fboHeight = (int)(scale * pg.height);
     } else {
-      fboWidth = nextPowerOfTwo(pg.width);
-      fboHeight = nextPowerOfTwo(pg.height);
+      fboWidth = nextPowerOfTwo((int)(scale * pg.width));
+      fboHeight = nextPowerOfTwo((int)(scale * pg.height));
     }
 
     int maxs = maxSamples();

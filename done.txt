@@ -1,3 +1,142 @@
+0236 (3.0a9)
+X show screen dimensions in the Preferences window for display selector
+
+gui/pdex/debugger
+X implement the bottom half of the editor window
+X   editor window draws in stages (at least on OS X) on first view
+X   the console/bottom area stays white until an additional repaint?
+X   fixed these issues and replaced with footer
+X remove EditorLineStatus (we have line numbers)
+X automatically show the variables window when debugging, hide when not
+X ctrl-y shortcut duplicated
+X   https://github.com/processing/processing/issues/3298
+X remove "Experimental Mode: Yikes!" messages
+o NullPointerException in initiateToolTip()
+X   https://github.com/processing/processing/issues/3286
+X   can no longer reproduce
+X get rid of the debugger 'pane', just have that be the old window
+o   show debug window when running, hide when stopped
+o   can we animate the show/hide for the debug box?
+X large window places the debugger window offscreen
+X   https://github.com/processing/processing/issues/3091
+X almost all of the debugger menu needs to disappear
+X   https://github.com/processing/processing/issues/3267
+X   everything below toggle breakpoint, plus show/hide inspector
+X debugger button should show/hide toolbar buttons for step/continue
+X name of toggle debug and variable inspector
+X   Enable Debugger (with or without a checkbox)
+X   "show inspector" "hide inspector" "variable inspector" (with a check)
+o need unavailable/deactivate state for debug toolbar items
+o   or hide the tray when not debugging? Debug just a menu checkbox?
+o fix hasJavaTabs() function
+o   almost always used as a negative, or tied to a 'return' from fxn
+o   name isn't tied to its function, but the symptom
+X update hasJavaTabs on editor header rebuild
+X remove focus border from the Variables window
+X need active state for the butterfly
+X click a line number to toggle breakpoint
+X   was in there before, but required double-click
+
+in alpha 8 (but not confirmed in time)
+X "step" not working properly
+X   https://github.com/processing/processing/issues/3266
+X Cmd-click behavior on function/variable is firing when cmd-click not pressed
+X   https://github.com/processing/processing/issues/3242
+
+
+0235 (3.0a8)
+X Unable to install "processing-java"
+X   https://github.com/processing/processing/issues/3224
+X   also update the Windows and Linux versions
+X color selector in Tweak Mode is broken (uses getComponent())
+X   replace ColorSelector with JComponent version
+X   https://github.com/processing/processing/issues/3209
+X sketchbook window is completely empty w/ no sketches
+X   requires restart of p5 before it updates
+X   https://github.com/processing/processing/issues/3214
+X Replace & Find was reading "Find & Replace" 
+X   https://github.com/processing/processing/issues/3247
+X "one file added to sketch" message when two files added
+X   turned out to be really messy ProgressFrame code
+X write Wiki page on how to run "headless"
+X   old version from user Batuff:
+X   sudo apt-get install xvfb
+X   Xvfb :2 -screen 0 1024x768x24 &
+X   export DISPLAY=localhost:2.0
+X   ./<myExportedProcessingApplication>
+X   https://github.com/processing/processing/wiki/Running-without-a-Display
+X write up code guidelines for project
+X   make proper Eclipse style prefs to reinforce
+X   https://github.com/processing/processing/wiki/Style-Guidelines
+X change preproc to write settings() method instead of sketchXxxx() 
+
+cleaning
+X better text editor / live debugging (integrate Eclipse JDT)
+X   line numbers
+X   it's too difficult for students to debug their code
+X     can the jdt be hooked in somewhat easily?
+X Replace current editor with more advanced version
+X   http://code.google.com/p/processing/issues/detail?id=1032
+o   code coloring is imperfect because it's not based on a parser
+X rename location is awkward, do it on the tab?
+X date inconsistencies
+o   https://github.com/processing/processing/issues/1777
+
+debugger/pdex
+X Change "method" to "function" in a few error messages
+X   https://github.com/processing/processing/issues/3225
+X ErrorMessageSimplifier should use the language subst stuff
+o   also, shouldn't that be one text() method with different args?
+X   in PDE.properties, unnecessary special syntax is used for replacements
+X   methoddef, varname, classname, namefield, typeA, typeB
+X Debugger "String is null" error when hitting breakpoint
+X   https://github.com/processing/processing/issues/3265
+X Error message for incorrect function arguments is wonky
+X   https://github.com/processing/processing/issues/3268
+X String concatenation mistakes produce odd error messages
+X   https://github.com/processing/processing/issues/3253
+X Debugger "String is null" error when hitting breakpoint
+X   https://github.com/processing/processing/issues/3265
+X   hopefully fixed, but what's happening here?
+
+contribs
+X Window size not passing into Tweak Mode
+X   https://github.com/processing/processing/issues/3208
+X   https://github.com/processing/processing/pull/3227
+X keep tab menu at the right-hand side
+X   https://github.com/processing/processing/pull/3236
+
+sketch reloading
+X "Your sketch has been modified externally..." appears erroneously
+X   https://github.com/processing/processing/issues/3222
+o   add a preference for this while it's being debugged?
+X Prevent breakpoints from causing a reload prompt
+X   https://github.com/processing/processing/pull/3263
+X Added buffer to file detection time
+X   https://github.com/processing/processing/pull/3262
+
+akarshit
+X preferences window fixes for Linux
+X   https://github.com/processing/processing/pull/3232
+X   https://github.com/processing/processing/issues/3231
+X Clear error message in Contribution Manager after retrying
+X   https://github.com/processing/processing/pull/3240
+X   https://github.com/processing/processing/issues/3239
+X Use system proxy by default
+X   https://github.com/processing/processing/issues/1476
+X   https://github.com/processing/processing/pull/3251
+X add SOCKS proxy support to the PDE
+X   https://github.com/processing/processing/issues/2643
+X   https://github.com/processing/processing/pull/3260
+X   the current code that gets/sets the pref is in Preferences
+X   instead of current implementation, can we auto-detect proxy settings?
+X   old issue: https://github.com/processing/processing/issues/1476
+X   http://docs.oracle.com/javase/7/docs/technotes/guides/net/proxies.html
+X   http://docs.oracle.com/javase/1.5.0/docs/guide/net/proxies.html
+X   http://stackoverflow.com/questions/4933677/detecting-windows-ie-proxy-setting-using-java
+X   http://www.java2s.com/Code/Java/Network-Protocol/DetectProxySettingsforInternetConnection.htm
+
+
 0234 (3.0a7)
 X fix bug causing Preferences window exception
 X   https://github.com/processing/processing/issues/3215

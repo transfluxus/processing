@@ -22,9 +22,6 @@
 
 package processing.core;
 
-//import java.awt.Color;
-//import java.awt.Component;
-
 
 /**
  * Surface that's not really visible. Used for PDF and friends, or as a base
@@ -32,6 +29,7 @@ package processing.core;
  */
 public class PSurfaceNone implements PSurface {
   PApplet sketch;
+  PGraphics graphics;
 
   Thread thread;
   boolean paused;
@@ -41,12 +39,16 @@ public class PSurfaceNone implements PSurface {
   protected long frameRatePeriod = 1000000000L / 60L;
 
 
-  public PSurfaceNone() { }
+  public PSurfaceNone(PGraphics graphics) {
+    this.graphics = graphics;
+  }
 
 
   @Override
   public void initOffscreen(PApplet sketch) {
-    // TODO Auto-generated method stub
+    this.sketch = sketch;
+
+    setSize(sketch.sketchWidth(), sketch.sketchHeight());
   }
 
 
@@ -57,8 +59,11 @@ public class PSurfaceNone implements PSurface {
 
   @Override
   public void initFrame(PApplet sketch, int backgroundColor,
-                         int deviceIndex, boolean fullScreen,
-                         boolean spanDisplays) {
+                        int deviceIndex, boolean fullScreen,
+                        boolean spanDisplays) {
+    //this.sketch = sketch;
+    throw new IllegalStateException("initFrame() not available with " +
+                                    getClass().getSimpleName());
   }
 
 
@@ -80,21 +85,44 @@ public class PSurfaceNone implements PSurface {
   }
 
 
-  public void placeWindow(int[] location) { }
+//  public void placeWindow(int[] location) { }
 
+  @Override
   public void placeWindow(int[] location, int[] editorLocation) { }
 
+
+  @Override
   public void placePresent(int stopColor) { }
 
+
+  @Override
   public void setupExternalMessages() { }
 
 
   //
 
 
-  public void setSize(int width, int height) {
-    // TODO Auto-generated method stub
+  @Override
+  public void setSize(int wide, int high) {
+    if (PApplet.DEBUG) {
+      //System.out.format("frame visible %b, setSize(%d, %d) %n", frame.isVisible(), wide, high);
+      new Exception(String.format("setSize(%d, %d)", wide, high)).printStackTrace(System.out);
+    }
 
+    //if (wide == sketchWidth && high == sketchHeight) {  // doesn't work on launch
+    if (wide == sketch.width && high == sketch.height) {
+      if (PApplet.DEBUG) {
+        new Exception("w/h unchanged " + wide + " " + high).printStackTrace(System.out);
+      }
+      return;  // unchanged, don't rebuild everything
+    }
+
+    //throw new RuntimeException("implement me, see readme.md");
+    sketch.width = wide;
+    sketch.height = high;
+
+    // set PGraphics variables for width/height/pixelWidth/pixelHeight
+    graphics.setSize(wide, high);
   }
 
 
@@ -113,7 +141,7 @@ public class PSurfaceNone implements PSurface {
 
   }
 
-  public void requestFocus() {
+  void requestFocus() {
     // TODO Auto-generated method stub
 
   }

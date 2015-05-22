@@ -45,6 +45,27 @@ public class StringList implements Iterable<String> {
 
 
   /**
+   * Construct a StringList from a random pile of objects. Null values will
+   * stay null, but all the others will be converted to String values.
+   */
+  public StringList(Object... items) {
+    count = items.length;
+    data = new String[count];
+    int index = 0;
+    for (Object o : items) {
+//      // Not gonna go with null values staying that way because perhaps
+//      // the most common case here is to immediately call join() or similar.
+//      data[index++] = String.valueOf(o);
+      // Keep null values null (because join() will make non-null anyway)
+      if (o != null) {  // leave null values null
+        data[index] = o.toString();
+      }
+      index++;
+    }
+  }
+
+
+  /**
    * Create from something iterable, for instance:
    * StringList list = new StringList(hashMap.keySet());
    *
@@ -289,6 +310,14 @@ public class StringList implements Iterable<String> {
   public void append(StringList list) {
     for (String v : list.values()) {  // will concat the list...
       append(v);
+    }
+  }
+
+
+  /** Add this value, but only if it's not already in the list. */
+  public void appendUnique(String value) {
+    if (!hasValue(value)) {
+      append(value);
     }
   }
 

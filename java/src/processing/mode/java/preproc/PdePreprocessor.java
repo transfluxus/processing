@@ -4,7 +4,7 @@
   PdePreprocessor - wrapper for default ANTLR-generated parser
   Part of the Processing project - http://processing.org
 
-  Copyright (c) 2004-12 Ben Fry and Casey Reas
+  Copyright (c) 2004-15 Ben Fry and Casey Reas
   Copyright (c) 2001-04 Massachusetts Institute of Technology
 
   ANTLR-generated parser and several supporting classes written
@@ -36,6 +36,7 @@ import processing.app.Base;
 import processing.app.Preferences;
 import processing.app.SketchException;
 import processing.core.PApplet;
+import processing.data.StringList;
 import processing.mode.java.preproc.PdeLexer;
 import processing.mode.java.preproc.PdeRecognizer;
 import processing.mode.java.preproc.PdeTokenTypes;
@@ -158,6 +159,7 @@ public class PdePreprocessor {
   protected String sketchWidth;
   protected String sketchHeight;
   protected String sketchRenderer;
+  protected String sketchOutputPath;
 
   /**
    * Regular expression for parsing the size() method. This should match
@@ -166,18 +168,19 @@ public class PdePreprocessor {
    * in the sketch, which is the case especially for anyone who is cutting
    * and pasting from the reference.
    */
-  public static final String SIZE_REGEX =
-    "(?:^|\\s|;)size\\s*\\(\\s*([^\\s,]+)\\s*,\\s*([^\\s,\\)]+)\\s*,?\\s*([^\\)]*)\\s*\\)\\s*\\;";
-    //"(?:^|\\s|;)size\\s*\\(\\s*(\\S+)\\s*,\\s*([^\\s,\\)]+),?\\s*([^\\)]*)\\s*\\)\\s*\\;";
+//  public static final String SIZE_REGEX =
+//    "(?:^|\\s|;)size\\s*\\(\\s*([^\\s,]+)\\s*,\\s*([^\\s,\\)]+)\\s*,?\\s*([^\\)]*)\\s*\\)\\s*\\;";
+  static private final String SIZE_CONTENTS_REGEX =
+    "(?:^|\\s|;)size\\s*\\(([^\\)]+)\\)\\s*\\;";
 
-  
-  private static final Pattern PUBLIC_CLASS =
+
+  static private final Pattern PUBLIC_CLASS =
     Pattern.compile("(^|;)\\s*public\\s+class\\s+\\S+\\s+extends\\s+PApplet", Pattern.MULTILINE);
     // Can't only match any 'public class', needs to be a PApplet
     // http://code.google.com/p/processing/issues/detail?id=551
     //Pattern.compile("(^|;)\\s*public\\s+class", Pattern.MULTILINE);
 
-  
+
   private static final Pattern FUNCTION_DECL =
     Pattern.compile("(^|;)\\s*((public|private|protected|final|static)\\s+)*" +
         "(void|int|float|double|String|char|byte)" +
@@ -200,13 +203,53 @@ public class PdePreprocessor {
 
   public String[] initSketchSize(String code, boolean sizeWarning) throws SketchException {
     String[] info = parseSketchSize(code, sizeWarning);
+    //PApplet.printArray(info);
     if (info != null) {
       sizeStatement = info[0];
       sketchWidth = info[1];
       sketchHeight = info[2];
       sketchRenderer = info[3];
+      sketchOutputPath = info[4];
     }
     return info;
+  }
+
+
+  // break on commas, except those inside quotes, e.g.:
+  // size(300, 200, PDF, "output,weirdname.pdf");
+  // no handling for escaped (\") quotes
+  static private StringList breakCommas(String contents) {
+    StringList outgoing = new StringList();
+
+    boolean insideQuote = false;
+    // The current word being read
+    StringBuilder current = new StringBuilder();
+    char[] chars = contents.toCharArray();
+    for (int i = 0; i < chars.length; i++) {
+      char c = chars[i];
+      if (insideQuote) {
+        current.append(c);
+        if (c == '\"') {
+          insideQuote = false;
+        }
+      } else {
+        if (c == ',') {
+          if (current.length() != 0) {
+            outgoing.append(current.toString());
+            current.setLength(0);
+          }
+        } else {
+          current.append(c);
+          if (c == '\"') {
+            insideQuote = true;
+          }
+        }
+      }
+    }
+    if (current.length() != 0) {
+      outgoing.append(current.toString());
+    }
+    return outgoing;
   }
 
 
@@ -224,15 +267,29 @@ public class PdePreprocessor {
 
 //    String scrubbed = scrubComments(sketch.getCode(0).getProgram());
 //    String[] matches = PApplet.match(scrubbed, SIZE_REGEX);
-    String[] matches = PApplet.match(scrubComments(code), SIZE_REGEX);
+//    String[] matches = PApplet.match(scrubComments(code), SIZE_REGEX);
 
-    if (matches != null) {
+    // Get everything inside the parens for the size() method
+    String[] contents = PApplet.match(scrubComments(code), SIZE_CONTENTS_REGEX);
+    if (contents != null) {
+      //String[] matches = split on commas, but not commas inside quotes
+
+      StringList args = breakCommas(contents[1]);
+      String width = args.get(0).trim();
+      String height = args.get(1).trim();
+      String renderer = (args.size() >= 3) ? args.get(2) : null;
+      String path = (args.size() >= 4) ? args.get(3) : null;
+
       boolean badSize = false;
 
-      if (matches[1].equals("screenWidth") ||
-          matches[1].equals("screenHeight") ||
-          matches[2].equals("screenWidth") ||
-          matches[2].equals("screenHeight")) {
+      // Trying to remember why we wanted to allow people to use displayWidth
+      // as the height or displayHeight as the width, but maybe it's for
+      // making a square sketch window? Not going to
+
+      if (width.equals("screenWidth") ||
+          width.equals("screenHeight") ||
+          height.equals("screenHeight") ||
+          height.equals("screenWidth")) {
         final String message =
           "The screenWidth and screenHeight variables\n" +
           "are named displayWidth and displayHeight\n" +
@@ -241,14 +298,14 @@ public class PdePreprocessor {
         return null;
       }
 
-      if (!matches[1].equals("displayWidth") &&
-          !matches[1].equals("displayHeight") &&
-          PApplet.parseInt(matches[1], -1) == -1) {
+      if (!width.equals("displayWidth") &&
+          !width.equals("displayHeight") &&
+          PApplet.parseInt(width, -1) == -1) {
         badSize = true;
       }
-      if (!matches[2].equals("displayWidth") &&
-          !matches[2].equals("displayHeight") &&
-          PApplet.parseInt(matches[2], -1) == -1) {
+      if (!height.equals("displayWidth") &&
+          !height.equals("displayHeight") &&
+          PApplet.parseInt(height, -1) == -1) {
         badSize = true;
       }
 
@@ -265,15 +322,24 @@ public class PdePreprocessor {
       }
 
       // Remove additional space 'round the renderer
-      matches[3] = matches[3].trim();
-
-      // if the renderer entry is empty, set it to null
-      if (matches[3].length() == 0) {
-        matches[3] = null;
+      if (renderer != null) {
+        renderer = renderer.trim();
+        if (renderer.length() == 0) {  // if empty, set null
+          renderer = null;
+        }
       }
-      return matches;
+
+      // Same for the file name
+      if (path != null) {
+        path = path.trim();
+        if (path.length() == 0) {
+          path = null;
+        }
+      }
+      return new String[] { contents[0], width, height, renderer, path };
     }
-    return new String[] { null, null, null, null };  // not an error, just empty
+    // not an error, just no size() specified
+    return new String[] { null, null, null, null, null };
   }
 
 
@@ -290,7 +356,7 @@ public class PdePreprocessor {
     int index = 0;
     while (index < p.length) {
       // for any double slash comments, ignore until the end of the line
-      if (!insideQuote && 
+      if (!insideQuote &&
           (p[index] == '/') &&
           (index < p.length - 1) &&
           (p[index+1] == '/')) {
@@ -329,7 +395,7 @@ public class PdePreprocessor {
       } else if (p[index] == '"' && index > 0 && p[index-1] != '\\') {
         insideQuote = !insideQuote;
         index++;
-        
+
       } else {  // any old character, move along
         index++;
       }
@@ -518,10 +584,10 @@ public class PdePreprocessor {
       program = substituteUnicode(program);
     }
 
-    // For 0215, adding } as a legitimate prefix to the import (along with 
+    // For 0215, adding } as a legitimate prefix to the import (along with
     // newline and semicolon) for cases where a tab ends with } and an import
     // statement starts the next tab.
-    final String importRegexp = 
+    final String importRegexp =
       "((?:^|;|\\})\\s*)(import\\s+)((?:static\\s+)?\\S+)(\\s*;)";
     final Pattern importPattern = Pattern.compile(importRegexp);
     String scrubbed = scrubComments(program);
@@ -551,9 +617,9 @@ public class PdePreprocessor {
         // Remove the import from the main program
         program = program.substring(0, start) + program.substring(stop);
         scrubbed = scrubbed.substring(0, start) + scrubbed.substring(stop);
-        // Set the offset to start, because everything between 
+        // Set the offset to start, because everything between
         // start and stop has been deleted.
-        offset = m.start();        
+        offset = m.start();
       }
     } while (found);
 //    System.out.println("program now:");
@@ -566,13 +632,13 @@ public class PdePreprocessor {
     }
 
     final PrintWriter stream = new PrintWriter(out);
-    final int headerOffset = 
+    final int headerOffset =
       writeImports(stream, programImports, codeFolderImports);
-    return new PreprocessorResult(mode, headerOffset + 2, 
+    return new PreprocessorResult(mode, headerOffset + 2,
                                   write(program, stream), programImports);
   }
 
-  
+
   static String substituteUnicode(String program) {
     // check for non-ascii chars (these will be/must be in unicode format)
     char p[] = program.toCharArray();
@@ -698,7 +764,7 @@ public class PdePreprocessor {
 
     return className;
   }
-  
+
 
   private PdeRecognizer createParser(final String program) {
     // create a lexer with the stream reader, and tell it to handle
@@ -873,6 +939,15 @@ public class PdePreprocessor {
     }
 
     if ((mode == Mode.STATIC) || (mode == Mode.ACTIVE)) {
+      // doesn't remove the oriiginal size() method, but calling size()
+      // again in setup() is harmless.
+      if (!hasMethod("settings") && sizeStatement != null) {
+        out.println(indent + "public void settings() { " + sizeStatement + " }");
+//        out.println(indent + "public void settings() {");
+//        out.println(indent + indent + sizeStatement);
+//        out.println(indent + "}");
+      }
+      /*
       if (sketchWidth != null && !hasMethod("sketchWidth")) {
         // Only include if it's a number (a variable will be a problem)
         if (PApplet.parseInt(sketchWidth, -1) != -1 || sketchWidth.equals("displayWidth")) {
@@ -885,20 +960,16 @@ public class PdePreprocessor {
           out.println(indent + "public int sketchHeight() { return " + sketchHeight + "; }");
         }
       }
-      if (sketchRenderer != null && !hasMethod("sketchRenderer")) {        
+      if (sketchRenderer != null && !hasMethod("sketchRenderer")) {
         // Only include if it's a known renderer (otherwise it might be a variable)
-        if (sketchRenderer.equals("P2D") ||
-            sketchRenderer.equals("P2D_2X") ||
-            sketchRenderer.equals("P3D") ||
-            sketchRenderer.equals("P3D_3X") ||
-            sketchRenderer.equals("OPENGL") ||
-            sketchRenderer.equals("JAVA2D") ||
-            sketchRenderer.equals("JAVA2D_2X") || 
-            sketchRenderer.equals("LWJGL.P2D") ||
-            sketchRenderer.equals("LWJGL.P3D")) {
-          out.println(indent + "public String sketchRenderer() { return " + sketchRenderer + "; }");
-        }
+        //if (PConstants.rendererList.hasValue(sketchRenderer)) {
+        out.println(indent + "public String sketchRenderer() { return " + sketchRenderer + "; }");
+        //}
       }
+      if (sketchOutputPath != null && !hasMethod("sketchOutputPath")) {
+        out.println(indent + "public String sketchOutputPath() { return " + sketchOutputPath + "; }");
+      }
+      */
 
       if (!hasMethod("main")) {
         out.println(indent + "static public void main(String[] passedArgs) {");
@@ -952,7 +1023,7 @@ public class PdePreprocessor {
     // These may change in-between (if the prefs panel adds this option)
     //String prefsLine = Preferences.get("preproc.imports");
     //return PApplet.splitTokens(prefsLine, ", ");
-    return new String[] { 
+    return new String[] {
       "java.util.HashMap",
       "java.util.ArrayList",
       "java.io.File",
@@ -975,6 +1046,10 @@ public class PdePreprocessor {
 //    return pkg.startsWith("processing.xml.");
   }
 
+
+  // . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+
   /**
    * Find the first CLASS_DEF node in the tree, and return the name of the
    * class in question.
@@ -988,10 +1063,12 @@ public class PdePreprocessor {
     return t;
   }
 
+
   public void debugAST(final AST ast, final boolean includeHidden) {
     System.err.println("------------------");
     debugAST(ast, includeHidden, 0);
   }
+
 
   private void debugAST(final AST ast, final boolean includeHidden,
                         final int indent) {
@@ -1012,23 +1089,24 @@ public class PdePreprocessor {
       debugAST(kid, includeHidden, indent + 1);
   }
 
+
   private String debugHiddenAfter(AST ast) {
-    if (!(ast instanceof antlr.CommonASTWithHiddenTokens))
-      return "";
-    return debugHiddenTokens(((antlr.CommonASTWithHiddenTokens) ast)
-        .getHiddenAfter());
+    return (ast instanceof antlr.CommonASTWithHiddenTokens) ?
+      debugHiddenTokens(((antlr.CommonASTWithHiddenTokens) ast).getHiddenAfter()) : "";
   }
 
   private String debugHiddenBefore(AST ast) {
-    if (!(ast instanceof antlr.CommonASTWithHiddenTokens))
+    if (!(ast instanceof antlr.CommonASTWithHiddenTokens)) {
       return "";
-    antlr.CommonHiddenStreamToken child = null, parent = ((antlr.CommonASTWithHiddenTokens) ast)
-        .getHiddenBefore();
+    }
+    antlr.CommonHiddenStreamToken parent =
+      ((antlr.CommonASTWithHiddenTokens) ast).getHiddenBefore();
 
     if (parent == null) {
       return "";
     }
 
+    antlr.CommonHiddenStreamToken child = null;
     do {
       child = parent;
       parent = child.getHiddenBefore();
@@ -1037,15 +1115,18 @@ public class PdePreprocessor {
     return debugHiddenTokens(child);
   }
 
+
   private String debugHiddenTokens(antlr.CommonHiddenStreamToken t) {
     final StringBuilder sb = new StringBuilder();
     for (; t != null; t = filter.getHiddenAfter(t)) {
-      if (sb.length() == 0)
+      if (sb.length() == 0) {
         sb.append("[");
+      }
       sb.append(t.getText().replace("\n", "\\n"));
     }
-    if (sb.length() > 0)
+    if (sb.length() > 0) {
       sb.append("]");
+    }
     return sb.toString();
   }
 }

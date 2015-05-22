@@ -23,16 +23,25 @@
 
 package processing.app;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.EventQueue;
+import java.awt.FileDialog;
+import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.List;
 import java.util.zip.*;
 
-import javax.swing.*;
-import javax.swing.tree.*;
+import javax.swing.JDialog;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
+import javax.swing.tree.DefaultMutableTreeNode;
 
 import processing.app.contrib.*;
 import processing.core.*;
@@ -47,9 +56,9 @@ import processing.core.*;
 public class Base {
   // Added accessors for 0218 because the UpdateCheck class was not properly
   // updating the values, due to javac inlining the static final values.
-  static private final int REVISION = 235;
+  static private final int REVISION = 237;
   /** This might be replaced by main() if there's a lib/version.txt file. */
-  static private String VERSION_NAME = "0235"; //$NON-NLS-1$
+  static private String VERSION_NAME = "0237"; //$NON-NLS-1$
   /** Set true if this a proper release rather than a numbered revision. */
 //  static private boolean RELEASE = false;
 
@@ -120,8 +129,8 @@ public class Base {
 
   /** The built-in modes. coreModes[0] will be considered the 'default'. */
   private Mode[] coreModes;
-  protected ArrayList<ModeContribution> modeContribs;
 
+  protected ArrayList<ModeContribution> modeContribs;
   protected ArrayList<ExamplesContribution> exampleContribs;
 
   private JMenu sketchbookMenu;
@@ -492,12 +501,12 @@ public class Base {
   }
 
 
-  public ArrayList<ModeContribution> getModeContribs() {
+  public List<ModeContribution> getModeContribs() {
     return modeContribs;
   }
 
 
-  public ArrayList<Mode> getModeList() {
+  public List<Mode> getModeList() {
     ArrayList<Mode> allModes = new ArrayList<Mode>();
     allModes.addAll(Arrays.asList(coreModes));
     if (modeContribs != null) {
@@ -509,7 +518,7 @@ public class Base {
   }
 
 
-  public ArrayList<ExamplesContribution> getExampleContribs() {
+  public List<ExamplesContribution> getExampleContribs() {
     return exampleContribs;
   }
 
@@ -814,7 +823,8 @@ public class Base {
     } catch (Throwable t) {
       showBadnessTrace("Terrible News",
                        "A serious error occurred while " +
-                       "trying to create a new editor window.", t, false);
+                       "trying to create a new editor window.", t,
+                       nextMode == getDefaultMode());  // quit if default
       nextMode = getDefaultMode();
       return null;
     }
@@ -1094,7 +1104,8 @@ public class Base {
       //mode.rebuildLibraryList();
       mode.rebuildImportMenu();  // calls rebuildLibraryList
       mode.rebuildToolbarMenu();
-      mode.resetExamples();
+      mode.rebuildExamplesFrame();
+      mode.rebuildSketchbookFrame();
     }
   }
 

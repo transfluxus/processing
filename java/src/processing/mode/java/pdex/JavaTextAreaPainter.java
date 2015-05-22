@@ -66,7 +66,7 @@ public class JavaTextAreaPainter extends TextAreaPainter
 	implements MouseListener, MouseMotionListener {
 
 //  protected JavaTextArea ta; // we need the subclassed textarea
-  protected ErrorCheckerService errorCheckerService;
+//  protected ErrorCheckerService errorCheckerService;
 
   public Color errorColor; // = new Color(0xED2630);
   public Color warningColor; // = new Color(0xFFC30E);
@@ -75,6 +75,7 @@ public class JavaTextAreaPainter extends TextAreaPainter
 
   protected Font gutterTextFont;
   protected Color gutterTextColor;
+  protected Color gutterLineHighlightColor;
 //  protected Color gutterTempColor;
 
   public static class ErrorLineCoord {
@@ -104,7 +105,7 @@ public class JavaTextAreaPainter extends TextAreaPainter
       public void mouseClicked(MouseEvent evt) {
         if (!getEditor().hasJavaTabs()) { // Ctrl + Click disabled for java tabs
           if (evt.getButton() == MouseEvent.BUTTON1) {
-            if (evt.isControlDown() || evt.isMetaDown()) {
+            if ((evt.isControlDown() && !Base.isMacOS()) || evt.isMetaDown()) {
               handleCtrlClick(evt);
             }
           }
@@ -112,18 +113,37 @@ public class JavaTextAreaPainter extends TextAreaPainter
       }
     });
 
+    // Handle mouse clicks to toggle breakpoints
+    addMouseListener(new MouseAdapter() {
+      long lastTime;  // OS X seems to be firing multiple mouse events
+
+      public void mousePressed(MouseEvent event) {
+        long thisTime = event.getWhen();
+        if (thisTime - lastTime > 100) {
+          if (event.getX() < Editor.LEFT_GUTTER) {
+            int offset = getTextArea().xyToOffset(event.getX(), event.getY());
+            if (offset >= 0) {
+              int lineIndex = getTextArea().getLineOfOffset(offset);
+              getEditor().toggleBreakpoint(lineIndex);
+            }
+          }
+          lastTime = thisTime;
+        }
+      }
+    });
+
     addMouseMotionListener(new MouseMotionAdapter() {
       @Override
       public void mouseMoved(final MouseEvent evt) {
-    	for (ErrorLineCoord coord : errorLineCoords) {
-    	  if (evt.getX() >= coord.xStart && evt.getX() <= coord.xEnd
-    			  && evt.getY() >= coord.yStart && evt.getY() <= coord.yEnd + 2) {
-    	    setToolTipText(coord.problem.getMessage());
-    		break;
-    	  }
-    	}
+        for (ErrorLineCoord coord : errorLineCoords) {
+          if (evt.getX() >= coord.xStart && evt.getX() <= coord.xEnd &&
+              evt.getY() >= coord.yStart && evt.getY() <= coord.yEnd + 2) {
+            setToolTipText(coord.problem.getMessage());
+            break;
+          }
+        }
       }
-	});
+    });
 
     // TweakMode code
     interactiveMode = false;
@@ -187,8 +207,8 @@ public class JavaTextAreaPainter extends TextAreaPainter
       if (Character.isDigit(word.charAt(0)))
         return;
 
-      Base.log(errorCheckerService.mainClassOffset + line + "|" + line + "| offset " + xLS + word + " <= \n");
-      errorCheckerService.getASTGenerator().scrollToDeclaration(line, word, xLS);
+      Base.log(getEditor().getErrorChecker().mainClassOffset + line + "|" + line + "| offset " + xLS + word + " <= \n");
+      getEditor().getErrorChecker().getASTGenerator().scrollToDeclaration(line, word, xLS);
     }
   }
 
@@ -242,15 +262,20 @@ public class JavaTextAreaPainter extends TextAreaPainter
    * @param x horizontal position
    */
   protected void paintLeftGutter(Graphics gfx, int line, int x) {
-    gfx.setColor(getTextArea().gutterBgColor);
 //    gfx.setColor(Color.ORANGE);
     int y = textArea.lineToY(line) + fm.getLeading() + fm.getMaxDescent();
+    if (line == textArea.getSelectionStopLine()) {
+      gfx.setColor(gutterLineHighlightColor);
+    } else {
+      gfx.setColor(getTextArea().gutterBgColor);
+    }
     gfx.fillRect(0, y, Editor.LEFT_GUTTER, fm.getHeight());
 
     String text = getTextArea().getGutterText(line);
     // if no special text for a breakpoint, just show the line number
     if (text == null) {
       text = String.valueOf(line + 1);
+      //text = makeOSF(String.valueOf(line + 1));
     }
     char[] txt = text.toCharArray();
 
@@ -265,6 +290,16 @@ public class JavaTextAreaPainter extends TextAreaPainter
     int ty = textArea.lineToY(line) + fm.getHeight();
     Utilities.drawTabbedText(new Segment(txt, 0, text.length()),
                              tx, ty, gfx, this, 0);
+  }
+
+
+  // Failed attempt to switch line numbers to old-style figures
+  String makeOSF(String what) {
+    char[] c = what.toCharArray();
+    for (int i = 0; i < c.length; i++) {
+      c[i] += (char) (c[i] - '0' + 0x362);
+    }
+    return new String(c);
   }
 
 
@@ -382,11 +417,8 @@ public class JavaTextAreaPainter extends TextAreaPainter
    * @param x
    */
   protected void paintErrorLine(Graphics gfx, int line, int x) {
-    if (errorCheckerService == null) {
-      return;
-    }
-
-    if (errorCheckerService.problemsList == null) {
+    ErrorCheckerService ecs = getEditor().getErrorChecker();
+    if (ecs == null || ecs.problemsList == null) {
       return;
     }
 
@@ -397,7 +429,7 @@ public class JavaTextAreaPainter extends TextAreaPainter
     errorLineCoords.clear();
     // Check if current line contains an error. If it does, find if it's an
     // error or warning
-    for (ErrorMarker emarker : errorCheckerService.getEditor().getErrorPoints()) {
+    for (ErrorMarker emarker : getEditor().getErrorPoints()) {
       if (emarker.getProblem().getLineNumber() == line) {
         notFound = false;
         if (emarker.getType() == ErrorMarker.Warning) {
@@ -513,8 +545,8 @@ public class JavaTextAreaPainter extends TextAreaPainter
    * @param ecs
    * @param mode
    */
-  public void setECSandTheme(ErrorCheckerService ecs, JavaMode mode) {
-    this.errorCheckerService = ecs;
+  public void setMode(JavaMode mode) {
+    //this.errorCheckerService = ecs;
     //loadTheme(mode);
 
     errorColor = mode.getColor("editor.errorcolor"); //, errorColor);
@@ -524,7 +556,9 @@ public class JavaTextAreaPainter extends TextAreaPainter
 
     gutterTextFont = mode.getFont("editor.gutter.text.font");
     gutterTextColor = mode.getColor("editor.gutter.text.color");
+    gutterLineHighlightColor = mode.getColor("editor.gutter.linehighlight.color");
   }
+
 
   @Override
   public String getToolTipText(MouseEvent event) {
@@ -597,7 +631,7 @@ public class JavaTextAreaPainter extends TextAreaPainter
           setToolTipText(null);
           return super.getToolTipText(event);
         }
-        String tooltipText = errorCheckerService.getASTGenerator()
+        String tooltipText = getEditor().getErrorChecker().getASTGenerator()
             .getLabelForASTNode(line, word, xLS);
 
         //      log(errorCheckerService.mainClassOffset + " MCO "

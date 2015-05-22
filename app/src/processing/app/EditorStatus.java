@@ -25,15 +25,16 @@ package processing.app;
 
 import java.awt.*;
 
-import javax.swing.*;
+import javax.swing.plaf.basic.BasicSplitPaneDivider;
+import javax.swing.plaf.basic.BasicSplitPaneUI;
 
 
 /**
  * Panel just below the editing area that contains status messages.
  */
-public class EditorStatus extends JPanel {
+public class EditorStatus extends BasicSplitPaneDivider {  //JPanel {
   static final int HIGH = 28;
-  
+
   Color[] bgcolor;
   Color[] fgcolor;
 
@@ -70,8 +71,9 @@ public class EditorStatus extends JPanel {
   Thread thread;
 
 
-
-  public EditorStatus(Editor editor) {
+  //public EditorStatus(Editor editor) {
+  public EditorStatus(BasicSplitPaneUI ui, Editor editor) {
+    super(ui);
     this.editor = editor;
     empty();
     updateMode();
@@ -172,7 +174,8 @@ public class EditorStatus extends JPanel {
   }
 
 
-  public void paintComponent(Graphics screen) {
+  //public void paintComponent(Graphics screen) {
+  public void paint(Graphics screen) {
 //    if (okButton == null) setup();
 
     Dimension size = getSize();
@@ -205,8 +208,11 @@ public class EditorStatus extends JPanel {
     g.fillRect(0, 0, sizeW, sizeH);
 
     g.setColor(fgcolor[mode]);
-    g.setFont(font); // needs to be set each time on osx
-    g.drawString(message, Preferences.GUI_SMALL, (sizeH + ascent) / 2);
+    // https://github.com/processing/processing/issues/3265
+    if (message != null) {
+      g.setFont(font); // needs to be set each time on osx
+      g.drawString(message, Preferences.GUI_SMALL, (sizeH + ascent) / 2);
+    }
 
     if (indeterminate) {
       //int x = cancelButton.getX();

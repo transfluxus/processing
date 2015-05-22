@@ -29,9 +29,9 @@ import java.net.URL;
 import java.nio.*;
 import java.util.*;
 
+
 /**
  * OpenGL renderer.
- *
  */
 public class PGraphicsOpenGL extends PGraphics {
   /** Interface between Processing and OpenGL */
@@ -42,6 +42,9 @@ public class PGraphicsOpenGL extends PGraphics {
 
   /** Font cache for texture objects. */
   protected WeakHashMap<PFont, FontTexture> fontMap;
+
+  // just to get things running properly, need to
+  static protected PSurfaceJOGL surfaceJOGL;
 
   // ........................................................
 
@@ -153,32 +156,32 @@ public class PGraphicsOpenGL extends PGraphics {
   // Shaders
 
   static protected URL defColorShaderVertURL =
-    PGraphicsOpenGL.class.getResource("ColorVert.glsl");
+    PGraphicsOpenGL.class.getResource("/processing/opengl/shaders/ColorVert.glsl");
   static protected URL defTextureShaderVertURL =
-    PGraphicsOpenGL.class.getResource("TextureVert.glsl");
+    PGraphicsOpenGL.class.getResource("/processing/opengl/shaders/TexVert.glsl");
   static protected URL defLightShaderVertURL =
-    PGraphicsOpenGL.class.getResource("LightVert.glsl");
+    PGraphicsOpenGL.class.getResource("/processing/opengl/shaders/LightVert.glsl");
   static protected URL defTexlightShaderVertURL =
-    PGraphicsOpenGL.class.getResource("TexlightVert.glsl");
+    PGraphicsOpenGL.class.getResource("/processing/opengl/shaders/TexlightVert.glsl");
   static protected URL defColorShaderFragURL =
-    PGraphicsOpenGL.class.getResource("ColorFrag.glsl");
+    PGraphicsOpenGL.class.getResource("/processing/opengl/shaders/ColorFrag.glsl");
   static protected URL defTextureShaderFragURL =
-    PGraphicsOpenGL.class.getResource("TextureFrag.glsl");
+    PGraphicsOpenGL.class.getResource("/processing/opengl/shaders/TexFrag.glsl");
   static protected URL defLightShaderFragURL =
-    PGraphicsOpenGL.class.getResource("LightFrag.glsl");
+    PGraphicsOpenGL.class.getResource("/processing/opengl/shaders/LightFrag.glsl");
   static protected URL defTexlightShaderFragURL =
-    PGraphicsOpenGL.class.getResource("TexlightFrag.glsl");
+    PGraphicsOpenGL.class.getResource("/processing/opengl/shaders/TexlightFrag.glsl");
 
   static protected URL defLineShaderVertURL =
-    PGraphicsOpenGL.class.getResource("LineVert.glsl");
+    PGraphicsOpenGL.class.getResource("/processing/opengl/shaders/LineVert.glsl");
   static protected URL defLineShaderFragURL =
-    PGraphicsOpenGL.class.getResource("LineFrag.glsl");
+    PGraphicsOpenGL.class.getResource("/processing/opengl/shaders/LineFrag.glsl");
   static protected URL defPointShaderVertURL =
-    PGraphicsOpenGL.class.getResource("PointVert.glsl");
+    PGraphicsOpenGL.class.getResource("/processing/opengl/shaders/PointVert.glsl");
   static protected URL defPointShaderFragURL =
-    PGraphicsOpenGL.class.getResource("PointFrag.glsl");
+    PGraphicsOpenGL.class.getResource("/processing/opengl/shaders/PointFrag.glsl");
   static protected URL maskShaderFragURL =
-    PGraphicsOpenGL.class.getResource("MaskFrag.glsl");
+    PGraphicsOpenGL.class.getResource("/processing/opengl/shaders/MaskFrag.glsl");
 
   protected PShader defColorShader;
   protected PShader defTextureShader;
@@ -668,8 +671,8 @@ public class PGraphicsOpenGL extends PGraphics {
 
   @Override
   public PSurface createSurface() {  // ignore
-    return new PSurfaceLWJGL(this);
-//    return new PSurfaceNEWT(this);
+    surfaceJOGL = new PSurfaceJOGL(this);
+    return surfaceJOGL;
   }
 
 
@@ -693,6 +696,11 @@ public class PGraphicsOpenGL extends PGraphics {
   @Override
   public void removeCache(PImage image) {
     getPrimaryPG().cacheMap.remove(image);
+  }
+
+
+  public float getPixelScale() {
+    return surfaceJOGL.getPixelScale();
   }
 
 
@@ -1772,7 +1780,7 @@ public class PGraphicsOpenGL extends PGraphics {
 
   // Factory method
   protected PGL createPGL(PGraphicsOpenGL pg) {
-    return new PLWJGL(pg);
+    return new PJOGL(pg);
   }
 
 

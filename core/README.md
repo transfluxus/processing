@@ -1,13 +1,16 @@
 ## Major destruction of `core` has started for Processing 3.
 
+
 #### What?
 We're removing `Applet` as the base class for `PApplet` and redoing the entire rendering and threading model for Processing sketches.
+
 
 #### Why?
 1. The changes will improve performance--greatly, in some cases--and reduce flicker and quirkiness in others. Using AWT objects like `Applet` (which subclasses `Component`) cause (sometimes major) performance restrictions or other visual glitches like flicker. 
 2. The code to mitigate the issues from #1 is very difficult to debug and make work properly across the many platforms we support (Macs, Macs with retina displays, Windows 7, Windows 8, 32- and 64-bit machines, Linux who-knows-what, and so on)
 3. The design of `core` is 13 years old, and the graphics features available (OpenGL, VolatileImage, BufferStrategy, etc) have changed drastically since then. I've papered over these changes and done my best to keep performance on-pace so that we don't break a lot of old code (or libraries), but now is the time for a clean break.
 4. With the death of applets, keeping the Applet base class is anachronistic. However, we're keeping the name `PApplet` because with any luck, these changes will only require a recompile of any sketch (or library) code. 
+
 
 #### What else?
 1. A new `PSurface` object has been added that acts as the layer between `PApplet` and `PGraphics`. It will handle interaction with the OS (creation of a window, placement on screen, getting events) as well as the animation thread (because OpenGL's animation thread is very different from an AWT animation thread).
@@ -16,18 +19,70 @@ We're removing `Applet` as the base class for `PApplet` and redoing the entire r
 4. We're working to add the ability to span multiple screens in "full screen" mode.
 5. In 3.0a2 we introduced a change on OS X to use Apple's "official" full screen mode. With this comes a dorky animation and the inability to span multiple screens. We've rolled that back.
 
+
 #### But what about...? 
-1. One downside is that you'll no longer be able to just drop a Processing sketch into other Java code, because `PApplet` will no longer subclass `Applet` (and therefore, `Component`). This is a huge downside for a tiny number of users. For the majority of users, re-read the "why" section. We'll try to figure out ways to continue embedding in other Java code, however, since we use this in our own work, and even within Processing itself (the Color Selector). 
-2. We're still determining how much code we're willing to break due to API changes. Stay tuned.
+
+We're still determining how much code we're willing to break due to API changes. Stay tuned.
+
+
+#### Integration with Java applications
+One downside of these changes is that you'll no longer be able to just drop a Processing sketch into other Java code, because `PApplet` will no longer subclass `Applet` (and therefore, `Component`). This is a huge downside for a tiny number of users. 
+
+Making it a generic `Component`, however, means that we cannot improve performance, due to the cross-platform mess of Java's outdated (and somewhat unsuspported) AWT. 
+
+In 3.0 alpha 6 and 7, a `getCanvas()` or `getComponent()` method provided a way to get an object to be embedded, but as we prepare for alpha 8, it looks like we'll have to move in another direction. At the present time, it looks like it'll be necessary to create a separate `PComponent` or `PCanvas` class that can be used, but it's not clear how that will work. 
+
+This is one of many unfortunate tradeoffs I'm trying to sort through as we try to remove significant barriers to performance caused by the design of Java's AWT, while also supporting features (like embedding) that we've spent so much time supporting in the past.
+
 
 #### Offscreen rendering
 * createGraphics() will create a buffer that's not resizable. `PGraphics.setSize()` is called in `PApplet.makeGraphics()`, and that's the end of the story. No `Surface.setSize()` calls are involved as in a normal rendering situation.
 
+
 #### Retina/HiDPI/2x drawing and displays
 * Documentation changes [here](https://github.com/processing/processing-docs/issues/170)
 
+
 #### The Event Dispatch Thread
-The current source starts putting AWT (and Swing, if any) calls on the [EDT](https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html), per Oracle's statements in Java's documentation. Actual rendering in the default renderer happens off the EDT, but the EDT is used to blit the image to the screen (or resize windows, etc). Looking for more consistent cross-platform results by doing this.
+The source has gone back and forth between putting all AWT (and Swing, if any) calls on the [EDT](https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html). Per Oracle's statements in Java's documentation, this is best practice (at least for Swing; for AWT it's not clear). However, we've gone back and forth several times as to whether it's necessary or worthwhile. 
+Actual rendering in the default renderer happens off the EDT, but the EDT is used to blit the image to the screen (or resize windows, etc). By moving to the EDT, we're looking for more consistent cross-platform results. In practice, results are either mixed or not there.
+
+
+## OpenGL 
+
+And now, for something completely different.
+
+### Changes from 2.x
+
+Any code that uses `javax.media.opengl` in imports should replace that `com.jogamp.opengl`. I guess the JOGL folks are fully on their own w/o Oracle/Sun support. 
+
+### JOGL vs LWJGL
+
+During the alpha 6, 7, and 8 release process we did some juggling with what OpenGL library we should use. 
+
+The short version of how it played out (written 15 May 2015)
+* JOGL had some major bugs and development seemed to have stopped (summer/fall 2014)
+* @codeanticode had been trying out LWJGL2 to see how it fared (last fall 2014)
+* The LWJGL project has moved all their development effort to LWJGL3 (since then)
+* Andrés spent the week rewriting OpenGL to use LWJGL3
+* LWJGL3 is simply too unstable for us to use, would require major reworking of PApplet to remove *all* uses of AWT, and they seem to be still struggling with many fundamental issues (this week) 
+* Andrés went back to JOGL (last 48 hours) to find that many bugs had been fixed and development was continuing. 
+* For 3.0a8, we dropped LWJGL since JOGL is performing much better, and we're 99% sure that's the final decision for 3.0 (yesterday).
+
+It looks like LWJGL3 will be a nice game-centric platform (full screen, affordances for game input/behavior) in the coming months, but the direction they're having to go with 3 means they're moving further away from what we need in Processing with something *slightly* more general.
+
+LWJGL and JOGL are both great projects and we're thankful for all the work that they put in, and our own experience with Processing means that we couldn't be more sympathetic to the difficulty they face in maintaining their cross-platform, cross-chipset, cross-everything code. Like Processing, both projects are open source and created by volunteers who give their work away for free. We're enormously appreciative of their efforts.
+
+
+## `sketchRenderer()` is required
+Prior to Processing 3, dark magic was used to make the `size()` command work. This was done to hide an enormous amount of complexity from users. Over time, the hacks involved became untenable or just unsustainable. The process was like this:
+* The default renderer would be initialized offscreen and unused
+* `setup()` would run, and if the renderer changed, the sketch would throw an exception causing things to restart (re-calling the `setup()` method)
+* The previous step gave fits to any other variants of Processing (like Python or Ruby or Scala)
+* We had a tricky, stuttery situation where some things would happen automatically, other things would be delayed slightly
+In the Android version of Processing, these methods weren't possible, so we enhanced the preprocessor to parse the `size()` command used in the sketch and create methods called `sketchWidth()` and `sketchHeight()` and so on, that returned the values found in `setup()`. 
+In Processing 3, these have moved to the desktop version of Processing as well. That means that when using Processing without the PDE (i.e. from Eclipse), it's necessary to implement these methods as well. 
+
 
 ## The Mess
 
@@ -68,7 +123,6 @@ another PSurfaceAWT variant could allow direct rendering to the canvas (no loadP
 
 
 #### To Document
-- sketchRenderer() is required
 - the renderer class/package is used to call a static method on the PGraphics that returns the class type for the rendering surface
 
 inside main, will know the screen that's being used for the app

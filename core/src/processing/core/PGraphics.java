@@ -7125,7 +7125,9 @@ public class PGraphics extends PImage implements PConstants {
     backgroundR = calcR;
     backgroundG = calcG;
     backgroundB = calcB;
-    backgroundA = (format == RGB) ? colorModeA : calcA;
+    //backgroundA = (format == RGB) ? colorModeA : calcA;
+    // If drawing surface is opaque, this maxes out at 1.0. [fry 150513]
+    backgroundA = (format == RGB) ? 1 : calcA;
     backgroundRi = calcRi;
     backgroundGi = calcGi;
     backgroundBi = calcBi;
@@ -7950,7 +7952,7 @@ public class PGraphics extends PImage implements PConstants {
    */
   static public void showDepthWarning(String method) {
     showWarning(method + "() can only be used with a renderer that " +
-                "supports 3D, such as P3D or OPENGL.");
+                "supports 3D, such as P3D.");
   }
 
 
@@ -7962,7 +7964,7 @@ public class PGraphics extends PImage implements PConstants {
   static public void showDepthWarningXYZ(String method) {
     showWarning(method + "() with x, y, and z coordinates " +
                 "can only be used with a renderer that " +
-                "supports 3D, such as P3D or OPENGL. " +
+                "supports 3D, such as P3D. " +
                 "Use a version without a z-coordinate instead.");
   }
 

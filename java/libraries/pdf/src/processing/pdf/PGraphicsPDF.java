@@ -72,7 +72,9 @@ public class PGraphicsPDF extends PGraphicsJava2D {
     this.path = path;
     if (path != null) {
       file = new File(path);
-      if (!file.isAbsolute()) file = null;
+      if (!file.isAbsolute()) {
+        file = null;
+      }
     }
     if (file == null) {
       throw new RuntimeException("PGraphicsPDF requires an absolute path " +
@@ -89,20 +91,20 @@ public class PGraphicsPDF extends PGraphicsJava2D {
   }
 
 
-  /**
-   * all the init stuff happens in here, in case someone calls size()
-   * along the way and wants to hork things up.
-   */
-  protected void allocate() {
-    // can't do anything here, because this will be called by the
-    // superclass PGraphics, and the file/path object won't be set yet
-    // (since super() called right at the beginning of the constructor)
-  }
+//  /**
+//   * all the init stuff happens in here, in case someone calls size()
+//   * along the way and wants to hork things up.
+//   */
+//  protected void allocate() {
+//    // can't do anything here, because this will be called by the
+//    // superclass PGraphics, and the file/path object won't be set yet
+//    // (since super() called right at the beginning of the constructor)
+//  }
 
 
   @Override
   public PSurface createSurface() {
-    return surface = new PSurfaceNone();
+    return surface = new PSurfaceNone(this);
   }
 
 
@@ -118,12 +120,14 @@ public class PGraphicsPDF extends PGraphicsJava2D {
 
     if (document == null) {
       document = new Document(new Rectangle(width, height));
+      boolean missingPath = false;
       try {
         if (file != null) {
           //BufferedOutputStream output = new BufferedOutputStream(stream, 16384);
           output = new BufferedOutputStream(new FileOutputStream(file), 16384);
 
         } else if (output == null) {
+          missingPath = true;
           throw new RuntimeException("PGraphicsPDF requires a path " +
                                      "for the location of the output file.");
         }
@@ -132,25 +136,26 @@ public class PGraphicsPDF extends PGraphicsJava2D {
         content = writer.getDirectContent();
 //        template = content.createTemplate(width, height);
 
-      } catch (Exception e) {
-        e.printStackTrace();
-        throw new RuntimeException("Problem saving the PDF file.");
+      } catch (RuntimeException re) {
+        if (missingPath) {
+          throw re;  // don't re-package our own error
+        } else {
+          throw new RuntimeException("Problem saving the PDF file.", re);
+        }
+
+      } catch (FileNotFoundException fnfe) {
+        throw new RuntimeException("Can't save the PDF file to " + path, fnfe);
+
+      } catch (DocumentException de) {
+        throw new RuntimeException("Error inside the PDF library.", de);
       }
 
-//      System.out.println("beginDraw fonts " + (System.currentTimeMillis() - t));
-//      g2 = content.createGraphics(width, height, getMapper());
-//      if (textMode == SHAPE) {
       g2 = content.createGraphicsShapes(width, height);
-//      } else if (textMode == MODEL) {
-//        g2 = content.createGraphics(width, height, getMapper());
-//      }
-//      g2 = createGraphics();
-//      g2 = template.createGraphics(width, height, mapper);
     }
-//    System.out.println("beginDraw " + (System.currentTimeMillis() - t0));
 
     // super in Java2D now creates an image buffer, don't do that
-//    super.beginDraw();
+    //super.beginDraw();
+
     checkSettings();
     resetMatrix(); // reset model matrix
     vertexCount = 0;
@@ -248,14 +253,13 @@ public class PGraphicsPDF extends PGraphicsJava2D {
   }
 
 
+  // endDraw() needs to be overridden so that the endDraw() from
+  // PGraphicsJava2D is not inherited (it calls loadPixels).
+  // http://dev.processing.org/bugs/show_bug.cgi?id=1169
   public void endDraw() {
     // Also need to pop the matrix since the matrix doesn't reset on each run
     // http://dev.processing.org/bugs/show_bug.cgi?id=1227
     popMatrix();
-
-    // This needs to be overridden so that the endDraw() from PGraphicsJava2D
-    // is not inherited (it calls loadPixels).
-    // http://dev.processing.org/bugs/show_bug.cgi?id=1169
   }
 
 

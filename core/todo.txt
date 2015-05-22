@@ -1,88 +1,85 @@
-0235 (3.0a8)
-X pop() was not implemented correctly
-X fairly major rewrite of createShape() 
-X   prevents same code from appearing 5x (!) in the source
-X   improves bad api design with the static createShapeImpl() methods
-X add new String/Int/FloatDict constructors for easier initialization
-X errors in case changes not correctly reported
-X   https://github.com/processing/processing/issues/3235
-
-_ move svgz handling to PApplet
-_   remove objz handling
-
-_ need reference update for createShape()
-_   createShape(RECT) uses x/y/w/h, and optionally adds a mode param
-_     and optionally the corner radii
-_   createShape(ELLIPSE) is x/y/w/h, and optionally adds a mode param
-
-
-opengl
-_ why is createShape() implemented 4x (for P2D, P3D, and 2x versions)? 
-_   shouldn't be static, run it from the renderer, that's point of createXxx()
-_ when did setPath() sneak into PShape? API is nothing like anything else
-_ public createShape() method that takes another shape as param?
-_   should just be the constructor doing this, or copy()
+0237 (3.0a10)
 
 
 high priority
-_ OpenGL sketches work only after running a sketch with default renderer
-_   https://github.com/processing/processing/issues/3218
-_ static mode - no setup() / draw() - broken in OpenGL
-_   https://github.com/processing/processing/issues/3163
+_ need a better option for using full screen
+_   https://github.com/processing/processing/issues/3296
+_   right now using a (display ignoring) hack to displayWidth/Height
+_   maybe we use the AWT screen sizes first, then match the others w/ em?
+_   https://docs.oracle.com/javafx/2/api/javafx/stage/Screen.html
+_ instead of all these sketchXxxx() methods, should we have sketchSetting()
+_   and an internal dictionary that stores them all?
+_   or sketchInt() or settingsInt()?
+_   too much soup inside main() to handle arg parsing and passing to the sketch
+_ update documentation to say "don't override sketchXxxx() methods"
 _ sketch window is not placed at correct location when running a second time
 _   https://github.com/processing/processing/issues/3125
-_ y location of frame might be negative, but that might be ok 
+_ y-location of frame might be negative, but that might be ok 
 _   right now, on Windows it moves it on-screen (b/c of previous bug reports)
 _   may be cause of some of the display placement issues w/ multiple displays
 _   seem to recall one of the bugs mentioning stacked displays
 _   need to change to iterate through display rectangles
-_ tweak mode ColorSelector is broken (uses getComponent())
+_   may be related to full-screen bug filed recently
 _ closing a sketch window manually (not hitting Stop) not killing sketch
 _   at least with the Java2D renderer
 
 
-rendering/performance/surface
-_ remove setTitle() etc methods from PSurface, just use the ones from Frame?
-_   and with that, encourage the use of the dummy frame object in renderers
-o destroy() removed, but bring back? is that better than dispose()?
-_   destroy() only called dispose(), so no difference
-_   Python Mode has a hook for when it's called
-_ move checkRetina()/highResDisplay() to PApplet
-_   and out of Toolkit and PSurfaceAWT
-_ probably should also check to make sure PApplet running JVM 8
-_   or compile against 1.8 and force it?
+javafx
+_ static mode sketches (draw once and halt w/o closing window)
+_ noLoop()
+_ keyChar and keyCode are super wonky and unlike AWT
+_   https://github.com/processing/processing/issues/3290
+_   what's the way to do this after the deprecation?
+_   if this is going to be the default renderer, has to be ironed out
+_ displayWidth, displayHeight, full screen, display number
+_ present mode (stage in the center, clear the rest of the screen)
+_ createGraphics() should probably create PGraphicsJava2D
+_   or is Canvas specific to the PGraphics, and we get another Context2D?
+_   http://docs.oracle.com/javafx/2/api/javafx/scene/canvas/Canvas.html
+_ loadPixels() (also 2x)
+_ text and fonts?
+_ updatePixels()
+_ save() and saveFrame()
+_ get() and set()
+_ clip/noClip
+_   https://github.com/processing/processing/issues/3274
+_ getNative() is problematic because it gives back a BufferedImage
+_   move loadImage() into PGraphics, with AWT version the default?
+_ implement frameRate()
+_ implement external messages (moving the window)
+
+
+opengl
+_ Closing OpenGL sketch from the PDE doesn't stop java.exe process
+_   https://github.com/processing/processing/issues/2335
+_ why is createShape() implemented 4x (for P2D, P3D, and 2x versions)? 
+_   shouldn't be static, run it from the renderer, that's point of createXxx()
+_ public createShape() method that takes another shape as param?
+_   should just be the constructor doing this, or copy()
+_ add attrib() method
+_   https://github.com/processing/processing/issues/2963
+_   assign this to DXF as well?
+
+
+opengl questions
+_ sketchQuality() vs sketchSmooth()?
+_ move glsl entries to their own subdirectory
+_ exitCalled() and exitActual made public by Andres, breaks Python
+_   also not API we want to expose, so sort this out
+_   or maybe we're fine b/c now FX2D needs it as well
+_ when did setPath() sneak into PShape? API is nothing like anything else
+_   probably from the material stuff, but we need to fix that
+
+
+full screen
 _ present window draws in stages (OS X)
 _ split 'present' and 'full screen'?
 _   --full-screen causes considerable flicker at this point
 _   or split them when sketchWidth/Height are implemented?
-_ check on performance of the new EDT setup
-_ can't do version that draws to BufferStrategy directly
-_   pixel operations (get/set/loadPixels/saveFrame) might be fixable
-_   but can't re-run draw() to re-blit the screen
-_     because we don't split calc() and draw()
-_   even with the split, handleDraw() might need to live in PSurface
-_ add calc() option? this could ease transition
-_ present mode is 30-40% slower than windowed
-_   w/ this example: https://github.com/processing/processing/issues/2423
-
-
-opengl misc
-_ sketchQuality() vs sketchSmooth()?
-_ move glsl entries to their own subdirectory?
-_ exitCalled() and exitActual made public by Andres, breaks Python
-_   also not API we want to expose, so sort this out
-_ get code into makeGraphics() to handle bad path settings for LWJGL
-_   right now it has a bunch of JOGL-specific code
-
-
-applet/sketch
-_ clean up requestFocus() stuff
-_   make sure it works with retina/canvas/strategy as well
-_   requestFocus() method probably needs to be added to PApplet
-_ args[] should be null if none passed (otherwise args == null checks are weird)
-
-
-full screen
+_ "run sketches on display" not working in 3.0a7
+_   https://github.com/processing/processing/issues/3264
+_ full screen doesn't work on second window w/o present mode
+_   https://github.com/processing/processing/issues/3271
 _ show warning when display spanning is turned off
 _   defaults read com.apple.spaces spans-displays
 _ crash on startup when "Mirror Displays" selected (cantfix?)
@@ -96,30 +93,21 @@ _   https://github.com/processing/processing/issues/3158
 
 
 graphics
-_ saveFrame() from setup() gives a black screen when size() is called
-_   as seen in the 'numbers' sketch
 _ should the re-alloc of the drawing surface happen in beginDraw()
 _   that way it won't blit to the screen until we have a fresh redraw?
 _   otherwise it'll also be resizing on another thread.. badness
 _   how to allocation image object w/ createGraphics() (since no surface)
-_ add attrib() method
-_   https://github.com/processing/processing/issues/2963
-_   assign this to DXF as well?
 _ createGraphics() currently broken in Java2D
 _ size() command not working to do a resize
-_ fix flicker when resizing window 
-_   running through PSurfaceAWT.setSize() is probably overkill
-_   setLocationRelativeTo(null) was removed, will it be missed?
+_   need a programmatic way to set size
 _ deal with applySettings() change (maybe not a problem?)
 _ textAlign(RIGHT) including spaces at the end of each line
 _   https://github.com/processing/processing/issues/3028
 _ loadImage() doesn't follow redirects
 _   https://github.com/processing/processing-docs/issues/218
-
-
-cross-language awkwardness
-_ python has to use launch() instead of open()
-_ map() is bad for Python and JavaScript
+_ check on performance of the new EDT setup
+_ present mode is 30-40% slower than windowed
+_   w/ this example: https://github.com/processing/processing/issues/2423
 
 
 breaking api
@@ -128,46 +116,20 @@ _ add chaining operations to PVector
 _   https://github.com/processing/processing/issues/257
 _ min() and max() to use varargs
 _   https://github.com/processing/processing/issues/3027
-_ use enums for constants
-_   https://github.com/processing/processing/issues/2778
-_ make join() work with Iterable?
+_ make join() work with Iterable or Object... or both?
 _   will this collide with the current String[] version?
 _ remove OPENGL constant (tell people to use P3D or P2D)
 _ exec() and open() to use varargs
-
-
-under consideration
+_ join() to use varargs
 _ break PUtil out from PApplet
-_ async requests
-_   https://github.com/processing/processing/issues/3165
-_   Request r = createRequest("http://p5.org/feed/13134.jpg");
-_   Request r = createRequest("http://p5.org/feed/13134.jpg", "callbackName");
-_   Request r = createRequest("http://p5.org/feed/13134, "callbackName", "jpg");
-_   implement callbacks for images and other loadXxxx() functions
-_     remove requestImage() and friends
-_   callback for requestImage()
-_     https://github.com/processing/processing/issues/680
-_   remove/update requestImage example
-_   check into promise api
-_     http://www.html5rocks.com/en/tutorials/es6/promises/
-_     https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
-_ fix the registered methods doc, stop/dispose working
-_   Casey needs to nudge people about libraries, so we need to fix this
-_ pause(), resume(), start(), stop() clarifications
-_ dispose/stop not great w/ libraries yet
-_ PShape complete refactoring
-_ proper touch events
-_   touch event doesn't make sense for mouseMove on desktop, hover on Android
-_   probably go with pointer: more universal for touch/mouse
-_ high-level touch events (swipe, et al)
-_   if Andres is done, they go in, if not then 3.0
-_ move away from loadPixels
+_   pro: weird to call PApplet for things like hex/join/etc
+_   con: still lots of things like selectFolder() that need GUI
+_ cross-language awkwardness
+_   python has to use launch() instead of open()
+_   map() is bad for Python and JavaScript
 
 
-processing.data
-_ add appendUnique()
-_ add fromOrder() and others? otherwise need temp object:
-_   categoryIndexLookup = new StringList(flavors).getOrder();
+data
 _ handling of 'missing' values in Table needs serious work
 _   if missing int is zero, can't just remove those values from saving a table
 _   but for NaN values, it's a necessity
@@ -187,19 +149,8 @@ _   the table pointer version will be speedy and allow chaining
 
 
 high
-_ Closing opengl sketch from the PDE doesn't stop java process on windows
-_   https://github.com/processing/processing/issues/2335
 _ dataPath() not working when app is not run from app dir on Linux
 _   https://github.com/processing/processing/issues/2195
-_ "Buffers have not been created" error for sketches w/o draw()
-_   https://github.com/processing/processing/issues/2469
-_   could not reproduce
-_ Sketch runs with default size if size() is followed by large memory allocation
-_   some sort of threading issue happening here
-_   https://github.com/processing/processing/issues/1672
-_   https://github.com/processing/processing/issues/2039 (dupe)
-_   https://github.com/processing/processing/issues/2294 (dupe)
-_   also check this out with the new full screen code on OS X
 _ point() rendering differently in 2.0.3 and 2.1
 _   https://github.com/processing/processing/issues/2278
 _   internally, we probably have to call set() if it's a 1 pixel point
@@ -212,6 +163,8 @@ _   draw(s) doesn't work on the returned PShape
 
 
 retina/hidpi
+_ save() and saveFrame() with 2X renderers fails
+_   https://github.com/processing/processing/issues/3255
 _ the 2X thing on the renderer name is unnecessary
 _   just do pixelFactor() (and pull it during compilation)?
 _   add sketchPixelFactor() to handle the scenario?
@@ -239,6 +192,42 @@ _   https://github.com/processing/processing/issues/2510
 
 
 decisions/misc
+_ keep Danger2D? 
+_   can't do version that draws to BufferStrategy directly
+_   pixel operations (get/set/loadPixels/saveFrame) might be fixable
+_   but can't re-run draw() to re-blit the screen
+_     because we don't split calc() and draw()
+_   even with the split, handleDraw() might need to live in PSurface
+_   add calc() option? this could ease transition
+_ need reference update for createShape()
+_   though we need to verify the behavior here
+_   createShape(RECT) uses x/y/w/h, and optionally adds a mode param
+_     and optionally the corner radii
+_   createShape(ELLIPSE) is x/y/w/h, and optionally adds a mode param
+_ async requests
+_   https://github.com/processing/processing/issues/3165
+_   Request r = createRequest("http://p5.org/feed/13134.jpg");
+_   Request r = createRequest("http://p5.org/feed/13134.jpg", "callbackName");
+_   Request r = createRequest("http://p5.org/feed/13134, "callbackName", "jpg");
+_   implement callbacks for images and other loadXxxx() functions
+_     remove requestImage() and friends
+_   callback for requestImage()
+_     https://github.com/processing/processing/issues/680
+_   remove/update requestImage example
+_   check into promise api
+_     http://www.html5rocks.com/en/tutorials/es6/promises/
+_     https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
+_ fix the registered methods doc, stop/dispose working
+_   Casey needs to nudge people about libraries, so we need to fix this
+_ pause(), resume(), start(), stop() clarifications
+_ dispose/stop not great w/ libraries yet
+_ PShape complete refactoring
+_ proper touch events
+_   touch event doesn't make sense for mouseMove on desktop, hover on Android
+_   probably go with pointer: more universal for touch/mouse
+_ high-level touch events (swipe, et al)
+_   if Andres is done, they go in, if not then 3.0
+_ move away from loadPixels
 _ add options for image.save() (or saveImage?)
 _   add quality=[0,1] for jpeg images
 _   add dpi=[0,n] for for png images
@@ -333,8 +322,15 @@ _ decide how disconnectEvent should actually be handled (and name?)
 _   was disconnect always there? 
 _   will need documentation
 _ negative indices so that we can work relative to the end in data classes?
-_ add Double and Long versions of the classes?
-
+_ add Double and Long versions of the data classes?
+_ add requestFocus() method to PApplet (or surface?)
+o destroy() removed, but bring back? is that better than dispose()?
+_   destroy() only called dispose(), so no difference
+_   Python Mode has a hook for when it's called
+_ move checkRetina()/highResDisplay() to PApplet
+_   and out of Toolkit and PSurfaceAWT
+_ probably should also check to make sure PApplet running JVM 8
+_   or compile against 1.8 and force it?
 
 
 

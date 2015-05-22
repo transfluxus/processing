@@ -38,10 +38,10 @@ import processing.core.*;
 
 
 /**
- * Window for modifying preferences.
+ * Creates the window for modifying preferences.
  */
 public class PreferencesFrame {
-  JFrame dialog;
+  JFrame frame;
   GroupLayout layout;
 
   static final Integer[] FONT_SIZES = { 10, 12, 14, 18, 24, 36, 48 };
@@ -83,18 +83,15 @@ public class PreferencesFrame {
 
   public PreferencesFrame(Base base) {
     this.base = base;
-    //dialog = new JDialog(editor, "Preferences", true);
-    dialog = new JFrame(Language.text("preferences"));
-    Container pain = dialog.getContentPane();
+
+    frame = new JFrame(Language.text("preferences"));
+    Container pain = frame.getContentPane();
     layout = new GroupLayout(pain);
     layout.setAutoCreateGaps(true);
     layout.setAutoCreateContainerGaps(true);
 
     pain.setLayout(layout);
 
-//    final int GUI_BETWEEN = Preferences.GUI_BETWEEN;
-//    final int GUI_BIG = Preferences.GUI_BIG;
-//    final int GUI_SMALL = Preferences.GUI_SMALL;
     final int BUTTON_WIDTH = Preferences.BUTTON_WIDTH;
     final int BORDER = Base.isMacOS() ? 20 : 13;
 
@@ -115,13 +112,12 @@ public class PreferencesFrame {
           File dflt = new File(sketchbookLocationField.getText());
           PApplet.selectFolder(Language.text("preferences.sketchbook_location.popup"),
                                "sketchbookCallback", dflt,
-                               PreferencesFrame.this, dialog);
+                               PreferencesFrame.this, frame);
         }
       });
 
+
     // Language: [ English ] (requires restart of Processing)
-
-
 
     JLabel languageLabel = new JLabel(Language.text("preferences.language")+": ");
     languageSelectionBox = new JComboBox<String>();
@@ -136,17 +132,10 @@ public class PreferencesFrame {
       }
     }
     languageSelectionBox.setModel(new DefaultComboBoxModel<String>(languageSelection));
-    restartProcessingLabel = new JLabel(" ("+Language.text("preferences.requires_restart")+")");
+    restartProcessingLabel = new JLabel(" (" + Language.text("preferences.requires_restart") + ")");
+
 
     // Editor and console font [ Source Code Pro ]
-
-    // Nevermind on this for now.. Java doesn't seem to have a method for
-    // enumerating only the fixed-width (monospaced) fonts. To do this
-    // properly, we'd need to list the fonts, and compare the metrics of
-    // i and M for each. When they're identical (and not degenerate),
-    // we'd call that font fixed width. That's all a very expensive set of
-    // operations, so it should also probably be cached between runs and
-    // updated in the background.
 
     JLabel fontLabel = new JLabel(Language.text("preferences.editor_and_console_font")+": ");
     final String fontTip = "<html>" + Language.text("preferences.editor_and_console_font.tip");
@@ -156,6 +145,7 @@ public class PreferencesFrame {
     fontSelectionBox.setToolTipText(fontTip);
     //updateDisplayList();
     fontSelectionBox.setEnabled(false);  // don't enable until fonts are loaded
+
 
     // Editor font size [ 12 ]  Console font size [ 10 ]
 
@@ -174,14 +164,13 @@ public class PreferencesFrame {
     presentColor = new JTextField("      ");
     presentColor.setOpaque(true);
     presentColor.setEnabled(false);
-    presentColor.setBorder(new CompoundBorder(BorderFactory.createMatteBorder(
-        1, 1, 0, 0, new Color(195, 195, 195)), BorderFactory.createMatteBorder(
-        0, 0, 1, 1, new Color(54, 54, 54))));
+    Border cb = new CompoundBorder(BorderFactory.createMatteBorder(1, 1, 0, 0, new Color(195, 195, 195)),
+                                   BorderFactory.createMatteBorder(0, 0, 1, 1, new Color(54, 54, 54)));
+    presentColor.setBorder(cb);
     presentColor.setBackground(Preferences.getColor("run.present.bgcolor"));
 
     presentColorHex = new JTextField(6);
-    presentColorHex
-        .setText(Preferences.get("run.present.bgcolor").substring(1));
+    presentColorHex.setText(Preferences.get("run.present.bgcolor").substring(1));
     presentColorHex.getDocument().addDocumentListener(new DocumentListener() {
 
       @Override
@@ -193,12 +182,9 @@ public class PreferencesFrame {
               presentColorHex.setText(colorValue.substring(1));
             }
           });
-        if (colorValue.length() == 6
-            && colorValue.matches("[0123456789ABCDEF]*")) {
-          presentColor.setBackground(new Color(Integer.parseInt(
-              colorValue.substring(0, 2), 16), Integer.parseInt(
-              colorValue.substring(2, 4), 16), Integer.parseInt(
-              colorValue.substring(4, 6), 16)));
+        if (colorValue.length() == 6 &&
+            colorValue.matches("[0123456789ABCDEF]*")) {
+          presentColor.setBackground(new Color(PApplet.unhex(colorValue)));
           if (!colorValue.equals(presentColorHex.getText()))
             EventQueue.invokeLater(new Runnable() {
               public void run() {
@@ -219,10 +205,7 @@ public class PreferencesFrame {
           });
         if (colorValue.length() == 6
             && colorValue.matches("[0123456789ABCDEF]*")) {
-          presentColor.setBackground(new Color(Integer.parseInt(
-              colorValue.substring(0, 2), 16), Integer.parseInt(
-              colorValue.substring(2, 4), 16), Integer.parseInt(
-              colorValue.substring(4, 6), 16)));
+          presentColor.setBackground(new Color(PApplet.unhex(colorValue)));
           if (!colorValue.equals(presentColorHex.getText()))
             EventQueue.invokeLater(new Runnable() {
               public void run() {
@@ -235,31 +218,29 @@ public class PreferencesFrame {
       @Override public void changedUpdate(DocumentEvent e) {}
     });
 
-    selector = new ColorChooser(dialog, false,
-        Preferences.getColor("run.present.bgcolor"), Language.text("prompt.ok"),
-        new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            String colorValue = selector.getHexColor();
-            presentColorHex.setText(colorValue.substring(1));
-            presentColor.setBackground(new Color(Integer.parseInt(
-                colorValue.substring(1, 3), 16), Integer.parseInt(
-                colorValue.substring(3, 5), 16), Integer.parseInt(
-                colorValue.substring(5, 7), 16)));
-            selector.hide();
-          }
-        });
+    selector = new ColorChooser(frame, false,
+                                Preferences.getColor("run.present.bgcolor"),
+                                Language.text("prompt.ok"),
+                                new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        String colorValue = selector.getHexColor();
+        colorValue = colorValue.substring(1);  // remove the #
+        presentColorHex.setText(colorValue);
+        presentColor.setBackground(new Color(PApplet.unhex(colorValue)));
+        selector.hide();
+      }
+    });
 
     presentColor.addMouseListener(new MouseAdapter() {
-
       @Override
       public void mouseExited(MouseEvent e) {
-        dialog.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        frame.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
       }
 
       @Override
       public void mouseEntered(MouseEvent e) {
-        dialog.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        frame.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       }
 
       @Override
@@ -270,9 +251,11 @@ public class PreferencesFrame {
 
     JLabel hashLabel = new JLabel("#");
 
+
     // [ ] Use smooth text in editor window
 
     editorAntialiasBox = new JCheckBox(Language.text("preferences.use_smooth_text"));
+
 
     // [ ] Enable complex text input (for Japanese et al, requires restart)
 
@@ -281,45 +264,31 @@ public class PreferencesFrame {
                     " ("+Language.text("preferences.enable_complex_text_input_example")+
                     ", "+Language.text("preferences.requires_restart")+")");
 
+
     // [ ] Continuously check for errors - PDE X
 
     errorCheckerBox =
       new JCheckBox(Language.text("preferences.continuously_check"));
+
 
     // [ ] Show Warnings - PDE X
 
     warningsCheckerBox =
       new JCheckBox(Language.text("preferences.show_warnings"));
 
+
     // [ ] Enable Code Completion - PDE X
 
     codeCompletionBox =
       new JCheckBox(Language.text("preferences.code_completion") +
                     " Ctrl-" + Language.text("preferences.cmd_space"));
-////    codeCompletionBox.addActionListener(new ActionListener() {
-////
-////      @Override
-////      public void actionPerformed(ActionEvent e) {
-////        // Disble code completion trigger option if completion is disabled
-////        codeCompletionTriggerBox.setEnabled(codeCompletionBox.isSelected());
-////      }
-////    });
 
-////    int toggleLeft = left + d.width;
-
-    //// [ ] Toggle Code Completion Trigger - PDE X. No longer needed (Manindra)
-
-////    codeCompletionTriggerBox =
-////      new JCheckBox(Language.text("preferences.trigger_with")+" Ctrl-"+Language.text("preferences.cmd_space"));
-////    pain.add(codeCompletionTriggerBox);
-////    d = codeCompletionTriggerBox.getPreferredSize();
-////    codeCompletionTriggerBox.setBounds(toggleLeft, top, d.width + 10, d.height);
-////    right = Math.max(right, toggleLeft + d.width);
 
     // [ ] Show import suggestions - PDE X
 
     importSuggestionsBox =
       new JCheckBox(Language.text("preferences.suggest_imports"));
+
 
     // [ ] Increase maximum available memory to [______] MB
 
@@ -333,15 +302,18 @@ public class PreferencesFrame {
     });
     JLabel mbLabel = new JLabel("MB");
 
+
     // [ ] Delete previous application folder on export
 
     deletePreviousBox =
       new JCheckBox(Language.text("preferences.delete_previous_folder_on_export"));
 
+
     // [ ] Check for updates on startup
 
     checkUpdatesBox =
       new JCheckBox(Language.text("preferences.check_for_updates_on_startup"));
+
 
     // Run sketches on display [  1 ]
 
@@ -356,6 +328,7 @@ public class PreferencesFrame {
       autoAssociateBox =
         new JCheckBox(Language.text("preferences.automatically_associate_pde_files"));
       autoAssociateBox.setVisible(false);
+
 
     // More preferences are in the ...
 
@@ -382,6 +355,7 @@ public class PreferencesFrame {
 
     JLabel preferenceHintLabel = new JLabel("(" + Language.text("preferences.file.hint") + ")");
     preferenceHintLabel.setForeground(Color.gray);
+
 
     // [  OK  ] [ Cancel ]
 
@@ -435,19 +409,25 @@ public class PreferencesFrame {
           .addComponent(importSuggestionsBox)
           .addGroup(layout.createSequentialGroup()
                         .addComponent(memoryOverrideBox)
-                        .addComponent(memoryField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                        .addComponent(memoryField,
+                                      GroupLayout.PREFERRED_SIZE,
+                                      GroupLayout.DEFAULT_SIZE,
+                                      GroupLayout.PREFERRED_SIZE)
                         .addComponent(mbLabel))
           .addComponent(deletePreviousBox)
           .addComponent(checkUpdatesBox)
           .addGroup(layout.createSequentialGroup()
                       .addComponent(displayLabel)
-                      .addComponent(displaySelectionBox, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                      .addComponent(displaySelectionBox,
+                                    GroupLayout.PREFERRED_SIZE,
+                                    GroupLayout.DEFAULT_SIZE,
+                                    GroupLayout.PREFERRED_SIZE)
           )
           .addComponent(autoAssociateBox)
           .addComponent(morePreferenceLabel)
           .addComponent(preferencePathLabel)
           .addComponent(preferenceHintLabel)
-          .addGroup(GroupLayout.Alignment.TRAILING ,layout.createSequentialGroup() // Trailing so that the buttons are to the right
+          .addGroup(GroupLayout.Alignment.TRAILING,layout.createSequentialGroup() // Trailing so that the buttons are to the right
                       .addComponent(okButton, BUTTON_WIDTH, GroupLayout.DEFAULT_SIZE, BUTTON_WIDTH) // Ok and Cancel buttton are now of size BUTTON_WIDTH
                       .addComponent(cancelButton, BUTTON_WIDTH, GroupLayout.DEFAULT_SIZE, BUTTON_WIDTH)
           ))
@@ -510,7 +490,7 @@ public class PreferencesFrame {
     }
     // closing the window is same as hitting cancel button
 
-    dialog.addWindowListener(new WindowAdapter() {
+    frame.addWindowListener(new WindowAdapter() {
       public void windowClosing(WindowEvent e) {
         disposeFrame();
       }
@@ -522,12 +502,12 @@ public class PreferencesFrame {
       }
     };
     // finish up
-    
-    Toolkit.registerWindowCloseKeys(dialog.getRootPane(), disposer);
-    Toolkit.setIcon(dialog);
-    dialog.setResizable(false);
-    dialog.pack();
-    dialog.setLocationRelativeTo(null);
+
+    Toolkit.registerWindowCloseKeys(frame.getRootPane(), disposer);
+    Toolkit.setIcon(frame);
+    frame.setResizable(false);
+    frame.pack();
+    frame.setLocationRelativeTo(null);
 
     // Workaround for OS X, which breaks the layout when these are set earlier
     // https://github.com/processing/processing/issues/3212
@@ -549,26 +529,17 @@ public class PreferencesFrame {
   }
 
 
+  /** Callback for the folder selector. */
   public void sketchbookCallback(File file) {
-    if (file != null) {
+    if (file != null) {  // null if cancel or closed
       sketchbookLocationField.setText(file.getAbsolutePath());
     }
   }
 
 
-//  public Dimension getPreferredSize() {
-//    return new Dimension(wide, high);
-//  }
-
-
-  // .................................................................
-
-
-  /**
-   * Close the window after an OK or Cancel.
-   */
+  /** Close the window after an OK or Cancel. */
   protected void disposeFrame() {
-    dialog.dispose();
+    frame.dispose();
   }
 
 
@@ -728,23 +699,23 @@ public class PreferencesFrame {
     if (autoAssociateBox != null) {
       autoAssociateBox.setSelected(Preferences.getBoolean("platform.auto_file_type_associations")); //$NON-NLS-1$
     }
-    // The OK Button has to be set as the default button every time the 
+    // The OK Button has to be set as the default button every time the
     // PrefWindow is to be displayed
-    dialog.getRootPane().setDefaultButton(okButton);
+    frame.getRootPane().setDefaultButton(okButton);
 
     // The pack is called again here second time to fix layout bugs
     // the bugs are not due to groupLayout but due to HTML rendering of components
     // more info can be found here -> https://netbeans.org/bugzilla/show_bug.cgi?id=79967
-    dialog.pack();
+    frame.pack();
 
-    dialog.setVisible(true);
+    frame.setVisible(true);
   }
 
 
   /**
    * I have some ideas on how we could make Swing even more obtuse for the
    * most basic usage scenarios. Is there someone on the team I can contact?
-   * Oracle staffer, are you reading this? This could be your meal ticket.
+   * Are you an Oracle staffer reading this? This could be your meal ticket.
    */
   static class FontNamer extends JLabel implements ListCellRenderer<Font> {
     public Component getListCellRendererComponent(JList<? extends Font> list,
@@ -780,15 +751,25 @@ public class PreferencesFrame {
 
   void updateDisplayList() {
     GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-    displayCount = ge.getScreenDevices().length;
-//    displaySelectionBox.removeAll();
+    GraphicsDevice defaultDevice = ge.getDefaultScreenDevice();
+    GraphicsDevice[] devices = ge.getScreenDevices();
+
+    displayCount = devices.length;
     String[] items = new String[displayCount];
     for (int i = 0; i < displayCount; i++) {
-      items[i] = String.valueOf(i + 1);
-//      displaySelectionBox.add(String.valueOf(i + 1));
+      DisplayMode mode = devices[i].getDisplayMode();
+      String title = String.format("%d (%d \u2715 %d)",  // or \u00d7?
+                                   i + 1, mode.getWidth(), mode.getHeight());
+      if (devices[i] == defaultDevice) {
+        title += " default";
+      }
+      items[i] = title;
     }
-//    PApplet.println(items);
     displaySelectionBox.setModel(new DefaultComboBoxModel<String>(items));
-//    displaySelectionBox = new JComboBox(items);
+
+    // Disable it if you can't actually change the default display
+    if (displayCount == 1) {
+      displaySelectionBox.setEnabled(false);
+    }
   }
 }

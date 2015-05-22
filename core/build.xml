@@ -32,6 +32,7 @@
     </condition>
     <!--<echo message="compiler is ${build.compiler}" />-->
 
+    <!-- link against apple.jar for the ThinkDifferent class -->
     <mkdir dir="bin" />
     <javac source="1.7"
 	   target="1.7"
@@ -39,7 +40,9 @@
 	   includeAntRuntime="false"
 	   debug="true"
 	   srcdir="src" destdir="bin"
-	   classpath="library/lwjgl.jar; library/lwjgl_util.jar"
+	   classpath="apple.jar; 
+                      library/jogl-all.jar; 
+                      library/gluegen-rt.jar"
 	   nowarn="true">
       <!-- kinda gross, but if not using the JDT, this just ignored anyway -->
       <compilerclasspath path="${jdt.jar}; ../java/mode/jdtCompilerAdapter.jar" />
@@ -52,7 +55,7 @@
     <!-- Copy shaders to bin. (Eclipse does this automatically.) -->
     <copy todir="bin">
       <fileset dir="src">
-	<include name="processing/opengl/*.glsl" />
+	<include name="processing/opengl/shaders/*.glsl" />
 	<include name="icon/*.png" />
       </fileset>
     </copy>

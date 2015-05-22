@@ -46,6 +46,17 @@ public interface PConstants {
 
   // renderers known to processing.core
 
+  /*
+  // List of renderers used inside PdePreprocessor
+  static final StringList rendererList = new StringList(new String[] {
+    "JAVA2D", "JAVA2D_2X",
+    "P2D", "P2D_2X", "P3D", "P3D_2X", "OPENGL",
+    "E2D", "FX2D", "FX2D_2X",  // experimental
+    "LWJGL.P2D", "LWJGL.P3D",  // hmm
+    "PDF"  // no DXF because that's only for beginRaw()
+  });
+  */
+
   static final String JAVA2D    = "processing.core.PGraphicsJava2D";
   static final String JAVA2D_2X = "processing.core.PGraphicsJava2D2X";
 
@@ -54,16 +65,18 @@ public interface PConstants {
   static final String P3D    = "processing.opengl.PGraphics3D";
   static final String P3D_2X = "processing.opengl.PGraphics3D2X";
 
-  // remove this? breakage?
+  // When will it be time to remove this to have people use P3D instead?
   static final String OPENGL = P3D;
 
-  // Experimental, higher-performance Java 2D renderer
+  // Experimental, higher-performance Java 2D renderer (but no pixel ops)
   static final String E2D = PGraphicsDanger2D.class.getName();
 
-  // Experimental JavaFX renderer; even better 2D performance?
-  static final String FX2D = PGraphicsFX.class.getName();
+  // Experimental JavaFX renderer; even better 2D performance
+  static final String FX2D = PGraphicsFX2D.class.getName();
+  static final String FX2D_2X = PGraphicsFX2D2X.class.getName();
 
   static final String PDF = "processing.pdf.PGraphicsPDF";
+  static final String SVG = "processing.svg.PGraphicsSVG";
   static final String DXF = "processing.dxf.RawDXF";
 
   // platform IDs for PApplet.platform

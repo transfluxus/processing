@@ -3,7 +3,7 @@
 /*
   Part of the Processing project - http://processing.org
 
-  Copyright (c) 2013-14 The Processing Foundation
+  Copyright (c) 2013-15 The Processing Foundation
   Copyright (c) 2005-13 Ben Fry and Casey Reas
 
   This library is free software; you can redistribute it and/or
@@ -28,13 +28,9 @@ import java.awt.*;
 import java.awt.font.TextAttribute;
 import java.awt.geom.*;
 import java.awt.image.*;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.zip.GZIPInputStream;
-
-import processing.data.XML;
 
 
 /**
@@ -296,7 +292,7 @@ public class PGraphicsJava2D extends PGraphics {
       }
       // If not realized (off-screen, i.e the Color Selector Tool), gc will be null.
       if (gc == null) {
-        System.err.println("GraphicsConfiguration null in initImage()");
+        //System.err.println("GraphicsConfiguration null in initImage()");
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         gc = ge.getDefaultScreenDevice().getDefaultConfiguration();
       }
@@ -1751,35 +1747,19 @@ public class PGraphicsJava2D extends PGraphics {
   // SHAPE I/O
 
 
-  @Override
-  public PShape loadShape(String filename) {
-    return loadShape(filename, null);
-  }
+  //public PShape loadShape(String filename)
 
 
   @Override
   public PShape loadShape(String filename, String options) {
     String extension = PApplet.getExtension(filename);
-
-    PShapeSVG svg = null;
-
-    if (extension.equals("svg")) {
-      svg = new PShapeSVG(parent.loadXML(filename));
-
-    } else if (extension.equals("svgz")) {
-      try {
-        InputStream input = new GZIPInputStream(parent.createInput(filename));
-        XML xml = new XML(PApplet.createReader(input), options);
-        svg = new PShapeSVG(xml);
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    } else {
-      PGraphics.showWarning("Unsupported format: " + filename);
+    if (extension.equals("svg") || extension.equals("svgz")) {
+      return new PShapeSVG(parent.loadXML(filename));
     }
-
-    return svg;
+    PGraphics.showWarning("Unsupported format: " + filename);
+    return null;
   }
+
 
 
   //////////////////////////////////////////////////////////////
@@ -2639,12 +2619,12 @@ public class PGraphicsJava2D extends PGraphics {
 
   @Override
   public void loadPixels() {
-    if ((pixels == null) || (pixels.length != width * height)) {
-      pixels = new int[width * height];
+    if (pixels == null || (pixels.length != pixelWidth*pixelHeight)) {
+      pixels = new int[pixelWidth * pixelHeight];
     }
 
     WritableRaster raster = getRaster();
-    raster.getDataElements(0, 0, width, height, pixels);
+    raster.getDataElements(0, 0, pixelWidth, pixelHeight, pixels);
     if (raster.getNumBands() == 3) {
       // Java won't set the high bits when RGB, returns 0 for alpha
       // https://github.com/processing/processing/issues/2030
@@ -2690,7 +2670,7 @@ public class PGraphicsJava2D extends PGraphics {
     }
 //    updatePixels();
     if (pixels != null) {
-      getRaster().setDataElements(0, 0, width, height, pixels);
+      getRaster().setDataElements(0, 0, pixelWidth, pixelHeight, pixels);
     }
     modified = true;
   }

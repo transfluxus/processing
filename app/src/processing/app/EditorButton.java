@@ -28,12 +28,14 @@ import javax.swing.*;
 
 abstract public class EditorButton extends JComponent
 implements MouseListener, MouseMotionListener, ActionListener {
-  static public final int DIM = 35;
+  static public final int DIM = 30;
 
   /** Button's description. */
   protected String title;
   /** Description of alternate behavior when shift is down. */
   protected String titleShift;
+  /** Description of alternate behavior when alt is down. */
+  protected String titleAlt;
 
   protected boolean pressed;
   protected boolean selected;
@@ -53,14 +55,22 @@ implements MouseListener, MouseMotionListener, ActionListener {
 
 
   public EditorButton(Mode mode, String name, String title) {
-    this(mode, name, title, title);
+    this(mode, name, title, title, title);
   }
 
 
-  public EditorButton(Mode mode, String name, String title, String titleShift) {
+  public EditorButton(Mode mode, String name,
+                      String title, String titleShift) {
+    this(mode, name, title, titleShift, title);
+  }
+
+
+  public EditorButton(Mode mode, String name,
+                      String title, String titleShift, String titleAlt) {
     this.mode = mode;
     this.title = title;
     this.titleShift = titleShift;
+    this.titleAlt = titleAlt;
 
     final int res = Toolkit.highResDisplay() ? 2 : 1;
     disabledImage = mode.loadImage(name + "-disabled-" + res + "x.png");
@@ -127,7 +137,7 @@ implements MouseListener, MouseMotionListener, ActionListener {
 
 
   public void setReverse() {
-    gradient = mode.getGradient("reversed", DIM, DIM);
+    gradient = mode.makeGradient("reversed", DIM, DIM);
   }
 
 
@@ -185,7 +195,13 @@ implements MouseListener, MouseMotionListener, ActionListener {
   public void mouseEntered(MouseEvent e) {
     rollover = true;
     if (rolloverLabel != null) {
-      rolloverLabel.setText(e.isShiftDown() ? titleShift : title);
+      if (e.isShiftDown()) {
+        rolloverLabel.setText(titleShift);
+      } else if (e.isAltDown()) {
+        rolloverLabel.setText(titleAlt);
+      } else {
+        rolloverLabel.setText(title);
+      }
     }
     repaint();
   }

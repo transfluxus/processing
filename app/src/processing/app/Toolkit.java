@@ -33,6 +33,7 @@ import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Image;
 import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.Window;
 import java.awt.datatransfer.Clipboard;
 import java.awt.event.ActionEvent;
@@ -41,6 +42,7 @@ import java.awt.event.KeyEvent;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.GeneralPath;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -450,6 +452,40 @@ public class Toolkit {
   }
 
 
+  static public Shape createRoundRect(float x1, float y1, float x2, float y2,
+                                      float tl, float tr, float br, float bl) {
+    GeneralPath path = new GeneralPath();
+//    vertex(x1+tl, y1);
+
+    if (tr != 0) {
+      path.moveTo(x2-tr, y1);
+      path.quadTo(x2, y1, x2, y1+tr);
+    } else {
+      path.moveTo(x2, y1);
+    }
+    if (br != 0) {
+      path.lineTo(x2, y2-br);
+      path.quadTo(x2, y2, x2-br, y2);
+    } else {
+      path.lineTo(x2, y2);
+    }
+    if (bl != 0) {
+      path.lineTo(x1+bl, y2);
+      path.quadTo(x1, y2, x1, y2-bl);
+    } else {
+      path.lineTo(x1, y2);
+    }
+    if (tl != 0) {
+      path.lineTo(x1, y1+tl);
+      path.quadTo(x1, y1, x1+tl, y1);
+    } else {
+      path.lineTo(x1, y1);
+    }
+    path.closePath();
+    return path;
+  }
+
+
   // someone needs to be slapped
   //static KeyStroke closeWindowKeyStroke;
 
@@ -722,7 +758,7 @@ public class Toolkit {
         monoFont = createFont("SourceCodePro-Regular.ttf", size);
         //monoBoldFont = createFont("SourceCodePro-Semibold.ttf", size);
         monoBoldFont = createFont("SourceCodePro-Bold.ttf", size);
-        
+
         // additional language constraints
         if ("el".equals(Language.getLanguage())) {
           if (!monoFont.canDisplay(GREEK_SMALL_LETTER_ALPHA) ||
@@ -758,7 +794,7 @@ public class Toolkit {
       try {
         sansFont = createFont("SourceSansPro-Regular.ttf", size);
         sansBoldFont = createFont("SourceSansPro-Semibold.ttf", size);
-        
+
         // additional language constraints
         if ("el".equals(Language.getLanguage())) {
           if (!sansFont.canDisplay(GREEK_SMALL_LETTER_ALPHA) ||

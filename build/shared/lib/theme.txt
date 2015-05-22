@@ -10,14 +10,24 @@ status.font = processing.sans,plain,14
 
 # TABS
 # Settings for the tab area at the top.
-header.text.font = processing.sans,bold,15
+header.text.font = processing.sans,bold,14
 header.text.selected.color = #000000
 header.text.unselected.color = #ffffff
-header.tab.selected.color = #ffffff
-header.tab.unselected.color = #657d87
-header.tab.arrow.color = #000000
+header.tab.arrow.color = #ffffff
 header.gradient.top = #132638
 header.gradient.bottom = #122535
+header.tab.selected.color = #e0fffd
+header.tab.unselected.color = #2d4251
+
+# LOWER TABS
+footer.text.font = processing.sans,bold,12
+footer.text.selected.color = #ffffff
+footer.text.unselected.color = #000000
+footer.tab.arrow.color = #ffffff
+footer.gradient.top = #132638
+footer.gradient.bottom = #122535
+footer.tab.selected.color = #3D5362
+footer.tab.unselected.color = #2d4251
 
 # CONSOLE
 # The font is handled by preferences, so its size/etc are modifiable.
@@ -51,7 +61,7 @@ divider.dot.color = #505050
 #toolbar.sketch.color = #ffffff
 toolbar.rollover.font = processing.sans,plain,12
 toolbar.rollover.color = #ffffff
-toolbar.gradient.top = #142c40
+toolbar.gradient.top = #142a3e
 toolbar.gradient.bottom = #132638
 
 # MODE SELECTOR
@@ -62,14 +72,17 @@ mode.title.color = #ffffff
 #mode.button.color = #ffffff
 #mode.button.gap = 13
 #mode.arrow.width
-mode.background.color = #3D5362
+#mode.background.color = #3D5362
+# stolen from gradient bottom
+mode.background.color = #132638
+mode.outline.color = #3a505e
 
 # LINE STATUS
 # The editor line number status bar at the bottom of the screen
-linestatus.color = #ffffff
-linestatus.bgcolor = #29333d
-linestatus.font = processing.sans,plain,13
-linestatus.height  = 20
+#linestatus.color = #ffffff
+#linestatus.bgcolor = #29333d
+#linestatus.font = processing.sans,plain,13
+#linestatus.height  = 20
 
 
 # EDITOR - DETAILS
@@ -82,7 +95,8 @@ editor.gradient.top = #122535
 editor.gradient.bottom = #020408
 
 # highlight for the current line
-editor.linehighlight.color=#e2e2e2
+#editor.linehighlight.color=#e2e2e2
+editor.linehighlight.color=#ebfffd
 # highlight for the current line
 editor.linehighlight=true
 
@@ -100,5 +114,8 @@ editor.eolmarkers.color = #999999
 editor.brackethighlight = true
 editor.brackethighlight.color = #006699
 
-editor.gutter.text.font = processing.sans,plain,11
-editor.gutter.text.color = #657d87
+editor.gutter.text.font = processing.mono,plain,11
+#editor.gutter.text.color = #657d87
+#editor.gutter.text.color = #587478
+editor.gutter.text.color = #bbd6d5
+editor.gutter.linehighlight.color=#587478

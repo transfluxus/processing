@@ -24,19 +24,16 @@
 
 package processing.core;
 
-// used for setting bg colors and whatnot
-//import java.awt.Color;
-// Component is further up the chain than Canvas
-//import java.awt.Component;
-// use for the link() command (and maybe open()?)
-
 // these are used for various methods (url opening, file selection, etc)
 // how many more can we remove?
 import java.awt.Desktop;
+import java.awt.DisplayMode;
 import java.awt.EventQueue;
 import java.awt.FileDialog;
 import java.awt.Font;
 import java.awt.Frame;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.color.ColorSpace;
@@ -336,7 +333,7 @@ public class PApplet implements PConstants {
    * @see PApplet#height
    * @see PApplet#size(int, int)
    */
-  public int width;
+  public int width = DEFAULT_WIDTH;
 
   /**
    * ( begin auto-generated from height.xml )
@@ -353,7 +350,7 @@ public class PApplet implements PConstants {
    * @see PApplet#width
    * @see PApplet#size(int, int)
    */
-  public int height;
+  public int height = DEFAULT_HEIGHT;
 
   /**
    * ( begin auto-generated from mouseX.xml )
@@ -773,10 +770,14 @@ public class PApplet implements PConstants {
   static public final String ARGS_SKETCH_FOLDER = "--sketch-path";
 
   /**
+<<<<<<< HEAD
    * When run externally to a PdeEditor, this is sent by the applet when it
    * quits.
+=======
+   * When run externally to a PdeEditor,
+   * this is sent by the sketch when it quits.
+>>>>>>> fbfb6a61469b98967d48c13d2c1d7b845ea8b783
    */
-  //static public final String EXTERNAL_QUIT = "__QUIT__";
   static public final String EXTERNAL_STOP = "__STOP__";
 
   /**
@@ -862,6 +863,78 @@ public class PApplet implements PConstants {
 
 
 
+  // . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+
+  boolean insideSettings;
+
+  String renderer = JAVA2D;
+  int quality = 2;
+  boolean fullScreen;
+  boolean spanDisplays;
+  int displayIndex;
+  String outputPath;
+  OutputStream outputStream;
+
+
+  boolean insideSettings(Object... args) {
+    if (insideSettings) {
+      return true;
+    }
+    final String url = "https://processing.org/reference/size_.html";
+    if (!external) {  // post a warning for users of Eclipse and other IDEs
+      StringList argList = new StringList(args);
+      System.err.println("When not using the PDE, size() can only be used inside settings().");
+      System.err.println("Remove the size() method from setup(), and add the following:");
+      System.err.println("public void settings() {");
+      System.err.println("  size(" + argList.join(", ") + ");");
+      System.err.println("}");
+    }
+    throw new IllegalStateException("size() cannot be used here, see " + url);
+  }
+
+
+  void handleSettings() {
+    insideSettings = true;
+
+    // Workaround for https://github.com/processing/processing/issues/3295
+    // until we resolved https://github.com/processing/processing/issues/3296
+    GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+    GraphicsDevice device = ge.getDefaultScreenDevice();
+    GraphicsDevice[] devices = ge.getScreenDevices();
+    // default or unparsed will be -1
+    if (displayIndex >= 0 && displayIndex < devices.length) {
+      device = devices[displayIndex];
+    }
+    DisplayMode displayMode = device.getDisplayMode();
+    displayWidth = displayMode.getWidth();
+    displayHeight = displayMode.getHeight();
+
+    settings();
+    insideSettings = false;
+  }
+
+
+  /** Override this method to call size() when not using the PDE. */
+  public void settings() {
+  }
+
+  public int sketchWidth() {
+    //return DEFAULT_WIDTH;
+    return width;
+  }
+
+  public int sketchHeight() {
+    //return DEFAULT_HEIGHT;
+    return height;
+  }
+
+  public String sketchRenderer() {
+    //return JAVA2D;
+    return renderer;
+  }
+
+
   // Named quality instead of smooth to avoid people trying to set (or get)
   // the current smooth level this way. Also that smooth(number) isn't really
   // public or well-known API. It's specific to the capabilities of the
@@ -870,36 +943,45 @@ public class PApplet implements PConstants {
   // true/false for whether fill was enabled, getFillColor() would return the
   // color itself. Or at least that's what I can recall at the moment. [fry]
   public int sketchQuality() {
-    return 2;
-  }
-
-  public int sketchWidth() {
-    return DEFAULT_WIDTH;
-  }
-
-  public int sketchHeight() {
-    return DEFAULT_HEIGHT;
-  }
-
-  public String sketchRenderer() {
-    return JAVA2D;
+    //return 2;
+    return quality;
   }
 
   public boolean sketchFullScreen() {
-    return false;
+    //return false;
+    return fullScreen;
   }
 
-  public boolean sketchSpanScreens() {
-    return false;
+
+  // Could be named 'screen' instead of display since it's the people using
+  // full screen who will be looking for it. On the other hand, screenX/Y/Z
+  // makes things confusing, and if 'displayIndex' exists...
+  public boolean sketchSpanDisplays() {
+    //return false;
+    return spanDisplays;
+  }
+
+
+  // Or should this be sketchDisplayNum instead of sketchDisplayIndex?
+  // (Index seems weird, but we don't use 'num' anywhere.)
+  public int sketchDisplayIndex() {
+    return displayIndex;
   }
 
   public String sketchOutputPath() {
-    return null;
+    //return null;
+    return outputPath;
   }
 
   public OutputStream sketchOutputStream() {
-    return null;
+    //return null;
+    return outputStream;
   }
+
+
+
+  // . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
 
   public PGraphics getGraphics() {
     return g;
@@ -1449,41 +1531,81 @@ public class PApplet implements PConstants {
    * renderer and simply resize it.
    *
    * @webref environment
+<<<<<<< HEAD
    * @param w
    *          width of the display window in units of pixels
    * @param h
    *          height of the display window in units of pixels
+=======
+   * @param width width of the display window in units of pixels
+   * @param height height of the display window in units of pixels
+>>>>>>> fbfb6a61469b98967d48c13d2c1d7b845ea8b783
    * @see PApplet#width
    * @see PApplet#height
    */
-  public void size(int w, int h) {
+  public void size(int width, int height) {
     //size(w, h, JAVA2D, null);
-    size(w, h, sketchRenderer(), null);
+    //size(w, h, sketchRenderer(), null);
+    if (insideSettings(width, height)) {
+      this.width = width;
+      this.height = height;
+//    } else if (external) {
+//      throw new IllegalStateException("size() cannot be called here");
+//    } else {
+//      System.err.println("Because you're running outside the PDE, "
+    }
   }
 
+
+  public void size(int width, int height, String renderer) {
+    //size(w, h, renderer, null);
+    if (insideSettings(width, height, renderer)) {
+      this.width = width;
+      this.height = height;
+      this.renderer = renderer;
+    }
+  }
+
+
   /**
+<<<<<<< HEAD
    * @param renderer
    *          Either P2D, P3D, or PDF
-   */
-  public void size(int w, int h, String renderer) {
-    size(w, h, renderer, null);
-  }
-
-  /**
+=======
    * @nowebref
+>>>>>>> fbfb6a61469b98967d48c13d2c1d7b845ea8b783
    */
-  public void size(final int w, final int h, String renderer, String path) {
-    if (!renderer.equals(sketchRenderer())) {
-      System.err
-        .println("Because you're not running from the PDE, add this to your code:");
-      System.err.println("public String sketchRenderer() {");
-      System.err.println("  return \"" + renderer + "\";");
-      System.err.println("}");
-      throw new RuntimeException(
-                                 "The sketchRenderer() method is not implemented.");
+  public void size(int width, int height, String renderer, String path) {
+    if (insideSettings(width, height, renderer, path)) {
+      this.width = width;
+      this.height = height;
+      this.renderer = renderer;
+      this.outputPath = path;
     }
-    surface.setSize(w, h);
-    g.setPath(path); // finally, a path
+
+    /*
+    if (!renderer.equals(sketchRenderer())) {
+      if (external) {
+        // The PDE should have parsed it, but something still went wrong
+        final String msg =
+          String.format("Something bad happened when calling " +
+                        "size(%d, %d, %s, %s)", w, h, renderer, path);
+        throw new RuntimeException(msg);
+
+      } else {
+        System.err.println("Because you're not running from the PDE, add this to your code:");
+        System.err.println("public String sketchRenderer() {");
+        System.err.println("  return \"" + renderer + "\";");
+        System.err.println("}");
+        throw new RuntimeException("The sketchRenderer() method is not implemented.");
+      }
+    }
+    */
+
+    // size() shouldn't actually do anything here [3.0a8]
+//    surface.setSize(w, h);
+    // this won't be absolute, which will piss off PDF [3.0a8]
+//    g.setPath(path);  // finally, a path
 
 //    // Run this from the EDT, just cuz it's AWT stuff (or maybe later Swing)
 //   EventQueue.invokeLater(new Runnable() {
@@ -1628,7 +1750,7 @@ public class PApplet implements PConstants {
 
   public PGraphics createGraphics(int w, int h,
                                   String renderer, String path) {
-    return makeGraphics(w, h, renderer, savePath(path), false);
+    return makeGraphics(w, h, renderer, path, false);
     /*
 
     if (path != null) {
@@ -1651,9 +1773,7 @@ public class PApplet implements PConstants {
 
   /**
    * Version of createGraphics() used internally.
-   * @param path A full (not relative) path.
-   *             {@link PApplet#createGraphics} will call
-   *             {@link PApplet#savePath} first.
+   * @param path A path (or null if none), can be absolute or relative ({@link PApplet#savePath} will be called)
    */
   protected PGraphics makeGraphics(int w, int h,
                                    String renderer, String path,
@@ -1688,7 +1808,7 @@ public class PApplet implements PConstants {
       pg.setPrimary(primary);
 
       if (path != null) {
-        pg.setPath(path);
+        pg.setPath(savePath(path));
       }
 //      pg.setQuality(sketchQuality());
 //      if (!primary) {
@@ -1757,7 +1877,8 @@ public class PApplet implements PConstants {
 
   /** Create default renderer, likely to be resized, but needed for surface init. */
   protected PGraphics createPrimaryGraphics() {
-    return makeGraphics(sketchWidth(), sketchHeight(), sketchRenderer(), null, true);
+    return makeGraphics(sketchWidth(), sketchHeight(),
+                        sketchRenderer(), sketchOutputPath(), true);
   }
 
 
@@ -1816,6 +1937,11 @@ public class PApplet implements PConstants {
       // Store the quality setting in case it's changed during draw and the
       // drawing context needs to be re-built before the next frame.
       int pquality = g.quality;
+
+      if (insideDraw) {
+        System.err.println("handleDraw() called before finishing");
+        System.exit(1);
+      }
 
       insideDraw = true;
       g.beginDraw();
@@ -6092,7 +6218,9 @@ public class PApplet implements PConstants {
    */
   public InputStream createInput(String filename) {
     InputStream input = createInputRaw(filename);
-    if ((input != null) && filename.toLowerCase().endsWith(".gz")) {
+    final String lower = filename.toLowerCase();
+    if ((input != null) &&
+        (lower.endsWith(".gz") || lower.endsWith(".svgz"))) {
       try {
         return new GZIPInputStream(input);
       } catch (IOException e) {
@@ -9262,6 +9390,20 @@ public class PApplet implements PConstants {
 
   //////////////////////////////////////////////////////////////
 
+
+  void frameMoved(int x, int y) {
+    System.err.println(EXTERNAL_MOVE + " " + x + " " + y);
+    System.err.flush();  // doesn't seem to help or hurt
+  }
+
+
+  void frameResized(int w, int h) {
+
+  }
+
+
+  //////////////////////////////////////////////////////////////
+
   // MAIN
 
   /**
@@ -9361,10 +9503,10 @@ public class PApplet implements PConstants {
 
 
   static public void runSketch(final String[] args,
-                               final PApplet constructedApplet) {
+                               final PApplet constructedSketch) {
     EventQueue.invokeLater(new Runnable() {
       public void run() {
-        runSketchEDT(args, constructedApplet);
+        runSketchEDT(args, constructedSketch);
       }
     });
   }
@@ -9375,12 +9517,15 @@ public class PApplet implements PConstants {
    * when messing with AWT/Swing components. And boy, do we mess with 'em.
    */
   static protected void runSketchEDT(final String[] args,
-                                  final PApplet constructedApplet) {
+                                     final PApplet constructedSketch) {
     // Supposed to help with flicker, but no effect on OS X.
     // TODO IIRC this helped on Windows, but need to double check.
     System.setProperty("sun.awt.noerasebackground", "true");
     // Call validate() while resize events are in progress
     Toolkit.getDefaultToolkit().setDynamicLayout(true);
+
+    // So that the system proxy setting are used by default
+    System.setProperty("java.net.useSystemProxies", "true");
 
     if (args.length < 1) {
       System.err.println("Usage: PApplet [options] <class name> [sketch args]");
@@ -9418,14 +9563,25 @@ public class PApplet implements PConstants {
 
         } else if (param.equals(ARGS_DISPLAY)) {
           displayIndex = parseInt(value, -1);
+          if (displayIndex == -1) {
+            System.err.println("Could not parse " + value + " for " + ARGS_DISPLAY);
+          }
 
         } else if (param.equals(ARGS_BGCOLOR)) {
-          if (value.charAt(0) == '#') value = value.substring(1);
-          backgroundColor = 0xff000000 | Integer.parseInt(value, 16);
+          if (value.charAt(0) == '#' && value.length() == 7) {
+            value = value.substring(1);
+            backgroundColor = 0xff000000 | Integer.parseInt(value, 16);
+          } else {
+            System.err.println(ARGS_BGCOLOR + " should be a # followed by six digits");
+          }
 
         } else if (param.equals(ARGS_STOP_COLOR)) {
-          if (value.charAt(0) == '#') value = value.substring(1);
-          stopColor = 0xff000000 | Integer.parseInt(value, 16);
+          if (value.charAt(0) == '#' && value.length() == 7) {
+            value = value.substring(1);
+            stopColor = 0xff000000 | Integer.parseInt(value, 16);
+          } else {
+            System.err.println(ARGS_STOP_COLOR + " should be a # followed by six digits");
+          }
 
         } else if (param.equals(ARGS_SKETCH_FOLDER)) {
           folder = value;
@@ -9467,72 +9623,66 @@ public class PApplet implements PConstants {
 //      }
 //    }
 
-
-    // Set this property before getting into any GUI init code
-    //System.setProperty("com.apple.mrj.application.apple.menu.about.name", name);
-    // This )*)(*@#$ Apple bulls*t don't work no matter where you put it
-    // (static method of the class, at the top of main, wherever)
-
-    final PApplet applet;
-    if (constructedApplet != null) {
-      applet = constructedApplet;
+    final PApplet sketch;
+    if (constructedSketch != null) {
+      sketch = constructedSketch;
     } else {
       try {
-        Class<?> c = Thread.currentThread().getContextClassLoader()
-          .loadClass(name);
-        applet = (PApplet) c.newInstance();
+        Class<?> c =
+          Thread.currentThread().getContextClassLoader().loadClass(name);
+        sketch = (PApplet) c.newInstance();
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
     }
 
-//    try {
-//      String renderer = applet.sketchRenderer();
-//      Class<?> rendererClass =
-//        Thread.currentThread().getContextClassLoader().loadClass(renderer);
-//      Method surfaceMethod = rendererClass.getMethod("createSurface");
-//      PSurface surface = (PSurface) surfaceMethod.invoke(null, new Object[] { });
-//    } catch (Exception e) {
-//      throw new RuntimeException(e);
-//    }
+    if (platform == MACOSX) {
+      try {
+        final String td = "processing.core.ThinkDifferent";
+        Class<?> thinkDifferent =
+          Thread.currentThread().getContextClassLoader().loadClass(td);
+
+        Method method =
+          thinkDifferent.getMethod("init", new Class[] { PApplet.class });
+        method.invoke(null, new Object[] { sketch });
+
+      } catch (Exception e) {
+        e.printStackTrace();  // That's unfortunate
+      }
+    }
+
+    // Call the settings() method which will give us our size() call
+    sketch.handleSettings();
 
     // A handful of things that need to be set before init/start.
-    applet.sketchPath = folder;
+    sketch.sketchPath = folder;
+
+    sketch.spanDisplays = spanDisplays;
+    // If spanning screens, that means we're also full screen.
+    fullScreen |= spanDisplays;
+
     // If the applet doesn't call for full screen, but the command line does,
     // enable it. Conversely, if the command line does not, don't disable it.
     // Query the applet to see if it wants to be full screen all the time.
-    fullScreen |= applet.sketchFullScreen();
-    // If spanning screens, that means we're also full screen.
-    fullScreen |= applet.sketchSpanScreens();
-    // pass everything after the class name in as args to the sketch itself
-    // (fixed for 2.0a5, this was just subsetting by 1, which didn't skip opts)
-    applet.args = PApplet.subset(args, argIndex + 1);
-    applet.external = external;
+    //fullScreen |= sketch.sketchFullScreen();
+    sketch.fullScreen |= fullScreen;
 
-    // For backwards compatability, initFrame() returns an AWT Frame object,
-    // whether or not one is actually used. There's lots of code that uses
-    // frame.setTitle() and frame.setResizable() out there...
-//    Frame frame =
-//      surface.initFrame(applet, backgroundColor,
-//                        displayIndex, present, spanDisplays);
+    // Don't set 'args' to a zero-length array if it should be null [3.0a8]
+    if (args.length != argIndex + 1) {
+      // pass everything after the class name in as args to the sketch itself
+      // (fixed for 2.0a5, this was just subsetting by 1, which didn't skip opts)
+      sketch.args = PApplet.subset(args, argIndex + 1);
+    }
+
+    sketch.external = external;
 
     PSurface surface =
-      applet.initSurface(backgroundColor, displayIndex, fullScreen, spanDisplays);
+      sketch.initSurface(backgroundColor, displayIndex, fullScreen, spanDisplays);
 
-//    applet.frame = frame;
-//    frame.setTitle(name);
-//
-//    applet.init();
-//    // TODO this used to be inside init()... does it need to stay there for
-//    // other external things like Python or embedding in Java apps?
-//    surface.startThread();
-////    applet.start();
-//
-//    // Wait until the applet has figured out its width.
-//    // In a static mode app, this will be after setup() has completed,
-//    // and the empty draw() has set "finished" to true.
-//    // TODO make sure this won't hang if the applet has an exception.
-    while (applet.defaultSize && !applet.finished) {
+    // Wait until the applet has figured out its width. In a static mode app,
+    // everything happens inside setup(), so this will be after setup() has
+    // completed, and the empty draw() has set "finished" to true.
+    while (sketch.defaultSize && !sketch.finished) {
       //System.out.println("default size");
       try {
         Thread.sleep(5);
@@ -9543,7 +9693,6 @@ public class PApplet implements PConstants {
     }
 
     if (fullScreen) {
-      //surface.placeFullScreen(hideStop);
       if (hideStop) {
         stopColor = 0;  // they'll get the hint
       }
@@ -9559,18 +9708,10 @@ public class PApplet implements PConstants {
 
 
   protected PSurface initSurface(int backgroundColor, int displayIndex,
-                                 boolean present, boolean spanDisplays) {
-//    try {
-//      String renderer = applet.sketchRenderer();
-//      Class<?> rendererClass =
-//        Thread.currentThread().getContextClassLoader().loadClass(renderer);
-//      Method surfaceMethod = rendererClass.getMethod("createSurface");
-//      PSurface surface = (PSurface) surfaceMethod.invoke(null, new Object[] { });
-//    } catch (Exception e) {
-//      throw new RuntimeException(e);
-//    }
+                                 boolean fullScreen, boolean spanDisplays) {
     g = createPrimaryGraphics();
     surface = g.createSurface();
+
     if (g.displayable()) {
       frame = new Frame() {
         @Override
@@ -9597,44 +9738,14 @@ public class PApplet implements PConstants {
         }
       };
 
-      surface.initFrame(this, backgroundColor, displayIndex, present, spanDisplays);
+      surface.initFrame(this, backgroundColor, displayIndex, fullScreen, spanDisplays);
       surface.setTitle(getClass().getName());
-      //frame.setTitle(getClass().getName());
-//    } else {
-//      // TODO necessary?
-//      surface.initOffscreen(this);
+
+    } else {
+      surface.initOffscreen(this);  // for PDF/PSurfaceNone and friends
     }
 
     init();
-
-    // TODO this used to be inside init()... does it need to stay there for
-    // other external things like Python or embedding in Java apps?
-    //surface.startThread();
-    // moving it to init() 141114
-    //applet.start();
-
-    // Removing this for 3.0a6. sketchWidth/Height() methods should give us
-    // good values for most cases, and removes the hackery seen here.
-    // TODO May need to keep since setup() may take a while, so why not have
-    //      it first render offscreen before showing.
-    /*
-    // Wait until the applet has figured out its width.
-    // In a static mode app, this will be after setup() has completed,
-    // and the empty draw() has set "finished" to true.
-    // TODO make sure this won't hang if the applet has an exception.
-    while (defaultSize && !finished) {
-//      System.out.println("default size");
-      try {
-        Thread.sleep(5);
-
-      } catch (InterruptedException e) {
-        //System.out.println("interrupt");
-      }
-    }
-    */
-
-//    System.out.println("out of default size loop, " + width + " " + height);
-    // convenience to avoid another 'get' from the static main() method
     return surface;
   }
 
