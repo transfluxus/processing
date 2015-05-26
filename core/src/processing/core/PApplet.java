@@ -3,9 +3,9 @@
 /*
  Part of the Processing project - http://processing.org
 
-  Copyright (c) 2012-15 The Processing Foundation
-  Copyright (c) 2004-12 Ben Fry and Casey Reas
-  Copyright (c) 2001-04 Massachusetts Institute of Technology
+ Copyright (c) 2012-15 The Processing Foundation
+ Copyright (c) 2004-12 Ben Fry and Casey Reas
+ Copyright (c) 2001-04 Massachusetts Institute of Technology
 
  This library is free software; you can redistribute it and/or
  modify it under the terms of the GNU Lesser General Public
@@ -79,8 +79,6 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-
-
 // used by loadImage() functions
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -119,32 +117,32 @@ import processing.opengl.PShader;
  * sizing, multiple displays, full screen, etc.
  * <p/>
  * Processing uses active mode rendering. All animation tasks happen on the
- * "Processing Animation Thread". The setup() and draw() methods are handled
- * by that thread, and events (like mouse movement and key presses, which are
- * fired by the event dispatch thread or EDT) are queued to be safely handled
- * at the end of draw().
+ * "Processing Animation Thread". The setup() and draw() methods are handled by
+ * that thread, and events (like mouse movement and key presses, which are fired
+ * by the event dispatch thread or EDT) are queued to be safely handled at the
+ * end of draw().
  * <p/>
- * Starting with 3.0a6, blit operations are on the EDT, so as not to cause
- * GUI problems with Swing and AWT. In the case of the default renderer, the
- * sketch renders to an offscreen image, then the EDT is asked to bring that
- * image to the screen.
+ * Starting with 3.0a6, blit operations are on the EDT, so as not to cause GUI
+ * problems with Swing and AWT. In the case of the default renderer, the sketch
+ * renders to an offscreen image, then the EDT is asked to bring that image to
+ * the screen.
  * <p/>
  * For code that needs to run on the EDT, use EventQueue.invokeLater(). When
  * doing so, be careful to synchronize between that code and the Processing
- * animation thread. That is, you can't call Processing methods from the EDT
- * or at any random time from another thread. Use of a callback function or
- * the registerXxx() methods in PApplet can help ensure that your code doesn't
- * do something naughty.
+ * animation thread. That is, you can't call Processing methods from the EDT or
+ * at any random time from another thread. Use of a callback function or the
+ * registerXxx() methods in PApplet can help ensure that your code doesn't do
+ * something naughty.
  * <p/>
  * As of Processing 3.0, we have removed Applet as the base class for PApplet.
  * This means that we can remove lots of legacy code, however one downside is
  * that it's no longer possible (without extra code) to embed a PApplet into
  * another Java application.
  * <p/>
- * As of Processing 3.0, we have discontinued support for versions of Java
- * prior to 1.8. We don't have enough people to support it, and for a
- * project of our (tiny) size, we should be focusing on the future, rather
- * than working around legacy Java code.
+ * As of Processing 3.0, we have discontinued support for versions of Java prior
+ * to 1.8. We don't have enough people to support it, and for a project of our
+ * (tiny) size, we should be focusing on the future, rather than working around
+ * legacy Java code.
  */
 public class PApplet implements PConstants {
 //public class PApplet extends Applet
@@ -251,16 +249,17 @@ public class PApplet implements PConstants {
   public PGraphics recorder;
 
   /**
-   * Command line options passed in from main().
-   * This does not include the arguments passed in to PApplet itself.
+   * Command line options passed in from main(). This does not include the
+   * arguments passed in to PApplet itself.
+   *
    * @see PApplet#main
    */
   public String[] args;
 
   /**
-   * Path to sketch folder. Previously undocumented, made private in 3.0a5
-   * so that people use the sketchPath() method and it's inited properly.
-   * Call sketchPath() once to set the default.
+   * Path to sketch folder. Previously undocumented, made private in 3.0a5 so
+   * that people use the sketchPath() method and it's inited properly. Call
+   * sketchPath() once to set the default.
    */
   private String sketchPath;
 
@@ -772,13 +771,9 @@ public class PApplet implements PConstants {
   static public final String ARGS_SKETCH_FOLDER = "--sketch-path";
 
   /**
-<<<<<<< HEAD
-   * When run externally to a PdeEditor, this is sent by the applet when it
-   * quits.
-=======
-   * When run externally to a PdeEditor,
-   * this is sent by the sketch when it quits.
->>>>>>> fbfb6a61469b98967d48c13d2c1d7b845ea8b783
+   * <<<<<<< HEAD When run externally to a PdeEditor, this is sent by the applet
+   * when it quits. ======= When run externally to a PdeEditor, this is sent by
+   * the sketch when it quits. >>>>>>> fbfb6a61469b98967d48c13d2c1d7b845ea8b783
    */
   static public final String EXTERNAL_STOP = "__STOP__";
 
@@ -863,38 +858,41 @@ public class PApplet implements PConstants {
     surface.startThread();
   }
 
-
-
   // . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-
 
   boolean insideSettings;
 
   String renderer = JAVA2D;
-  int quality = 2;
-  boolean fullScreen;
-  boolean spanDisplays;
-  int displayIndex;
-  String outputPath;
-  OutputStream outputStream;
 
+  int quality = 2;
+
+  boolean fullScreen;
+
+  boolean spanDisplays;
+
+  int displayIndex;
+
+  String outputPath;
+
+  OutputStream outputStream;
 
   boolean insideSettings(Object... args) {
     if (insideSettings) {
       return true;
     }
     final String url = "https://processing.org/reference/size_.html";
-    if (!external) {  // post a warning for users of Eclipse and other IDEs
+    if (!external) { // post a warning for users of Eclipse and other IDEs
       StringList argList = new StringList(args);
-      System.err.println("When not using the PDE, size() can only be used inside settings().");
-      System.err.println("Remove the size() method from setup(), and add the following:");
+      System.err
+        .println("When not using the PDE, size() can only be used inside settings().");
+      System.err
+        .println("Remove the size() method from setup(), and add the following:");
       System.err.println("public void settings() {");
       System.err.println("  size(" + argList.join(", ") + ");");
       System.err.println("}");
     }
     throw new IllegalStateException("size() cannot be used here, see " + url);
   }
-
 
   void handleSettings() {
     insideSettings = true;
@@ -916,7 +914,6 @@ public class PApplet implements PConstants {
     insideSettings = false;
   }
 
-
   /** Override this method to call size() when not using the PDE. */
   public void settings() {
   }
@@ -936,7 +933,6 @@ public class PApplet implements PConstants {
     return renderer;
   }
 
-
   // Named quality instead of smooth to avoid people trying to set (or get)
   // the current smooth level this way. Also that smooth(number) isn't really
   // public or well-known API. It's specific to the capabilities of the
@@ -954,7 +950,6 @@ public class PApplet implements PConstants {
     return fullScreen;
   }
 
-
   // Could be named 'screen' instead of display since it's the people using
   // full screen who will be looking for it. On the other hand, screenX/Y/Z
   // makes things confusing, and if 'displayIndex' exists...
@@ -962,7 +957,6 @@ public class PApplet implements PConstants {
     //return false;
     return spanDisplays;
   }
-
 
   // Or should this be sketchDisplayNum instead of sketchDisplayIndex?
   // (Index seems weird, but we don't use 'num' anywhere.)
@@ -980,10 +974,7 @@ public class PApplet implements PConstants {
     return outputStream;
   }
 
-
-
   // . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-
 
   public PGraphics getGraphics() {
     return g;
@@ -1532,16 +1523,16 @@ public class PApplet implements PConstants {
    * If called once a renderer has already been set, this will use the previous
    * renderer and simply resize it.
    *
-   * @webref environment
-<<<<<<< HEAD
+   * @webref environment <<<<<<< HEAD
    * @param w
    *          width of the display window in units of pixels
    * @param h
-   *          height of the display window in units of pixels
-=======
-   * @param width width of the display window in units of pixels
-   * @param height height of the display window in units of pixels
->>>>>>> fbfb6a61469b98967d48c13d2c1d7b845ea8b783
+   *          height of the display window in units of pixels =======
+   * @param width
+   *          width of the display window in units of pixels
+   * @param height
+   *          height of the display window in units of pixels >>>>>>>
+   *          fbfb6a61469b98967d48c13d2c1d7b845ea8b783
    * @see PApplet#width
    * @see PApplet#height
    */
@@ -1558,7 +1549,6 @@ public class PApplet implements PConstants {
     }
   }
 
-
   public void size(int width, int height, String renderer) {
     //size(w, h, renderer, null);
     if (insideSettings(width, height, renderer)) {
@@ -1568,14 +1558,12 @@ public class PApplet implements PConstants {
     }
   }
 
-
   /**
-<<<<<<< HEAD
+   * <<<<<<< HEAD
+   *
    * @param renderer
-   *          Either P2D, P3D, or PDF
-=======
-   * @nowebref
->>>>>>> fbfb6a61469b98967d48c13d2c1d7b845ea8b783
+   *          Either P2D, P3D, or PDF =======
+   * @nowebref >>>>>>> fbfb6a61469b98967d48c13d2c1d7b845ea8b783
    */
   public void size(int width, int height, String renderer, String path) {
     if (insideSettings(width, height, renderer, path)) {
@@ -1586,23 +1574,19 @@ public class PApplet implements PConstants {
     }
 
     /*
-    if (!renderer.equals(sketchRenderer())) {
-      if (external) {
-        // The PDE should have parsed it, but something still went wrong
-        final String msg =
-          String.format("Something bad happened when calling " +
-                        "size(%d, %d, %s, %s)", w, h, renderer, path);
-        throw new RuntimeException(msg);
-
-      } else {
-        System.err.println("Because you're not running from the PDE, add this to your code:");
-        System.err.println("public String sketchRenderer() {");
-        System.err.println("  return \"" + renderer + "\";");
-        System.err.println("}");
-        throw new RuntimeException("The sketchRenderer() method is not implemented.");
-      }
-    }
-    */
+     * if (!renderer.equals(sketchRenderer())) { if (external) { // The PDE
+     * should have parsed it, but something still went wrong final String msg =
+     * String.format("Something bad happened when calling " +
+     * "size(%d, %d, %s, %s)", w, h, renderer, path); throw new
+     * RuntimeException(msg);
+     *
+     * } else { System.err.println(
+     * "Because you're not running from the PDE, add this to your code:");
+     * System.err.println("public String sketchRenderer() {");
+     * System.err.println("  return \"" + renderer + "\";");
+     * System.err.println("}"); throw new
+     * RuntimeException("The sketchRenderer() method is not implemented."); } }
+     */
 
     // size() shouldn't actually do anything here [3.0a8]
 //    surface.setSize(w, h);
@@ -1750,37 +1734,33 @@ public class PApplet implements PConstants {
    *          the name of the file (can be an absolute or relative path)
    */
 
-  public PGraphics createGraphics(int w, int h,
-                                  String renderer, String path) {
+  public PGraphics createGraphics(int w, int h, String renderer, String path) {
     return makeGraphics(w, h, renderer, path, false);
     /*
-
-    if (path != null) {
-      path = savePath(path);
-    }
-    PGraphics pg = makeGraphics(w, h, renderer, path, false);
-
-    //pg.parent = this;  // why wasn't setParent() used before 3.0a6?
-    //pg.setParent(this);  // make save() work
-    // Nevermind, parent is set in makeGraphics()
-    return pg;
-    */
+     *
+     * if (path != null) { path = savePath(path); } PGraphics pg =
+     * makeGraphics(w, h, renderer, path, false);
+     *
+     * //pg.parent = this; // why wasn't setParent() used before 3.0a6?
+     * //pg.setParent(this); // make save() work // Nevermind, parent is set in
+     * makeGraphics() return pg;
+     */
   }
 
 //  public PGraphics makePrimaryGraphics(int wide, int high) {
 //    return makeGraphics(wide, high, sketchRenderer(), null, true);
 //  }
 
-
-
   /**
    * Version of createGraphics() used internally.
-   * @param path A path (or null if none), can be absolute or relative ({@link PApplet#savePath} will be called)
+   *
+   * @param path
+   *          A path (or null if none), can be absolute or relative (
+   *          {@link PApplet#savePath} will be called)
    */
-  protected PGraphics makeGraphics(int w, int h,
-                                   String renderer, String path,
+  protected PGraphics makeGraphics(int w, int h, String renderer, String path,
 
-                                   boolean primary) {
+  boolean primary) {
 //    String openglError = external ?
 //      // This first one should no longer be possible
 //      "Before using OpenGL, first select " +
@@ -1875,14 +1855,13 @@ public class PApplet implements PConstants {
     }
   }
 
-
-
-  /** Create default renderer, likely to be resized, but needed for surface init. */
+  /**
+   * Create default renderer, likely to be resized, but needed for surface init.
+   */
   protected PGraphics createPrimaryGraphics() {
-    return makeGraphics(sketchWidth(), sketchHeight(),
-                        sketchRenderer(), sketchOutputPath(), true);
+    return makeGraphics(sketchWidth(), sketchHeight(), sketchRenderer(),
+                        sketchOutputPath(), true);
   }
-
 
   /**
    * ( begin auto-generated from createImage.xml )
@@ -2479,6 +2458,10 @@ public class PApplet implements PConstants {
 
   //////////////////////////////////////////////////////////////
 
+  private boolean multiKeyEnabled = false;
+
+  private TreeSet<Integer> keys;
+
   protected void handleKeyEvent(KeyEvent event) {
     keyEvent = event;
     key = event.getKey();
@@ -2660,6 +2643,30 @@ public class PApplet implements PConstants {
 
   public void keyTyped(KeyEvent event) {
     keyTyped();
+  }
+
+  public void enableMultiKey() {
+    multiKeyEnabled = true;
+    if (keys == null)
+      keys = new TreeSet<Integer>();
+  }
+
+  public void disableMultiKeys() {
+    multiKeyEnabled = false;
+  }
+
+  public Integer[] getPressedKeys() {
+    if (multiKeyEnabled)
+      return keys.toArray(new Integer[keys.size()]);
+    else
+      return new Integer[] { 0 };
+  }
+
+  public boolean keyPressed(int keyCode) {
+    if (!multiKeyEnabled)
+      return this.keyCode == keyCode;
+    else
+     return keys.contains(keyCode);
   }
 
   //////////////////////////////////////////////////////////////
@@ -3985,12 +3992,12 @@ public class PApplet implements PConstants {
     return min;
   }
 
-
-
   /*
-   * Find the minimum value in an array.
-   * Throws an ArrayIndexOutOfBoundsException if the array is length 0.
+   * Find the minimum value in an array. Throws an
+   * ArrayIndexOutOfBoundsException if the array is length 0.
+   *
    * @param list the source array
+   *
    * @return The minimum value
    */
   /*
@@ -5648,7 +5655,8 @@ public class PApplet implements PConstants {
    */
   public PFont loadFont(String filename) {
     if (!filename.toLowerCase().endsWith(".vlw")) {
-      throw new IllegalArgumentException("loadFont() is for .vlw files, try createFont()");
+      throw new IllegalArgumentException(
+                                         "loadFont() is for .vlw files, try createFont()");
     }
     try {
       InputStream input = createInput(filename);
@@ -6098,7 +6106,6 @@ public class PApplet implements PConstants {
     return createWriter(saveFile(filename));
   }
 
-
   /**
    * @nowebref I want to print lines to a file. I have RSI from typing these
    *           eight lines of code so many times.
@@ -6116,8 +6123,8 @@ public class PApplet implements PConstants {
       return createWriter(output);
 
     } catch (Exception e) {
-      throw new RuntimeException("Couldn't create a writer for " +
-                                 file.getAbsolutePath(), e);
+      throw new RuntimeException("Couldn't create a writer for "
+        + file.getAbsolutePath(), e);
     }
   }
 
@@ -6139,7 +6146,6 @@ public class PApplet implements PConstants {
   //////////////////////////////////////////////////////////////
 
   // FILE INPUT
-
 
   // Removed for 3.0a8
 //  /**
@@ -6221,8 +6227,7 @@ public class PApplet implements PConstants {
   public InputStream createInput(String filename) {
     InputStream input = createInputRaw(filename);
     final String lower = filename.toLowerCase();
-    if ((input != null) &&
-        (lower.endsWith(".gz") || lower.endsWith(".svgz"))) {
+    if ((input != null) && (lower.endsWith(".gz") || lower.endsWith(".svgz"))) {
       try {
         return new GZIPInputStream(input);
       } catch (IOException e) {
@@ -6237,7 +6242,8 @@ public class PApplet implements PConstants {
    * Call openStream() without automatic gzip decompression.
    */
   public InputStream createInputRaw(String filename) {
-    if (filename == null) return null;
+    if (filename == null)
+      return null;
     InputStream stream = null;
 
     if (filename.length() == 0) {
@@ -6280,8 +6286,6 @@ public class PApplet implements PConstants {
       }
     }
 
-
-
     // Moved this earlier than the getResourceAsStream() checks, because
     // calling getResourceAsStream() on a directory lists its contents.
     // http://dev.processing.org/bugs/show_bug.cgi?id=716
@@ -6309,10 +6313,9 @@ public class PApplet implements PConstants {
           //if (filenameActual.equalsIgnoreCase(filenameShort) &&
           //!filenameActual.equals(filenameShort)) {
           if (!filenameActual.equals(filenameShort)) {
-            throw new RuntimeException("This file is named " +
-                                       filenameActual + " not " +
-                                       filename + ". Rename the file " +
-                                       "or change your code.");
+            throw new RuntimeException("This file is named " + filenameActual
+              + " not " + filename + ". Rename the file "
+              + "or change your code.");
           }
         } catch (IOException e) {
         }
@@ -9383,26 +9386,20 @@ public class PApplet implements PConstants {
     return g.color(v1, v2, v3, alpha);
   }
 
-
-
-
   static public int blendColor(int c1, int c2, int mode) {
     return PImage.blendColor(c1, c2, mode);
   }
 
   //////////////////////////////////////////////////////////////
 
-
   void frameMoved(int x, int y) {
     System.err.println(EXTERNAL_MOVE + " " + x + " " + y);
-    System.err.flush();  // doesn't seem to help or hurt
+    System.err.flush(); // doesn't seem to help or hurt
   }
-
 
   void frameResized(int w, int h) {
 
   }
-
 
   //////////////////////////////////////////////////////////////
 
@@ -9411,25 +9408,29 @@ public class PApplet implements PConstants {
   /**
    * main() method for running this class from the command line.
    * <p>
-
+   *
    * Usage: PApplet [options] &lt;class name&gt; [sketch args]
    * <ul>
    * <li>The [options] are one or several of the parameters seen below.
-   * <li>The class name is required. If you're running outside the PDE and
-   * your class is in a package, this should include the full name. That means
-   * that if the class is called Sketchy and the package is com.sketchycompany
-   * then com.sketchycompany.Sketchy should be used as the class name.
+   * <li>The class name is required. If you're running outside the PDE and your
+   * class is in a package, this should include the full name. That means that
+   * if the class is called Sketchy and the package is com.sketchycompany then
+   * com.sketchycompany.Sketchy should be used as the class name.
    * <li>The [sketch args] are any command line parameters you want to send to
    * the sketch itself. These will be passed into the args[] array in PApplet.
    * <p>
-   * The simplest way to turn and sketch into an application is to
-   * add the following code to your program:
-   * <PRE>static public void main(String args[]) {
-   *   PApplet.main("YourSketchName");
-   * }</PRE>
-   * That will properly launch your code from a double-clickable .jar
-   * or from the command line.
-
+   * The simplest way to turn and sketch into an application is to add the
+   * following code to your program:
+   *
+   * <PRE>
+   * static public void main(String args[]) {
+   *   PApplet.main(&quot;YourSketchName&quot;);
+   * }
+   * </PRE>
+   *
+   * That will properly launch your code from a double-clickable .jar or from
+   * the command line.
+   *
    * <PRE>
    * Parameters useful for launching or also used by the PDE:
    *
@@ -9479,7 +9480,9 @@ public class PApplet implements PConstants {
   /**
    * Convenience method so that PApplet.main("YourSketch") launches a sketch,
    * rather than having to wrap it into a single element String array.
-   * @param mainClass name of the class to load (with package if any)
+   *
+   * @param mainClass
+   *          name of the class to load (with package if any)
    */
   static public void main(final String mainClass) {
     main(mainClass, null);
@@ -9489,10 +9492,13 @@ public class PApplet implements PConstants {
    * Convenience method so that PApplet.main("YourSketch", args) launches a
    * sketch, rather than having to wrap it into a String array, and appending
    * the 'args' array when not null.
-   * @param mainClass name of the class to load (with package if any)
-   * @param args command line arguments to pass to the sketch's 'args' array.
-   *             Note that this is *not* the same as the args passed to (and
-   *             understood by) PApplet such as --display.
+   *
+   * @param mainClass
+   *          name of the class to load (with package if any)
+   * @param args
+   *          command line arguments to pass to the sketch's 'args' array. Note
+   *          that this is *not* the same as the args passed to (and understood
+   *          by) PApplet such as --display.
    */
   static public void main(final String mainClass, final String[] sketchArgs) {
     String[] args = new String[] { mainClass };
@@ -9501,8 +9507,6 @@ public class PApplet implements PConstants {
     }
     runSketch(args, null);
   }
-
-
 
   static public void runSketch(final String[] args,
                                final PApplet constructedSketch) {
@@ -9513,10 +9517,9 @@ public class PApplet implements PConstants {
     });
   }
 
-
   /**
-   * Moving this to the EDT for 3.0a6 because that's the proper thing to do
-   * when messing with AWT/Swing components. And boy, do we mess with 'em.
+   * Moving this to the EDT for 3.0a6 because that's the proper thing to do when
+   * messing with AWT/Swing components. And boy, do we mess with 'em.
    */
   static protected void runSketchEDT(final String[] args,
                                      final PApplet constructedSketch) {
@@ -9566,7 +9569,8 @@ public class PApplet implements PConstants {
         } else if (param.equals(ARGS_DISPLAY)) {
           displayIndex = parseInt(value, -1);
           if (displayIndex == -1) {
-            System.err.println("Could not parse " + value + " for " + ARGS_DISPLAY);
+            System.err.println("Could not parse " + value + " for "
+              + ARGS_DISPLAY);
           }
 
         } else if (param.equals(ARGS_BGCOLOR)) {
@@ -9574,7 +9578,8 @@ public class PApplet implements PConstants {
             value = value.substring(1);
             backgroundColor = 0xff000000 | Integer.parseInt(value, 16);
           } else {
-            System.err.println(ARGS_BGCOLOR + " should be a # followed by six digits");
+            System.err.println(ARGS_BGCOLOR
+              + " should be a # followed by six digits");
           }
 
         } else if (param.equals(ARGS_STOP_COLOR)) {
@@ -9582,7 +9587,8 @@ public class PApplet implements PConstants {
             value = value.substring(1);
             stopColor = 0xff000000 | Integer.parseInt(value, 16);
           } else {
-            System.err.println(ARGS_STOP_COLOR + " should be a # followed by six digits");
+            System.err.println(ARGS_STOP_COLOR
+              + " should be a # followed by six digits");
           }
 
         } else if (param.equals(ARGS_SKETCH_FOLDER)) {
@@ -9613,7 +9619,6 @@ public class PApplet implements PConstants {
       argIndex++;
     }
 
-
 //    // Now that sketch path is passed in args after the sketch name
 //    // it's not set in the above loop(the above loop breaks after
 //    // finding sketch name). So setting sketch path here.
@@ -9630,8 +9635,8 @@ public class PApplet implements PConstants {
       sketch = constructedSketch;
     } else {
       try {
-        Class<?> c =
-          Thread.currentThread().getContextClassLoader().loadClass(name);
+        Class<?> c = Thread.currentThread().getContextClassLoader()
+          .loadClass(name);
         sketch = (PApplet) c.newInstance();
       } catch (Exception e) {
         throw new RuntimeException(e);
@@ -9641,15 +9646,15 @@ public class PApplet implements PConstants {
     if (platform == MACOSX) {
       try {
         final String td = "processing.core.ThinkDifferent";
-        Class<?> thinkDifferent =
-          Thread.currentThread().getContextClassLoader().loadClass(td);
+        Class<?> thinkDifferent = Thread.currentThread()
+          .getContextClassLoader().loadClass(td);
 
-        Method method =
-          thinkDifferent.getMethod("init", new Class[] { PApplet.class });
+        Method method = thinkDifferent.getMethod("init",
+                                                 new Class[] { PApplet.class });
         method.invoke(null, new Object[] { sketch });
 
       } catch (Exception e) {
-        e.printStackTrace();  // That's unfortunate
+        e.printStackTrace(); // That's unfortunate
       }
     }
 
@@ -9678,8 +9683,8 @@ public class PApplet implements PConstants {
 
     sketch.external = external;
 
-    PSurface surface =
-      sketch.initSurface(backgroundColor, displayIndex, fullScreen, spanDisplays);
+    PSurface surface = sketch.initSurface(backgroundColor, displayIndex,
+                                          fullScreen, spanDisplays);
 
     // Wait until the applet has figured out its width. In a static mode app,
     // everything happens inside setup(), so this will be after setup() has
@@ -9696,7 +9701,7 @@ public class PApplet implements PConstants {
 
     if (fullScreen) {
       if (hideStop) {
-        stopColor = 0;  // they'll get the hint
+        stopColor = 0; // they'll get the hint
       }
       surface.placePresent(stopColor);
     } else {
@@ -9707,7 +9712,6 @@ public class PApplet implements PConstants {
       surface.setupExternalMessages();
     }
   }
-
 
   protected PSurface initSurface(int backgroundColor, int displayIndex,
                                  boolean fullScreen, boolean spanDisplays) {
@@ -9735,16 +9739,17 @@ public class PApplet implements PConstants {
         }
 
         private void deprecationWarning(String method) {
-          PGraphics.showWarning("Use surface." + method + "() instead of " +
-                                "frame." + method + " in Processing 3");
+          PGraphics.showWarning("Use surface." + method + "() instead of "
+            + "frame." + method + " in Processing 3");
         }
       };
 
-      surface.initFrame(this, backgroundColor, displayIndex, fullScreen, spanDisplays);
+      surface.initFrame(this, backgroundColor, displayIndex, fullScreen,
+                        spanDisplays);
       surface.setTitle(getClass().getName());
 
     } else {
-      surface.initOffscreen(this);  // for PDF/PSurfaceNone and friends
+      surface.initOffscreen(this); // for PDF/PSurfaceNone and friends
     }
 
     init();
@@ -9759,7 +9764,6 @@ public class PApplet implements PConstants {
 //      System.exit(1);
 //    }
 //  }
-
 
 //  /**
 //   * Return a Canvas object that can be embedded into other Java GUIs.
@@ -10036,121 +10040,112 @@ public class PApplet implements PConstants {
   // public functions for processing.core
 
 
-
   public PGL beginPGL() {
     return g.beginPGL();
   }
 
+
   public void endPGL() {
-    if (recorder != null)
-      recorder.endPGL();
+    if (recorder != null) recorder.endPGL();
     g.endPGL();
   }
 
+
   public void flush() {
-    if (recorder != null)
-      recorder.flush();
+    if (recorder != null) recorder.flush();
     g.flush();
   }
 
+
   public void hint(int which) {
-    if (recorder != null)
-      recorder.hint(which);
+    if (recorder != null) recorder.hint(which);
     g.hint(which);
   }
+
 
   /**
    * Start a new shape of type POLYGON
    */
   public void beginShape() {
-    if (recorder != null)
-      recorder.beginShape();
+    if (recorder != null) recorder.beginShape();
     g.beginShape();
   }
+
 
   /**
    * ( begin auto-generated from beginShape.xml )
    *
    * Using the <b>beginShape()</b> and <b>endShape()</b> functions allow
-   * creating more complex forms. <b>beginShape()</b> begins recording vertices
-   * for a shape and <b>endShape()</b> stops recording. The value of the
-   * <b>MODE</b> parameter tells it which types of shapes to create from the
-   * provided vertices. With no mode specified, the shape can be any irregular
-   * polygon. The parameters available for beginShape() are POINTS, LINES,
-   * TRIANGLES, TRIANGLE_FAN, TRIANGLE_STRIP, QUADS, and QUAD_STRIP. After
-   * calling the <b>beginShape()</b> function, a series of <b>vertex()</b>
-   * commands must follow. To stop drawing the shape, call <b>endShape()</b>.
-   * The <b>vertex()</b> function with two parameters specifies a position in 2D
-   * and the <b>vertex()</b> function with three parameters specifies a position
-   * in 3D. Each shape will be outlined with the current stroke color and filled
-   * with the fill color. <br/>
-   * <br/>
+   * creating more complex forms. <b>beginShape()</b> begins recording
+   * vertices for a shape and <b>endShape()</b> stops recording. The value of
+   * the <b>MODE</b> parameter tells it which types of shapes to create from
+   * the provided vertices. With no mode specified, the shape can be any
+   * irregular polygon. The parameters available for beginShape() are POINTS,
+   * LINES, TRIANGLES, TRIANGLE_FAN, TRIANGLE_STRIP, QUADS, and QUAD_STRIP.
+   * After calling the <b>beginShape()</b> function, a series of
+   * <b>vertex()</b> commands must follow. To stop drawing the shape, call
+   * <b>endShape()</b>. The <b>vertex()</b> function with two parameters
+   * specifies a position in 2D and the <b>vertex()</b> function with three
+   * parameters specifies a position in 3D. Each shape will be outlined with
+   * the current stroke color and filled with the fill color.
+   * <br/> <br/>
    * Transformations such as <b>translate()</b>, <b>rotate()</b>, and
    * <b>scale()</b> do not work within <b>beginShape()</b>. It is also not
    * possible to use other shapes, such as <b>ellipse()</b> or <b>rect()</b>
-   * within <b>beginShape()</b>. <br/>
-   * <br/>
-   * The P3D renderer settings allow <b>stroke()</b> and <b>fill()</b> settings
-   * to be altered per-vertex, however the default P2D renderer does not.
-   * Settings such as <b>strokeWeight()</b>, <b>strokeCap()</b>, and
+   * within <b>beginShape()</b>.
+   * <br/> <br/>
+   * The P3D renderer settings allow <b>stroke()</b> and <b>fill()</b>
+   * settings to be altered per-vertex, however the default P2D renderer does
+   * not. Settings such as <b>strokeWeight()</b>, <b>strokeCap()</b>, and
    * <b>strokeJoin()</b> cannot be changed while inside a
    * <b>beginShape()</b>/<b>endShape()</b> block with any renderer.
    *
    * ( end auto-generated )
-   *
    * @webref shape:vertex
-   * @param kind
-   *          Either POINTS, LINES, TRIANGLES, TRIANGLE_FAN, TRIANGLE_STRIP,
-   *          QUADS, or QUAD_STRIP
+   * @param kind Either POINTS, LINES, TRIANGLES, TRIANGLE_FAN, TRIANGLE_STRIP, QUADS, or QUAD_STRIP
    * @see PShape
    * @see PGraphics#endShape()
    * @see PGraphics#vertex(float, float, float, float, float)
    * @see PGraphics#curveVertex(float, float, float)
-   * @see PGraphics#bezierVertex(float, float, float, float, float, float,
-   *      float, float, float)
+   * @see PGraphics#bezierVertex(float, float, float, float, float, float, float, float, float)
    */
   public void beginShape(int kind) {
-    if (recorder != null)
-      recorder.beginShape(kind);
+    if (recorder != null) recorder.beginShape(kind);
     g.beginShape(kind);
   }
 
+
   /**
-   * Sets whether the upcoming vertex is part of an edge. Equivalent to
-   * glEdgeFlag(), for people familiar with OpenGL.
+   * Sets whether the upcoming vertex is part of an edge.
+   * Equivalent to glEdgeFlag(), for people familiar with OpenGL.
    */
   public void edge(boolean edge) {
-    if (recorder != null)
-      recorder.edge(edge);
+    if (recorder != null) recorder.edge(edge);
     g.edge(edge);
   }
+
 
   /**
    * ( begin auto-generated from normal.xml )
    *
    * Sets the current normal vector. This is for drawing three dimensional
-   * shapes and surfaces and specifies a vector perpendicular to the surface of
-   * the shape which determines how lighting affects it. Processing attempts to
-   * automatically assign normals to shapes, but since that's imperfect, this is
-   * a better option when you want more control. This function is identical to
-   * glNormal3f() in OpenGL.
+   * shapes and surfaces and specifies a vector perpendicular to the surface
+   * of the shape which determines how lighting affects it. Processing
+   * attempts to automatically assign normals to shapes, but since that's
+   * imperfect, this is a better option when you want more control. This
+   * function is identical to glNormal3f() in OpenGL.
    *
    * ( end auto-generated )
-   *
    * @webref lights_camera:lights
-   * @param nx
-   *          x direction
-   * @param ny
-   *          y direction
-   * @param nz
-   *          z direction
+   * @param nx x direction
+   * @param ny y direction
+   * @param nz z direction
    * @see PGraphics#beginShape(int)
    * @see PGraphics#endShape(int)
    * @see PGraphics#lights()
    */
   public void normal(float nx, float ny, float nz) {
-    if (recorder != null)
-      recorder.normal(nx, ny, nz);
+    if (recorder != null) recorder.normal(nx, ny, nz);
     g.normal(nx, ny, nz);
   }
 
@@ -10172,30 +10167,29 @@ public class PApplet implements PConstants {
     g.attrib(name, values);
   }
 
+
   /**
    * ( begin auto-generated from textureMode.xml )
    *
    * Sets the coordinate space for texture mapping. There are two options,
-   * IMAGE, which refers to the actual coordinates of the image, and NORMAL,
-   * which refers to a normalized space of values ranging from 0 to 1. The
-   * default mode is IMAGE. In IMAGE, if an image is 100 x 200 pixels, mapping
-   * the image onto the entire size of a quad would require the points (0,0)
-   * (0,100) (100,200) (0,200). The same mapping in NORMAL_SPACE is (0,0) (0,1)
-   * (1,1) (0,1).
+   * IMAGE, which refers to the actual coordinates of the image, and
+   * NORMAL, which refers to a normalized space of values ranging from 0
+   * to 1. The default mode is IMAGE. In IMAGE, if an image is 100 x 200
+   * pixels, mapping the image onto the entire size of a quad would require
+   * the points (0,0) (0,100) (100,200) (0,200). The same mapping in
+   * NORMAL_SPACE is (0,0) (0,1) (1,1) (0,1).
    *
    * ( end auto-generated )
-   *
    * @webref image:textures
-   * @param mode
-   *          either IMAGE or NORMAL
+   * @param mode either IMAGE or NORMAL
    * @see PGraphics#texture(PImage)
    * @see PGraphics#textureWrap(int)
    */
   public void textureMode(int mode) {
-    if (recorder != null)
-      recorder.textureMode(mode);
+    if (recorder != null) recorder.textureMode(mode);
     g.textureMode(mode);
   }
+
 
   /**
    * ( begin auto-generated from textureWrap.xml )
@@ -10205,32 +10199,29 @@ public class PApplet implements PConstants {
    * ( end auto-generated from textureWrap.xml )
    *
    * @webref image:textures
-   * @param wrap
-   *          Either CLAMP (default) or REPEAT
+   * @param wrap Either CLAMP (default) or REPEAT
    * @see PGraphics#texture(PImage)
    * @see PGraphics#textureMode(int)
    */
   public void textureWrap(int wrap) {
-    if (recorder != null)
-      recorder.textureWrap(wrap);
+    if (recorder != null) recorder.textureWrap(wrap);
     g.textureWrap(wrap);
   }
+
 
   /**
    * ( begin auto-generated from texture.xml )
    *
    * Sets a texture to be applied to vertex points. The <b>texture()</b>
-   * function must be called between <b>beginShape()</b> and <b>endShape()</b>
-   * and before any calls to <b>vertex()</b>. <br/>
-   * <br/>
-   * When textures are in use, the fill color is ignored. Instead, use tint() to
-   * specify the color of the texture as it is applied to the shape.
+   * function must be called between <b>beginShape()</b> and
+   * <b>endShape()</b> and before any calls to <b>vertex()</b>.
+   * <br/> <br/>
+   * When textures are in use, the fill color is ignored. Instead, use tint()
+   * to specify the color of the texture as it is applied to the shape.
    *
    * ( end auto-generated )
-   *
    * @webref image:textures
-   * @param image
-   *          reference to a PImage object
+   * @param image reference to a PImage object
    * @see PGraphics#textureMode(int)
    * @see PGraphics#textureWrap(int)
    * @see PGraphics#beginShape(int)
@@ -10238,54 +10229,52 @@ public class PApplet implements PConstants {
    * @see PGraphics#vertex(float, float, float, float, float)
    */
   public void texture(PImage image) {
-    if (recorder != null)
-      recorder.texture(image);
+    if (recorder != null) recorder.texture(image);
     g.texture(image);
   }
 
+
   /**
-   * Removes texture image for current shape. Needs to be called between
-   * beginShape and endShape
+   * Removes texture image for current shape.
+   * Needs to be called between beginShape and endShape
    *
    */
   public void noTexture() {
-    if (recorder != null)
-      recorder.noTexture();
+    if (recorder != null) recorder.noTexture();
     g.noTexture();
   }
 
+
   public void vertex(float x, float y) {
-    if (recorder != null)
-      recorder.vertex(x, y);
+    if (recorder != null) recorder.vertex(x, y);
     g.vertex(x, y);
   }
 
+
   public void vertex(float x, float y, float z) {
-    if (recorder != null)
-      recorder.vertex(x, y, z);
+    if (recorder != null) recorder.vertex(x, y, z);
     g.vertex(x, y, z);
   }
+
 
   /**
    * Used by renderer subclasses or PShape to efficiently pass in already
    * formatted vertex information.
-   *
-   * @param v
-   *          vertex parameters, as a float array of length VERTEX_FIELD_COUNT
+   * @param v vertex parameters, as a float array of length VERTEX_FIELD_COUNT
    */
   public void vertex(float[] v) {
-    if (recorder != null)
-      recorder.vertex(v);
+    if (recorder != null) recorder.vertex(v);
     g.vertex(v);
   }
 
+
   public void vertex(float x, float y, float u, float v) {
-    if (recorder != null)
-      recorder.vertex(x, y, u, v);
+    if (recorder != null) recorder.vertex(x, y, u, v);
     g.vertex(x, y, u, v);
   }
 
-  /**
+
+/**
    * ( begin auto-generated from vertex.xml )
    *
    * All shapes are constructed by connecting a series of vertices.
@@ -10297,91 +10286,81 @@ public class PApplet implements PConstants {
    * parameter in combination with size as shown in the above example.<br />
    * <br />
    * This function is also used to map a texture onto the geometry. The
-   * <b>texture()</b> function declares the texture to apply to the geometry and
-   * the <b>u</b> and <b>v</b> coordinates set define the mapping of this
+   * <b>texture()</b> function declares the texture to apply to the geometry
+   * and the <b>u</b> and <b>v</b> coordinates set define the mapping of this
    * texture to the form. By default, the coordinates used for <b>u</b> and
-   * <b>v</b> are specified in relation to the image's size in pixels, but this
-   * relation can be changed with <b>textureMode()</b>.
+   * <b>v</b> are specified in relation to the image's size in pixels, but
+   * this relation can be changed with <b>textureMode()</b>.
    *
    * ( end auto-generated )
-   *
-   * @webref shape:vertex
-   * @param x
-   *          x-coordinate of the vertex
-   * @param y
-   *          y-coordinate of the vertex
-   * @param z
-   *          z-coordinate of the vertex
-   * @param u
-   *          horizontal coordinate for the texture mapping
-   * @param v
-   *          vertical coordinate for the texture mapping
-   * @see PGraphics#beginShape(int)
-   * @see PGraphics#endShape(int)
-   * @see PGraphics#bezierVertex(float, float, float, float, float, float,
-   *      float, float, float)
-   * @see PGraphics#quadraticVertex(float, float, float, float, float, float)
-   * @see PGraphics#curveVertex(float, float, float)
-   * @see PGraphics#texture(PImage)
-   */
+ * @webref shape:vertex
+ * @param x x-coordinate of the vertex
+ * @param y y-coordinate of the vertex
+ * @param z z-coordinate of the vertex
+ * @param u horizontal coordinate for the texture mapping
+ * @param v vertical coordinate for the texture mapping
+ * @see PGraphics#beginShape(int)
+ * @see PGraphics#endShape(int)
+ * @see PGraphics#bezierVertex(float, float, float, float, float, float, float, float, float)
+ * @see PGraphics#quadraticVertex(float, float, float, float, float, float)
+ * @see PGraphics#curveVertex(float, float, float)
+ * @see PGraphics#texture(PImage)
+ */
   public void vertex(float x, float y, float z, float u, float v) {
-    if (recorder != null)
-      recorder.vertex(x, y, z, u, v);
+    if (recorder != null) recorder.vertex(x, y, z, u, v);
     g.vertex(x, y, z, u, v);
   }
+
 
   /**
    * @webref shape:vertex
    */
   public void beginContour() {
-    if (recorder != null)
-      recorder.beginContour();
+    if (recorder != null) recorder.beginContour();
     g.beginContour();
   }
+
 
   /**
    * @webref shape:vertex
    */
   public void endContour() {
-    if (recorder != null)
-      recorder.endContour();
+    if (recorder != null) recorder.endContour();
     g.endContour();
   }
 
+
   public void endShape() {
-    if (recorder != null)
-      recorder.endShape();
+    if (recorder != null) recorder.endShape();
     g.endShape();
   }
+
 
   /**
    * ( begin auto-generated from endShape.xml )
    *
-   * The <b>endShape()</b> function is the companion to <b>beginShape()</b> and
-   * may only be called after <b>beginShape()</b>. When <b>endshape()</b> is
-   * called, all of image data defined since the previous call to
-   * <b>beginShape()</b> is written into the image buffer. The constant CLOSE as
-   * the value for the MODE parameter to close the shape (to connect the
+   * The <b>endShape()</b> function is the companion to <b>beginShape()</b>
+   * and may only be called after <b>beginShape()</b>. When <b>endshape()</b>
+   * is called, all of image data defined since the previous call to
+   * <b>beginShape()</b> is written into the image buffer. The constant CLOSE
+   * as the value for the MODE parameter to close the shape (to connect the
    * beginning and the end).
    *
    * ( end auto-generated )
-   *
    * @webref shape:vertex
-   * @param mode
-   *          use CLOSE to close the shape
+   * @param mode use CLOSE to close the shape
    * @see PShape
    * @see PGraphics#beginShape(int)
    */
   public void endShape(int mode) {
-    if (recorder != null)
-      recorder.endShape(mode);
+    if (recorder != null) recorder.endShape(mode);
     g.endShape(mode);
   }
 
+
   /**
    * @webref shape
-   * @param filename
-   *          name of file to load, can be .svg or .obj
+   * @param filename name of file to load, can be .svg or .obj
    * @see PShape
    * @see PApplet#createShape()
    */
@@ -10389,12 +10368,14 @@ public class PApplet implements PConstants {
     return g.loadShape(filename);
   }
 
+
   /**
    * @nowebref
    */
   public PShape loadShape(String filename, String options) {
     return g.loadShape(filename, options);
   }
+
 
   /**
    * @webref shape
@@ -10411,368 +10392,323 @@ public class PApplet implements PConstants {
     return g.createShape(type);
   }
 
+
   /**
-<<<<<<< HEAD
-   * @param kind
-   *          either LINE, TRIANGLE, RECT, ELLIPSE, ARC, SPHERE, BOX
-   * @param p
-   *          parameters that match the kind of shape
-=======
    * @param kind either POINT, LINE, TRIANGLE, QUAD, RECT, ELLIPSE, ARC, BOX, SPHERE
    * @param p parameters that match the kind of shape
->>>>>>> 6cb769b8194394690955fb0efc81bedce4379412
    */
   public PShape createShape(int kind, float... p) {
     return g.createShape(kind, p);
   }
 
+
   /**
    * ( begin auto-generated from loadShader.xml )
    *
-   * This is a new reference entry for Processing 2.0. It will be updated
-   * shortly.
+   * This is a new reference entry for Processing 2.0. It will be updated shortly.
    *
    * ( end auto-generated )
    *
    * @webref rendering:shaders
-   * @param fragFilename
-   *          name of fragment shader file
+   * @param fragFilename name of fragment shader file
    */
   public PShader loadShader(String fragFilename) {
     return g.loadShader(fragFilename);
   }
 
+
   /**
-   * @param vertFilename
-   *          name of vertex shader file
+   * @param vertFilename name of vertex shader file
    */
   public PShader loadShader(String fragFilename, String vertFilename) {
     return g.loadShader(fragFilename, vertFilename);
   }
 
+
   /**
    * ( begin auto-generated from shader.xml )
    *
-   * This is a new reference entry for Processing 2.0. It will be updated
-   * shortly.
+   * This is a new reference entry for Processing 2.0. It will be updated shortly.
    *
    * ( end auto-generated )
    *
    * @webref rendering:shaders
-   * @param shader
-   *          name of shader file
+   * @param shader name of shader file
    */
   public void shader(PShader shader) {
-    if (recorder != null)
-      recorder.shader(shader);
+    if (recorder != null) recorder.shader(shader);
     g.shader(shader);
   }
 
+
   /**
-   * @param kind
-   *          type of shader, either POINTS, LINES, or TRIANGLES
+   * @param kind type of shader, either POINTS, LINES, or TRIANGLES
    */
   public void shader(PShader shader, int kind) {
-    if (recorder != null)
-      recorder.shader(shader, kind);
+    if (recorder != null) recorder.shader(shader, kind);
     g.shader(shader, kind);
   }
+
 
   /**
    * ( begin auto-generated from resetShader.xml )
    *
-   * This is a new reference entry for Processing 2.0. It will be updated
-   * shortly.
+   * This is a new reference entry for Processing 2.0. It will be updated shortly.
    *
    * ( end auto-generated )
    *
    * @webref rendering:shaders
    */
   public void resetShader() {
-    if (recorder != null)
-      recorder.resetShader();
+    if (recorder != null) recorder.resetShader();
     g.resetShader();
   }
 
+
   /**
-   * @param kind
-   *          type of shader, either POINTS, LINES, or TRIANGLES
+   * @param kind type of shader, either POINTS, LINES, or TRIANGLES
    */
   public void resetShader(int kind) {
-    if (recorder != null)
-      recorder.resetShader(kind);
+    if (recorder != null) recorder.resetShader(kind);
     g.resetShader(kind);
   }
 
+
   /**
-   * @param shader
-   *          the fragment shader to apply
+   * @param shader the fragment shader to apply
    */
   public void filter(PShader shader) {
-    if (recorder != null)
-      recorder.filter(shader);
+    if (recorder != null) recorder.filter(shader);
     g.filter(shader);
   }
 
+
   /*
    * @webref rendering:shaders
-   *
    * @param a x-coordinate of the rectangle by default
-   *
    * @param b y-coordinate of the rectangle by default
-   *
    * @param c width of the rectangle by default
-   *
    * @param d height of the rectangle by default
    */
   public void clip(float a, float b, float c, float d) {
-    if (recorder != null)
-      recorder.clip(a, b, c, d);
+    if (recorder != null) recorder.clip(a, b, c, d);
     g.clip(a, b, c, d);
   }
+
 
   /*
    * @webref rendering:shaders
    */
   public void noClip() {
-    if (recorder != null)
-      recorder.noClip();
+    if (recorder != null) recorder.noClip();
     g.noClip();
   }
+
 
   /**
    * ( begin auto-generated from blendMode.xml )
    *
-   * This is a new reference entry for Processing 2.0. It will be updated
-   * shortly.
+   * This is a new reference entry for Processing 2.0. It will be updated shortly.
    *
    * ( end auto-generated )
    *
    * @webref Rendering
-   * @param mode
-   *          the blending mode to use
+   * @param mode the blending mode to use
    */
   public void blendMode(int mode) {
-    if (recorder != null)
-      recorder.blendMode(mode);
+    if (recorder != null) recorder.blendMode(mode);
     g.blendMode(mode);
   }
 
-  public void bezierVertex(float x2, float y2, float x3, float y3, float x4,
-                           float y4) {
-    if (recorder != null)
-      recorder.bezierVertex(x2, y2, x3, y3, x4, y4);
+
+  public void bezierVertex(float x2, float y2,
+                           float x3, float y3,
+                           float x4, float y4) {
+    if (recorder != null) recorder.bezierVertex(x2, y2, x3, y3, x4, y4);
     g.bezierVertex(x2, y2, x3, y3, x4, y4);
   }
 
-  /**
+
+/**
    * ( begin auto-generated from bezierVertex.xml )
    *
    * Specifies vertex coordinates for Bezier curves. Each call to
    * <b>bezierVertex()</b> defines the position of two control points and one
    * anchor point of a Bezier curve, adding a new segment to a line or shape.
-   * The first time <b>bezierVertex()</b> is used within a <b>beginShape()</b>
-   * call, it must be prefaced with a call to <b>vertex()</b> to set the first
-   * anchor point. This function must be used between <b>beginShape()</b> and
-   * <b>endShape()</b> and only when there is no MODE parameter specified to
-   * <b>beginShape()</b>. Using the 3D version requires rendering with P3D (see
-   * the Environment reference for more information).
+   * The first time <b>bezierVertex()</b> is used within a
+   * <b>beginShape()</b> call, it must be prefaced with a call to
+   * <b>vertex()</b> to set the first anchor point. This function must be
+   * used between <b>beginShape()</b> and <b>endShape()</b> and only when
+   * there is no MODE parameter specified to <b>beginShape()</b>. Using the
+   * 3D version requires rendering with P3D (see the Environment reference
+   * for more information).
    *
    * ( end auto-generated )
-   *
-   * @webref shape:vertex
-   * @param x2
-   *          the x-coordinate of the 1st control point
-   * @param y2
-   *          the y-coordinate of the 1st control point
-   * @param z2
-   *          the z-coordinate of the 1st control point
-   * @param x3
-   *          the x-coordinate of the 2nd control point
-   * @param y3
-   *          the y-coordinate of the 2nd control point
-   * @param z3
-   *          the z-coordinate of the 2nd control point
-   * @param x4
-   *          the x-coordinate of the anchor point
-   * @param y4
-   *          the y-coordinate of the anchor point
-   * @param z4
-   *          the z-coordinate of the anchor point
-   * @see PGraphics#curveVertex(float, float, float)
-   * @see PGraphics#vertex(float, float, float, float, float)
-   * @see PGraphics#quadraticVertex(float, float, float, float, float, float)
-   * @see PGraphics#bezier(float, float, float, float, float, float, float,
-   *      float, float, float, float, float)
-   */
-  public void bezierVertex(float x2, float y2, float z2, float x3, float y3,
-                           float z3, float x4, float y4, float z4) {
-    if (recorder != null)
-      recorder.bezierVertex(x2, y2, z2, x3, y3, z3, x4, y4, z4);
+ * @webref shape:vertex
+ * @param x2 the x-coordinate of the 1st control point
+ * @param y2 the y-coordinate of the 1st control point
+ * @param z2 the z-coordinate of the 1st control point
+ * @param x3 the x-coordinate of the 2nd control point
+ * @param y3 the y-coordinate of the 2nd control point
+ * @param z3 the z-coordinate of the 2nd control point
+ * @param x4 the x-coordinate of the anchor point
+ * @param y4 the y-coordinate of the anchor point
+ * @param z4 the z-coordinate of the anchor point
+ * @see PGraphics#curveVertex(float, float, float)
+ * @see PGraphics#vertex(float, float, float, float, float)
+ * @see PGraphics#quadraticVertex(float, float, float, float, float, float)
+ * @see PGraphics#bezier(float, float, float, float, float, float, float, float, float, float, float, float)
+ */
+  public void bezierVertex(float x2, float y2, float z2,
+                           float x3, float y3, float z3,
+                           float x4, float y4, float z4) {
+    if (recorder != null) recorder.bezierVertex(x2, y2, z2, x3, y3, z3, x4, y4, z4);
     g.bezierVertex(x2, y2, z2, x3, y3, z3, x4, y4, z4);
   }
 
+
   /**
    * @webref shape:vertex
-   * @param cx
-   *          the x-coordinate of the control point
-   * @param cy
-   *          the y-coordinate of the control point
-   * @param x3
-   *          the x-coordinate of the anchor point
-   * @param y3
-   *          the y-coordinate of the anchor point
+   * @param cx the x-coordinate of the control point
+   * @param cy the y-coordinate of the control point
+   * @param x3 the x-coordinate of the anchor point
+   * @param y3 the y-coordinate of the anchor point
    * @see PGraphics#curveVertex(float, float, float)
    * @see PGraphics#vertex(float, float, float, float, float)
    * @see PGraphics#bezierVertex(float, float, float, float, float, float)
-   * @see PGraphics#bezier(float, float, float, float, float, float, float,
-   *      float, float, float, float, float)
+   * @see PGraphics#bezier(float, float, float, float, float, float, float, float, float, float, float, float)
    */
-  public void quadraticVertex(float cx, float cy, float x3, float y3) {
-    if (recorder != null)
-      recorder.quadraticVertex(cx, cy, x3, y3);
+  public void quadraticVertex(float cx, float cy,
+                              float x3, float y3) {
+    if (recorder != null) recorder.quadraticVertex(cx, cy, x3, y3);
     g.quadraticVertex(cx, cy, x3, y3);
   }
 
+
   /**
-   * @param cz
-   *          the z-coordinate of the control point
-   * @param z3
-   *          the z-coordinate of the anchor point
+   * @param cz the z-coordinate of the control point
+   * @param z3 the z-coordinate of the anchor point
    */
-  public void quadraticVertex(float cx, float cy, float cz, float x3, float y3,
-                              float z3) {
-    if (recorder != null)
-      recorder.quadraticVertex(cx, cy, cz, x3, y3, z3);
+  public void quadraticVertex(float cx, float cy, float cz,
+                              float x3, float y3, float z3) {
+    if (recorder != null) recorder.quadraticVertex(cx, cy, cz, x3, y3, z3);
     g.quadraticVertex(cx, cy, cz, x3, y3, z3);
   }
 
-  /**
+
+ /**
    * ( begin auto-generated from curveVertex.xml )
    *
    * Specifies vertex coordinates for curves. This function may only be used
-   * between <b>beginShape()</b> and <b>endShape()</b> and only when there is no
-   * MODE parameter specified to <b>beginShape()</b>. The first and last points
-   * in a series of <b>curveVertex()</b> lines will be used to guide the
-   * beginning and end of a the curve. A minimum of four points is required to
-   * draw a tiny curve between the second and third points. Adding a fifth point
-   * with <b>curveVertex()</b> will draw the curve between the second, third,
-   * and fourth points. The <b>curveVertex()</b> function is an implementation
-   * of Catmull-Rom splines. Using the 3D version requires rendering with P3D
-   * (see the Environment reference for more information).
+   * between <b>beginShape()</b> and <b>endShape()</b> and only when there is
+   * no MODE parameter specified to <b>beginShape()</b>. The first and last
+   * points in a series of <b>curveVertex()</b> lines will be used to guide
+   * the beginning and end of a the curve. A minimum of four points is
+   * required to draw a tiny curve between the second and third points.
+   * Adding a fifth point with <b>curveVertex()</b> will draw the curve
+   * between the second, third, and fourth points. The <b>curveVertex()</b>
+   * function is an implementation of Catmull-Rom splines. Using the 3D
+   * version requires rendering with P3D (see the Environment reference for
+   * more information).
    *
    * ( end auto-generated )
-   *
-   * @webref shape:vertex
-   * @param x
-   *          the x-coordinate of the vertex
-   * @param y
-   *          the y-coordinate of the vertex
-   * @see PGraphics#curve(float, float, float, float, float, float, float,
-   *      float, float, float, float, float)
-   * @see PGraphics#beginShape(int)
-   * @see PGraphics#endShape(int)
-   * @see PGraphics#vertex(float, float, float, float, float)
-   * @see PGraphics#bezier(float, float, float, float, float, float, float,
-   *      float, float, float, float, float)
-   * @see PGraphics#quadraticVertex(float, float, float, float, float, float)
-   */
+  *
+  * @webref shape:vertex
+  * @param x the x-coordinate of the vertex
+  * @param y the y-coordinate of the vertex
+  * @see PGraphics#curve(float, float, float, float, float, float, float, float, float, float, float, float)
+  * @see PGraphics#beginShape(int)
+  * @see PGraphics#endShape(int)
+  * @see PGraphics#vertex(float, float, float, float, float)
+  * @see PGraphics#bezier(float, float, float, float, float, float, float, float, float, float, float, float)
+  * @see PGraphics#quadraticVertex(float, float, float, float, float, float)
+  */
   public void curveVertex(float x, float y) {
-    if (recorder != null)
-      recorder.curveVertex(x, y);
+    if (recorder != null) recorder.curveVertex(x, y);
     g.curveVertex(x, y);
   }
 
+
   /**
-   * @param z
-   *          the z-coordinate of the vertex
+   * @param z the z-coordinate of the vertex
    */
   public void curveVertex(float x, float y, float z) {
-    if (recorder != null)
-      recorder.curveVertex(x, y, z);
+    if (recorder != null) recorder.curveVertex(x, y, z);
     g.curveVertex(x, y, z);
   }
+
 
   /**
    * ( begin auto-generated from point.xml )
    *
    * Draws a point, a coordinate in space at the dimension of one pixel. The
-   * first parameter is the horizontal value for the point, the second value is
-   * the vertical value for the point, and the optional third value is the depth
-   * value. Drawing this shape in 3D with the <b>z</b> parameter requires the
-   * P3D parameter in combination with <b>size()</b> as shown in the above
-   * example.
+   * first parameter is the horizontal value for the point, the second value
+   * is the vertical value for the point, and the optional third value is the
+   * depth value. Drawing this shape in 3D with the <b>z</b> parameter
+   * requires the P3D parameter in combination with <b>size()</b> as shown in
+   * the above example.
    *
    * ( end auto-generated )
    *
    * @webref shape:2d_primitives
-   * @param x
-   *          x-coordinate of the point
-   * @param y
-   *          y-coordinate of the point
+   * @param x x-coordinate of the point
+   * @param y y-coordinate of the point
    */
   public void point(float x, float y) {
-    if (recorder != null)
-      recorder.point(x, y);
+    if (recorder != null) recorder.point(x, y);
     g.point(x, y);
   }
 
+
   /**
-   * @param z
-   *          z-coordinate of the point
+   * @param z z-coordinate of the point
    */
   public void point(float x, float y, float z) {
-    if (recorder != null)
-      recorder.point(x, y, z);
+    if (recorder != null) recorder.point(x, y, z);
     g.point(x, y, z);
   }
+
 
   /**
    * ( begin auto-generated from line.xml )
    *
-   * Draws a line (a direct path between two points) to the screen. The version
-   * of <b>line()</b> with four parameters draws the line in 2D. To color a
-   * line, use the <b>stroke()</b> function. A line cannot be filled, therefore
-   * the <b>fill()</b> function will not affect the color of a line. 2D lines
-   * are drawn with a width of one pixel by default, but this can be changed
-   * with the <b>strokeWeight()</b> function. The version with six parameters
-   * allows the line to be placed anywhere within XYZ space. Drawing this shape
-   * in 3D with the <b>z</b> parameter requires the P3D parameter in combination
-   * with <b>size()</b> as shown in the above example.
+   * Draws a line (a direct path between two points) to the screen. The
+   * version of <b>line()</b> with four parameters draws the line in 2D.  To
+   * color a line, use the <b>stroke()</b> function. A line cannot be filled,
+   * therefore the <b>fill()</b> function will not affect the color of a
+   * line. 2D lines are drawn with a width of one pixel by default, but this
+   * can be changed with the <b>strokeWeight()</b> function. The version with
+   * six parameters allows the line to be placed anywhere within XYZ space.
+   * Drawing this shape in 3D with the <b>z</b> parameter requires the P3D
+   * parameter in combination with <b>size()</b> as shown in the above example.
    *
    * ( end auto-generated )
-   *
    * @webref shape:2d_primitives
-   * @param x1
-   *          x-coordinate of the first point
-   * @param y1
-   *          y-coordinate of the first point
-   * @param x2
-   *          x-coordinate of the second point
-   * @param y2
-   *          y-coordinate of the second point
+   * @param x1 x-coordinate of the first point
+   * @param y1 y-coordinate of the first point
+   * @param x2 x-coordinate of the second point
+   * @param y2 y-coordinate of the second point
    * @see PGraphics#strokeWeight(float)
    * @see PGraphics#strokeJoin(int)
    * @see PGraphics#strokeCap(int)
    * @see PGraphics#beginShape()
    */
   public void line(float x1, float y1, float x2, float y2) {
-    if (recorder != null)
-      recorder.line(x1, y1, x2, y2);
+    if (recorder != null) recorder.line(x1, y1, x2, y2);
     g.line(x1, y1, x2, y2);
   }
 
+
   /**
-   * @param z1
-   *          z-coordinate of the first point
-   * @param z2
-   *          z-coordinate of the second point
+   * @param z1 z-coordinate of the first point
+   * @param z2 z-coordinate of the second point
    */
-  public void line(float x1, float y1, float z1, float x2, float y2, float z2) {
-    if (recorder != null)
-      recorder.line(x1, y1, z1, x2, y2, z2);
+  public void line(float x1, float y1, float z1,
+                   float x2, float y2, float z2) {
+    if (recorder != null) recorder.line(x1, y1, z1, x2, y2, z2);
     g.line(x1, y1, z1, x2, y2, z2);
   }
+
 
   /**
    * ( begin auto-generated from triangle.xml )
@@ -10782,328 +10718,284 @@ public class PApplet implements PConstants {
    * second point, and the last two arguments specify the third point.
    *
    * ( end auto-generated )
-   *
    * @webref shape:2d_primitives
-   * @param x1
-   *          x-coordinate of the first point
-   * @param y1
-   *          y-coordinate of the first point
-   * @param x2
-   *          x-coordinate of the second point
-   * @param y2
-   *          y-coordinate of the second point
-   * @param x3
-   *          x-coordinate of the third point
-   * @param y3
-   *          y-coordinate of the third point
+   * @param x1 x-coordinate of the first point
+   * @param y1 y-coordinate of the first point
+   * @param x2 x-coordinate of the second point
+   * @param y2 y-coordinate of the second point
+   * @param x3 x-coordinate of the third point
+   * @param y3 y-coordinate of the third point
    * @see PApplet#beginShape()
    */
-  public void triangle(float x1, float y1, float x2, float y2, float x3,
-                       float y3) {
-    if (recorder != null)
-      recorder.triangle(x1, y1, x2, y2, x3, y3);
+  public void triangle(float x1, float y1, float x2, float y2,
+                       float x3, float y3) {
+    if (recorder != null) recorder.triangle(x1, y1, x2, y2, x3, y3);
     g.triangle(x1, y1, x2, y2, x3, y3);
   }
+
 
   /**
    * ( begin auto-generated from quad.xml )
    *
    * A quad is a quadrilateral, a four sided polygon. It is similar to a
-   * rectangle, but the angles between its edges are not constrained to ninety
-   * degrees. The first pair of parameters (x1,y1) sets the first vertex and the
-   * subsequent pairs should proceed clockwise or counter-clockwise around the
-   * defined shape.
+   * rectangle, but the angles between its edges are not constrained to
+   * ninety degrees. The first pair of parameters (x1,y1) sets the first
+   * vertex and the subsequent pairs should proceed clockwise or
+   * counter-clockwise around the defined shape.
    *
    * ( end auto-generated )
-   *
    * @webref shape:2d_primitives
-   * @param x1
-   *          x-coordinate of the first corner
-   * @param y1
-   *          y-coordinate of the first corner
-   * @param x2
-   *          x-coordinate of the second corner
-   * @param y2
-   *          y-coordinate of the second corner
-   * @param x3
-   *          x-coordinate of the third corner
-   * @param y3
-   *          y-coordinate of the third corner
-   * @param x4
-   *          x-coordinate of the fourth corner
-   * @param y4
-   *          y-coordinate of the fourth corner
+   * @param x1 x-coordinate of the first corner
+   * @param y1 y-coordinate of the first corner
+   * @param x2 x-coordinate of the second corner
+   * @param y2 y-coordinate of the second corner
+   * @param x3 x-coordinate of the third corner
+   * @param y3 y-coordinate of the third corner
+   * @param x4 x-coordinate of the fourth corner
+   * @param y4 y-coordinate of the fourth corner
    */
-  public void quad(float x1, float y1, float x2, float y2, float x3, float y3,
-                   float x4, float y4) {
-    if (recorder != null)
-      recorder.quad(x1, y1, x2, y2, x3, y3, x4, y4);
+  public void quad(float x1, float y1, float x2, float y2,
+                   float x3, float y3, float x4, float y4) {
+    if (recorder != null) recorder.quad(x1, y1, x2, y2, x3, y3, x4, y4);
     g.quad(x1, y1, x2, y2, x3, y3, x4, y4);
   }
+
 
   /**
    * ( begin auto-generated from rectMode.xml )
    *
    * Modifies the location from which rectangles draw. The default mode is
-   * <b>rectMode(CORNER)</b>, which specifies the location to be the upper left
-   * corner of the shape and uses the third and fourth parameters of
+   * <b>rectMode(CORNER)</b>, which specifies the location to be the upper
+   * left corner of the shape and uses the third and fourth parameters of
    * <b>rect()</b> to specify the width and height. The syntax
    * <b>rectMode(CORNERS)</b> uses the first and second parameters of
    * <b>rect()</b> to set the location of one corner and uses the third and
    * fourth parameters to set the opposite corner. The syntax
-   * <b>rectMode(CENTER)</b> draws the image from its center point and uses the
-   * third and forth parameters of <b>rect()</b> to specify the image's width
-   * and height. The syntax <b>rectMode(RADIUS)</b> draws the image from its
-   * center point and uses the third and forth parameters of <b>rect()</b> to
-   * specify half of the image's width and height. The parameter must be written
-   * in ALL CAPS because Processing is a case sensitive language. Note: In
-   * version 125, the mode named CENTER_RADIUS was shortened to RADIUS.
+   * <b>rectMode(CENTER)</b> draws the image from its center point and uses
+   * the third and forth parameters of <b>rect()</b> to specify the image's
+   * width and height. The syntax <b>rectMode(RADIUS)</b> draws the image
+   * from its center point and uses the third and forth parameters of
+   * <b>rect()</b> to specify half of the image's width and height. The
+   * parameter must be written in ALL CAPS because Processing is a case
+   * sensitive language. Note: In version 125, the mode named CENTER_RADIUS
+   * was shortened to RADIUS.
    *
    * ( end auto-generated )
-   *
    * @webref shape:attributes
-   * @param mode
-   *          either CORNER, CORNERS, CENTER, or RADIUS
+   * @param mode either CORNER, CORNERS, CENTER, or RADIUS
    * @see PGraphics#rect(float, float, float, float)
    */
   public void rectMode(int mode) {
-    if (recorder != null)
-      recorder.rectMode(mode);
+    if (recorder != null) recorder.rectMode(mode);
     g.rectMode(mode);
   }
+
 
   /**
    * ( begin auto-generated from rect.xml )
    *
    * Draws a rectangle to the screen. A rectangle is a four-sided shape with
-   * every angle at ninety degrees. By default, the first two parameters set the
-   * location of the upper-left corner, the third sets the width, and the fourth
-   * sets the height. These parameters may be changed with the <b>rectMode()</b>
-   * function.
+   * every angle at ninety degrees. By default, the first two parameters set
+   * the location of the upper-left corner, the third sets the width, and the
+   * fourth sets the height. These parameters may be changed with the
+   * <b>rectMode()</b> function.
    *
    * ( end auto-generated )
    *
    * @webref shape:2d_primitives
-   * @param a
-   *          x-coordinate of the rectangle by default
-   * @param b
-   *          y-coordinate of the rectangle by default
-   * @param c
-   *          width of the rectangle by default
-   * @param d
-   *          height of the rectangle by default
+   * @param a x-coordinate of the rectangle by default
+   * @param b y-coordinate of the rectangle by default
+   * @param c width of the rectangle by default
+   * @param d height of the rectangle by default
    * @see PGraphics#rectMode(int)
    * @see PGraphics#quad(float, float, float, float, float, float, float, float)
    */
   public void rect(float a, float b, float c, float d) {
-    if (recorder != null)
-      recorder.rect(a, b, c, d);
+    if (recorder != null) recorder.rect(a, b, c, d);
     g.rect(a, b, c, d);
   }
 
+
   /**
-   * @param r
-   *          radii for all four corners
+   * @param r radii for all four corners
    */
   public void rect(float a, float b, float c, float d, float r) {
-    if (recorder != null)
-      recorder.rect(a, b, c, d, r);
+    if (recorder != null) recorder.rect(a, b, c, d, r);
     g.rect(a, b, c, d, r);
   }
 
+
   /**
-   * @param tl
-   *          radius for top-left corner
-   * @param tr
-   *          radius for top-right corner
-   * @param br
-   *          radius for bottom-right corner
-   * @param bl
-   *          radius for bottom-left corner
+   * @param tl radius for top-left corner
+   * @param tr radius for top-right corner
+   * @param br radius for bottom-right corner
+   * @param bl radius for bottom-left corner
    */
-  public void rect(float a, float b, float c, float d, float tl, float tr,
-                   float br, float bl) {
-    if (recorder != null)
-      recorder.rect(a, b, c, d, tl, tr, br, bl);
+  public void rect(float a, float b, float c, float d,
+                   float tl, float tr, float br, float bl) {
+    if (recorder != null) recorder.rect(a, b, c, d, tl, tr, br, bl);
     g.rect(a, b, c, d, tl, tr, br, bl);
   }
+
 
   /**
    * ( begin auto-generated from ellipseMode.xml )
    *
-   * The origin of the ellipse is modified by the <b>ellipseMode()</b> function.
-   * The default configuration is <b>ellipseMode(CENTER)</b>, which specifies
-   * the location of the ellipse as the center of the shape. The <b>RADIUS</b>
-   * mode is the same, but the width and height parameters to <b>ellipse()</b>
-   * specify the radius of the ellipse, rather than the diameter. The
-   * <b>CORNER</b> mode draws the shape from the upper-left corner of its
-   * bounding box. The <b>CORNERS</b> mode uses the four parameters to
-   * <b>ellipse()</b> to set two opposing corners of the ellipse's bounding box.
-   * The parameter must be written in ALL CAPS because Processing is a
-   * case-sensitive language.
+   * The origin of the ellipse is modified by the <b>ellipseMode()</b>
+   * function. The default configuration is <b>ellipseMode(CENTER)</b>, which
+   * specifies the location of the ellipse as the center of the shape. The
+   * <b>RADIUS</b> mode is the same, but the width and height parameters to
+   * <b>ellipse()</b> specify the radius of the ellipse, rather than the
+   * diameter. The <b>CORNER</b> mode draws the shape from the upper-left
+   * corner of its bounding box. The <b>CORNERS</b> mode uses the four
+   * parameters to <b>ellipse()</b> to set two opposing corners of the
+   * ellipse's bounding box. The parameter must be written in ALL CAPS
+   * because Processing is a case-sensitive language.
    *
    * ( end auto-generated )
-   *
    * @webref shape:attributes
-   * @param mode
-   *          either CENTER, RADIUS, CORNER, or CORNERS
+   * @param mode either CENTER, RADIUS, CORNER, or CORNERS
    * @see PApplet#ellipse(float, float, float, float)
    * @see PApplet#arc(float, float, float, float, float, float)
    */
   public void ellipseMode(int mode) {
-    if (recorder != null)
-      recorder.ellipseMode(mode);
+    if (recorder != null) recorder.ellipseMode(mode);
     g.ellipseMode(mode);
   }
+
 
   /**
    * ( begin auto-generated from ellipse.xml )
    *
    * Draws an ellipse (oval) in the display window. An ellipse with an equal
    * <b>width</b> and <b>height</b> is a circle. The first two parameters set
-   * the location, the third sets the width, and the fourth sets the height. The
-   * origin may be changed with the <b>ellipseMode()</b> function.
+   * the location, the third sets the width, and the fourth sets the height.
+   * The origin may be changed with the <b>ellipseMode()</b> function.
    *
    * ( end auto-generated )
-   *
    * @webref shape:2d_primitives
-   * @param a
-   *          x-coordinate of the ellipse
-   * @param b
-   *          y-coordinate of the ellipse
-   * @param c
-   *          width of the ellipse by default
-   * @param d
-   *          height of the ellipse by default
+   * @param a x-coordinate of the ellipse
+   * @param b y-coordinate of the ellipse
+   * @param c width of the ellipse by default
+   * @param d height of the ellipse by default
    * @see PApplet#ellipseMode(int)
    * @see PApplet#arc(float, float, float, float, float, float)
    */
   public void ellipse(float a, float b, float c, float d) {
-    if (recorder != null)
-      recorder.ellipse(a, b, c, d);
+    if (recorder != null) recorder.ellipse(a, b, c, d);
     g.ellipse(a, b, c, d);
   }
+
 
   /**
    * ( begin auto-generated from arc.xml )
    *
-   * Draws an arc in the display window. Arcs are drawn along the outer edge of
-   * an ellipse defined by the <b>x</b>, <b>y</b>, <b>width</b> and
+   * Draws an arc in the display window. Arcs are drawn along the outer edge
+   * of an ellipse defined by the <b>x</b>, <b>y</b>, <b>width</b> and
    * <b>height</b> parameters. The origin or the arc's ellipse may be changed
    * with the <b>ellipseMode()</b> function. The <b>start</b> and <b>stop</b>
    * parameters specify the angles at which to draw the arc.
    *
    * ( end auto-generated )
-   *
    * @webref shape:2d_primitives
-   * @param a
-   *          x-coordinate of the arc's ellipse
-   * @param b
-   *          y-coordinate of the arc's ellipse
-   * @param c
-   *          width of the arc's ellipse by default
-   * @param d
-   *          height of the arc's ellipse by default
-   * @param start
-   *          angle to start the arc, specified in radians
-   * @param stop
-   *          angle to stop the arc, specified in radians
+   * @param a x-coordinate of the arc's ellipse
+   * @param b y-coordinate of the arc's ellipse
+   * @param c width of the arc's ellipse by default
+   * @param d height of the arc's ellipse by default
+   * @param start angle to start the arc, specified in radians
+   * @param stop angle to stop the arc, specified in radians
    * @see PApplet#ellipse(float, float, float, float)
    * @see PApplet#ellipseMode(int)
    * @see PApplet#radians(float)
    * @see PApplet#degrees(float)
    */
-  public void arc(float a, float b, float c, float d, float start, float stop) {
-    if (recorder != null)
-      recorder.arc(a, b, c, d, start, stop);
+  public void arc(float a, float b, float c, float d,
+                  float start, float stop) {
+    if (recorder != null) recorder.arc(a, b, c, d, start, stop);
     g.arc(a, b, c, d, start, stop);
   }
+
 
   /*
    * @param mode either OPEN, CHORD, or PIE
    */
-  public void arc(float a, float b, float c, float d, float start, float stop,
-                  int mode) {
-    if (recorder != null)
-      recorder.arc(a, b, c, d, start, stop, mode);
+  public void arc(float a, float b, float c, float d,
+                  float start, float stop, int mode) {
+    if (recorder != null) recorder.arc(a, b, c, d, start, stop, mode);
     g.arc(a, b, c, d, start, stop, mode);
   }
+
 
   /**
    * ( begin auto-generated from box.xml )
    *
-   * A box is an extruded rectangle. A box with equal dimension on all sides is
-   * a cube.
+   * A box is an extruded rectangle. A box with equal dimension on all sides
+   * is a cube.
    *
    * ( end auto-generated )
    *
    * @webref shape:3d_primitives
-   * @param size
-   *          dimension of the box in all dimensions (creates a cube)
+   * @param size dimension of the box in all dimensions (creates a cube)
    * @see PGraphics#sphere(float)
    */
   public void box(float size) {
-    if (recorder != null)
-      recorder.box(size);
+    if (recorder != null) recorder.box(size);
     g.box(size);
   }
 
+
   /**
-   * @param w
-   *          dimension of the box in the x-dimension
-   * @param h
-   *          dimension of the box in the y-dimension
-   * @param d
-   *          dimension of the box in the z-dimension
+   * @param w dimension of the box in the x-dimension
+   * @param h dimension of the box in the y-dimension
+   * @param d dimension of the box in the z-dimension
    */
   public void box(float w, float h, float d) {
-    if (recorder != null)
-      recorder.box(w, h, d);
+    if (recorder != null) recorder.box(w, h, d);
     g.box(w, h, d);
   }
+
 
   /**
    * ( begin auto-generated from sphereDetail.xml )
    *
    * Controls the detail used to render a sphere by adjusting the number of
-   * vertices of the sphere mesh. The default resolution is 30, which creates a
-   * fairly detailed sphere definition with vertices every 360/30 = 12 degrees.
-   * If you're going to render a great number of spheres per frame, it is
-   * advised to reduce the level of detail using this function. The setting
-   * stays active until <b>sphereDetail()</b> is called again with a new
-   * parameter and so should <i>not</i> be called prior to every <b>sphere()</b>
-   * statement, unless you wish to render spheres with different settings, e.g.
-   * using less detail for smaller spheres or ones further away from the camera.
-   * To control the detail of the horizontal and vertical resolution
-   * independently, use the version of the functions with two parameters.
+   * vertices of the sphere mesh. The default resolution is 30, which creates
+   * a fairly detailed sphere definition with vertices every 360/30 = 12
+   * degrees. If you're going to render a great number of spheres per frame,
+   * it is advised to reduce the level of detail using this function. The
+   * setting stays active until <b>sphereDetail()</b> is called again with a
+   * new parameter and so should <i>not</i> be called prior to every
+   * <b>sphere()</b> statement, unless you wish to render spheres with
+   * different settings, e.g. using less detail for smaller spheres or ones
+   * further away from the camera. To control the detail of the horizontal
+   * and vertical resolution independently, use the version of the functions
+   * with two parameters.
    *
    * ( end auto-generated )
    *
-   * <h3>Advanced</h3> Code for sphereDetail() submitted by toxi [031031]. Code
-   * for enhanced u/v version from davbol [080801].
+   * <h3>Advanced</h3>
+   * Code for sphereDetail() submitted by toxi [031031].
+   * Code for enhanced u/v version from davbol [080801].
    *
-   * @param res
-   *          number of segments (minimum 3) used per full circle revolution
+   * @param res number of segments (minimum 3) used per full circle revolution
    * @webref shape:3d_primitives
    * @see PGraphics#sphere(float)
    */
   public void sphereDetail(int res) {
-    if (recorder != null)
-      recorder.sphereDetail(res);
+    if (recorder != null) recorder.sphereDetail(res);
     g.sphereDetail(res);
   }
 
+
   /**
-   * @param ures
-   *          number of segments used longitudinally per full circle revolutoin
-   * @param vres
-   *          number of segments used latitudinally from top to bottom
+   * @param ures number of segments used longitudinally per full circle revolutoin
+   * @param vres number of segments used latitudinally from top to bottom
    */
   public void sphereDetail(int ures, int vres) {
-    if (recorder != null)
-      recorder.sphereDetail(ures, vres);
+    if (recorder != null) recorder.sphereDetail(ures, vres);
     g.sphereDetail(ures, vres);
   }
+
 
   /**
    * ( begin auto-generated from sphere.xml )
@@ -11116,12 +11008,12 @@ public class PApplet implements PConstants {
    * <P>
    * Implementation notes:
    * <P>
-   * cache all the points of the sphere in a static array top and bottom are
-   * just a bunch of triangles that land in the center point
+   * cache all the points of the sphere in a static array
+   * top and bottom are just a bunch of triangles that land
+   * in the center point
    * <P>
-   * sphere is a series of concentric circles who radii vary along the shape,
-   * based on, er.. cos or something
-   *
+   * sphere is a series of concentric circles who radii vary
+   * along the shape, based on, er.. cos or something
    * <PRE>
    * [toxi 031031] new sphere code. removed all multiplies with
    * radius, as scale() will take care of that anyway
@@ -11134,15 +11026,14 @@ public class PApplet implements PConstants {
    * </PRE>
    *
    * @webref shape:3d_primitives
-   * @param r
-   *          the radius of the sphere
+   * @param r the radius of the sphere
    * @see PGraphics#sphereDetail(int)
    */
   public void sphere(float r) {
-    if (recorder != null)
-      recorder.sphere(r);
+    if (recorder != null) recorder.sphere(r);
     g.sphere(r);
   }
+
 
   /**
    * ( begin auto-generated from bezierPoint.xml )
@@ -11150,14 +11041,13 @@ public class PApplet implements PConstants {
    * Evaluates the Bezier at point t for points a, b, c, d. The parameter t
    * varies between 0 and 1, a and d are points on the curve, and b and c are
    * the control points. This can be done once with the x coordinates and a
-   * second time with the y coordinates to get the location of a bezier curve at
-   * t.
+   * second time with the y coordinates to get the location of a bezier curve
+   * at t.
    *
    * ( end auto-generated )
    *
-   * <h3>Advanced</h3> For instance, to convert the following example:
-   *
-   * <PRE>
+   * <h3>Advanced</h3>
+   * For instance, to convert the following example:<PRE>
    * stroke(255, 102, 0);
    * line(85, 20, 10, 10);
    * line(90, 90, 15, 80);
@@ -11169,28 +11059,21 @@ public class PApplet implements PConstants {
    * // to do things with the coordinates at each step
    * stroke(128);
    * beginShape(LINE_STRIP);
-   * for (int i = 0; i &lt;= 10; i++) {
+   * for (int i = 0; i <= 10; i++) {
    *   float t = i / 10.0f;
    *   float x = bezierPoint(85, 10, 90, 15, t);
    *   float y = bezierPoint(20, 10, 90, 80, t);
    *   vertex(x, y);
    * }
-   * endShape();
-   * </PRE>
+   * endShape();</PRE>
    *
    * @webref shape:curves
-   * @param a
-   *          coordinate of first point on the curve
-   * @param b
-   *          coordinate of first control point
-   * @param c
-   *          coordinate of second control point
-   * @param d
-   *          coordinate of second point on the curve
-   * @param t
-   *          value between 0 and 1
-   * @see PGraphics#bezier(float, float, float, float, float, float, float,
-   *      float, float, float, float, float)
+   * @param a coordinate of first point on the curve
+   * @param b coordinate of first control point
+   * @param c coordinate of second control point
+   * @param d coordinate of second point on the curve
+   * @param t value between 0 and 1
+   * @see PGraphics#bezier(float, float, float, float, float, float, float, float, float, float, float, float)
    * @see PGraphics#bezierVertex(float, float, float, float, float, float)
    * @see PGraphics#curvePoint(float, float, float, float, float)
    */
@@ -11198,31 +11081,26 @@ public class PApplet implements PConstants {
     return g.bezierPoint(a, b, c, d, t);
   }
 
+
   /**
    * ( begin auto-generated from bezierTangent.xml )
    *
    * Calculates the tangent of a point on a Bezier curve. There is a good
-   * definition of <a href="http://en.wikipedia.org/wiki/Tangent" target="new">
-   * <em>tangent</em> on Wikipedia</a>.
+   * definition of <a href="http://en.wikipedia.org/wiki/Tangent"
+   * target="new"><em>tangent</em> on Wikipedia</a>.
    *
    * ( end auto-generated )
    *
-   * <h3>Advanced</h3> Code submitted by Dave Bollinger (davol) for release
-   * 0136.
+   * <h3>Advanced</h3>
+   * Code submitted by Dave Bollinger (davol) for release 0136.
    *
    * @webref shape:curves
-   * @param a
-   *          coordinate of first point on the curve
-   * @param b
-   *          coordinate of first control point
-   * @param c
-   *          coordinate of second control point
-   * @param d
-   *          coordinate of second point on the curve
-   * @param t
-   *          value between 0 and 1
-   * @see PGraphics#bezier(float, float, float, float, float, float, float,
-   *      float, float, float, float, float)
+   * @param a coordinate of first point on the curve
+   * @param b coordinate of first control point
+   * @param c coordinate of second control point
+   * @param d coordinate of second point on the curve
+   * @param t value between 0 and 1
+   * @see PGraphics#bezier(float, float, float, float, float, float, float, float, float, float, float, float)
    * @see PGraphics#bezierVertex(float, float, float, float, float, float)
    * @see PGraphics#curvePoint(float, float, float, float, float)
    */
@@ -11230,149 +11108,116 @@ public class PApplet implements PConstants {
     return g.bezierTangent(a, b, c, d, t);
   }
 
+
   /**
    * ( begin auto-generated from bezierDetail.xml )
    *
-   * Sets the resolution at which Beziers display. The default value is 20. This
-   * function is only useful when using the P3D renderer as the default P2D
-   * renderer does not use this information.
+   * Sets the resolution at which Beziers display. The default value is 20.
+   * This function is only useful when using the P3D renderer as the default
+   * P2D renderer does not use this information.
    *
    * ( end auto-generated )
    *
    * @webref shape:curves
-   * @param detail
-   *          resolution of the curves
-   * @see PGraphics#curve(float, float, float, float, float, float, float,
-   *      float, float, float, float, float)
+   * @param detail resolution of the curves
+   * @see PGraphics#curve(float, float, float, float, float, float, float, float, float, float, float, float)
    * @see PGraphics#curveVertex(float, float, float)
    * @see PGraphics#curveTightness(float)
    */
   public void bezierDetail(int detail) {
-    if (recorder != null)
-      recorder.bezierDetail(detail);
+    if (recorder != null) recorder.bezierDetail(detail);
     g.bezierDetail(detail);
   }
 
-  public void bezier(float x1, float y1, float x2, float y2, float x3,
-                     float y3, float x4, float y4) {
-    if (recorder != null)
-      recorder.bezier(x1, y1, x2, y2, x3, y3, x4, y4);
+
+  public void bezier(float x1, float y1,
+                     float x2, float y2,
+                     float x3, float y3,
+                     float x4, float y4) {
+    if (recorder != null) recorder.bezier(x1, y1, x2, y2, x3, y3, x4, y4);
     g.bezier(x1, y1, x2, y2, x3, y3, x4, y4);
   }
+
 
   /**
    * ( begin auto-generated from bezier.xml )
    *
-   * Draws a Bezier curve on the screen. These curves are defined by a series of
-   * anchor and control points. The first two parameters specify the first
+   * Draws a Bezier curve on the screen. These curves are defined by a series
+   * of anchor and control points. The first two parameters specify the first
    * anchor point and the last two parameters specify the other anchor point.
-   * The middle parameters specify the control points which define the shape of
-   * the curve. Bezier curves were developed by French engineer Pierre Bezier.
-   * Using the 3D version requires rendering with P3D (see the Environment
-   * reference for more information).
+   * The middle parameters specify the control points which define the shape
+   * of the curve. Bezier curves were developed by French engineer Pierre
+   * Bezier. Using the 3D version requires rendering with P3D (see the
+   * Environment reference for more information).
    *
    * ( end auto-generated )
    *
-   * <h3>Advanced</h3> Draw a cubic bezier curve. The first and last points are
-   * the on-curve points. The middle two are the 'control' points, or 'handles'
-   * in an application like Illustrator.
+   * <h3>Advanced</h3>
+   * Draw a cubic bezier curve. The first and last points are
+   * the on-curve points. The middle two are the 'control' points,
+   * or 'handles' in an application like Illustrator.
    * <P>
    * Identical to typing:
-   *
-   * <PRE>
-   * beginShape();
+   * <PRE>beginShape();
    * vertex(x1, y1);
    * bezierVertex(x2, y2, x3, y3, x4, y4);
    * endShape();
    * </PRE>
-   *
    * In Postscript-speak, this would be:
-   *
-   * <PRE>
-   * moveto(x1, y1);
-   * curveto(x2, y2, x3, y3, x4, y4);
-   * </PRE>
-   *
+   * <PRE>moveto(x1, y1);
+   * curveto(x2, y2, x3, y3, x4, y4);</PRE>
    * If you were to try and continue that curve like so:
-   *
-   * <PRE>
-   * curveto(x5, y5, x6, y6, x7, y7);
-   * </PRE>
-   *
+   * <PRE>curveto(x5, y5, x6, y6, x7, y7);</PRE>
    * This would be done in processing by adding these statements:
-   *
-   * <PRE>
-   * bezierVertex(x5, y5, x6, y6, x7, y7)
+   * <PRE>bezierVertex(x5, y5, x6, y6, x7, y7)
    * </PRE>
-   *
-   * To draw a quadratic (instead of cubic) curve, use the control point twice
-   * by doubling it:
-   *
-   * <PRE>
-   * bezier(x1, y1, cx, cy, cx, cy, x2, y2);
-   * </PRE>
+   * To draw a quadratic (instead of cubic) curve,
+   * use the control point twice by doubling it:
+   * <PRE>bezier(x1, y1, cx, cy, cx, cy, x2, y2);</PRE>
    *
    * @webref shape:curves
-   * @param x1
-   *          coordinates for the first anchor point
-   * @param y1
-   *          coordinates for the first anchor point
-   * @param z1
-   *          coordinates for the first anchor point
-   * @param x2
-   *          coordinates for the first control point
-   * @param y2
-   *          coordinates for the first control point
-   * @param z2
-   *          coordinates for the first control point
-   * @param x3
-   *          coordinates for the second control point
-   * @param y3
-   *          coordinates for the second control point
-   * @param z3
-   *          coordinates for the second control point
-   * @param x4
-   *          coordinates for the second anchor point
-   * @param y4
-   *          coordinates for the second anchor point
-   * @param z4
-   *          coordinates for the second anchor point
+   * @param x1 coordinates for the first anchor point
+   * @param y1 coordinates for the first anchor point
+   * @param z1 coordinates for the first anchor point
+   * @param x2 coordinates for the first control point
+   * @param y2 coordinates for the first control point
+   * @param z2 coordinates for the first control point
+   * @param x3 coordinates for the second control point
+   * @param y3 coordinates for the second control point
+   * @param z3 coordinates for the second control point
+   * @param x4 coordinates for the second anchor point
+   * @param y4 coordinates for the second anchor point
+   * @param z4 coordinates for the second anchor point
    *
    * @see PGraphics#bezierVertex(float, float, float, float, float, float)
-   * @see PGraphics#curve(float, float, float, float, float, float, float,
-   *      float, float, float, float, float)
+   * @see PGraphics#curve(float, float, float, float, float, float, float, float, float, float, float, float)
    */
-  public void bezier(float x1, float y1, float z1, float x2, float y2,
-                     float z2, float x3, float y3, float z3, float x4,
-                     float y4, float z4) {
-    if (recorder != null)
-      recorder.bezier(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
+  public void bezier(float x1, float y1, float z1,
+                     float x2, float y2, float z2,
+                     float x3, float y3, float z3,
+                     float x4, float y4, float z4) {
+    if (recorder != null) recorder.bezier(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
     g.bezier(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
   }
+
 
   /**
    * ( begin auto-generated from curvePoint.xml )
    *
-   * Evalutes the curve at point t for points a, b, c, d. The parameter t varies
-   * between 0 and 1, a and d are points on the curve, and b and c are the
-   * control points. This can be done once with the x coordinates and a second
-   * time with the y coordinates to get the location of a curve at t.
+   * Evalutes the curve at point t for points a, b, c, d. The parameter t
+   * varies between 0 and 1, a and d are points on the curve, and b and c are
+   * the control points. This can be done once with the x coordinates and a
+   * second time with the y coordinates to get the location of a curve at t.
    *
    * ( end auto-generated )
    *
    * @webref shape:curves
-   * @param a
-   *          coordinate of first point on the curve
-   * @param b
-   *          coordinate of second point on the curve
-   * @param c
-   *          coordinate of third point on the curve
-   * @param d
-   *          coordinate of fourth point on the curve
-   * @param t
-   *          value between 0 and 1
-   * @see PGraphics#curve(float, float, float, float, float, float, float,
-   *      float, float, float, float, float)
+   * @param a coordinate of first point on the curve
+   * @param b coordinate of second point on the curve
+   * @param c coordinate of third point on the curve
+   * @param d coordinate of fourth point on the curve
+   * @param t value between 0 and 1
+   * @see PGraphics#curve(float, float, float, float, float, float, float, float, float, float, float, float)
    * @see PGraphics#curveVertex(float, float)
    * @see PGraphics#bezierPoint(float, float, float, float, float)
    */
@@ -11380,30 +11225,26 @@ public class PApplet implements PConstants {
     return g.curvePoint(a, b, c, d, t);
   }
 
+
   /**
    * ( begin auto-generated from curveTangent.xml )
    *
-   * Calculates the tangent of a point on a curve. There's a good definition of
-   * <em><a href="http://en.wikipedia.org/wiki/Tangent"
+   * Calculates the tangent of a point on a curve. There's a good definition
+   * of <em><a href="http://en.wikipedia.org/wiki/Tangent"
    * target="new">tangent</em> on Wikipedia</a>.
    *
    * ( end auto-generated )
    *
-   * <h3>Advanced</h3> Code thanks to Dave Bollinger (Bug #715)
+   * <h3>Advanced</h3>
+   * Code thanks to Dave Bollinger (Bug #715)
    *
    * @webref shape:curves
-   * @param a
-   *          coordinate of first point on the curve
-   * @param b
-   *          coordinate of first control point
-   * @param c
-   *          coordinate of second control point
-   * @param d
-   *          coordinate of second point on the curve
-   * @param t
-   *          value between 0 and 1
-   * @see PGraphics#curve(float, float, float, float, float, float, float,
-   *      float, float, float, float, float)
+   * @param a coordinate of first point on the curve
+   * @param b coordinate of first control point
+   * @param c coordinate of second control point
+   * @param d coordinate of second point on the curve
+   * @param t value between 0 and 1
+   * @see PGraphics#curve(float, float, float, float, float, float, float, float, float, float, float, float)
    * @see PGraphics#curveVertex(float, float)
    * @see PGraphics#curvePoint(float, float, float, float, float)
    * @see PGraphics#bezierTangent(float, float, float, float, float)
@@ -11412,78 +11253,73 @@ public class PApplet implements PConstants {
     return g.curveTangent(a, b, c, d, t);
   }
 
+
   /**
    * ( begin auto-generated from curveDetail.xml )
    *
-   * Sets the resolution at which curves display. The default value is 20. This
-   * function is only useful when using the P3D renderer as the default P2D
-   * renderer does not use this information.
+   * Sets the resolution at which curves display. The default value is 20.
+   * This function is only useful when using the P3D renderer as the default
+   * P2D renderer does not use this information.
    *
    * ( end auto-generated )
    *
    * @webref shape:curves
-   * @param detail
-   *          resolution of the curves
-   * @see PGraphics#curve(float, float, float, float, float, float, float,
-   *      float, float, float, float, float)
+   * @param detail resolution of the curves
+   * @see PGraphics#curve(float, float, float, float, float, float, float, float, float, float, float, float)
    * @see PGraphics#curveVertex(float, float)
    * @see PGraphics#curveTightness(float)
    */
   public void curveDetail(int detail) {
-    if (recorder != null)
-      recorder.curveDetail(detail);
+    if (recorder != null) recorder.curveDetail(detail);
     g.curveDetail(detail);
   }
+
 
   /**
    * ( begin auto-generated from curveTightness.xml )
    *
    * Modifies the quality of forms created with <b>curve()</b> and
-   * <b>curveVertex()</b>. The parameter <b>squishy</b> determines how the curve
-   * fits to the vertex points. The value 0.0 is the default value for
+   * <b>curveVertex()</b>. The parameter <b>squishy</b> determines how the
+   * curve fits to the vertex points. The value 0.0 is the default value for
    * <b>squishy</b> (this value defines the curves to be Catmull-Rom splines)
    * and the value 1.0 connects all the points with straight lines. Values
    * within the range -5.0 and 5.0 will deform the curves but will leave them
-   * recognizable and as values increase in magnitude, they will continue to
-   * deform.
+   * recognizable and as values increase in magnitude, they will continue to deform.
    *
    * ( end auto-generated )
    *
    * @webref shape:curves
-   * @param tightness
-   *          amount of deformation from the original vertices
-   * @see PGraphics#curve(float, float, float, float, float, float, float,
-   *      float, float, float, float, float)
+   * @param tightness amount of deformation from the original vertices
+   * @see PGraphics#curve(float, float, float, float, float, float, float, float, float, float, float, float)
    * @see PGraphics#curveVertex(float, float)
    */
   public void curveTightness(float tightness) {
-    if (recorder != null)
-      recorder.curveTightness(tightness);
+    if (recorder != null) recorder.curveTightness(tightness);
     g.curveTightness(tightness);
   }
+
 
   /**
    * ( begin auto-generated from curve.xml )
    *
-   * Draws a curved line on the screen. The first and second parameters specify
-   * the beginning control point and the last two parameters specify the ending
-   * control point. The middle parameters specify the start and stop of the
-   * curve. Longer curves can be created by putting a series of <b>curve()</b>
-   * functions together or using <b>curveVertex()</b>. An additional function
-   * called <b>curveTightness()</b> provides control for the visual quality of
-   * the curve. The <b>curve()</b> function is an implementation of Catmull-Rom
-   * splines. Using the 3D version requires rendering with P3D (see the
-   * Environment reference for more information).
+   * Draws a curved line on the screen. The first and second parameters
+   * specify the beginning control point and the last two parameters specify
+   * the ending control point. The middle parameters specify the start and
+   * stop of the curve. Longer curves can be created by putting a series of
+   * <b>curve()</b> functions together or using <b>curveVertex()</b>. An
+   * additional function called <b>curveTightness()</b> provides control for
+   * the visual quality of the curve. The <b>curve()</b> function is an
+   * implementation of Catmull-Rom splines. Using the 3D version requires
+   * rendering with P3D (see the Environment reference for more information).
    *
    * ( end auto-generated )
    *
-   * <h3>Advanced</h3> As of revision 0070, this function no longer doubles the
-   * first and last points. The curves are a bit more boring, but it's more
+   * <h3>Advanced</h3>
+   * As of revision 0070, this function no longer doubles the first
+   * and last points. The curves are a bit more boring, but it's more
    * mathematically correct, and properly mirrored in curvePoint().
    * <P>
-   * Identical to typing out:
-   *
-   * <PRE>
+   * Identical to typing out:<PRE>
    * beginShape();
    * curveVertex(x1, y1);
    * curveVertex(x2, y2);
@@ -11493,50 +11329,41 @@ public class PApplet implements PConstants {
    * </PRE>
    *
    * @webref shape:curves
-   * @param x1
-   *          coordinates for the beginning control point
-   * @param y1
-   *          coordinates for the beginning control point
-   * @param x2
-   *          coordinates for the first point
-   * @param y2
-   *          coordinates for the first point
-   * @param x3
-   *          coordinates for the second point
-   * @param y3
-   *          coordinates for the second point
-   * @param x4
-   *          coordinates for the ending control point
-   * @param y4
-   *          coordinates for the ending control point
+   * @param x1 coordinates for the beginning control point
+   * @param y1 coordinates for the beginning control point
+   * @param x2 coordinates for the first point
+   * @param y2 coordinates for the first point
+   * @param x3 coordinates for the second point
+   * @param y3 coordinates for the second point
+   * @param x4 coordinates for the ending control point
+   * @param y4 coordinates for the ending control point
    * @see PGraphics#curveVertex(float, float)
    * @see PGraphics#curveTightness(float)
-   * @see PGraphics#bezier(float, float, float, float, float, float, float,
-   *      float, float, float, float, float)
+   * @see PGraphics#bezier(float, float, float, float, float, float, float, float, float, float, float, float)
    */
-  public void curve(float x1, float y1, float x2, float y2, float x3, float y3,
+  public void curve(float x1, float y1,
+                    float x2, float y2,
+                    float x3, float y3,
                     float x4, float y4) {
-    if (recorder != null)
-      recorder.curve(x1, y1, x2, y2, x3, y3, x4, y4);
+    if (recorder != null) recorder.curve(x1, y1, x2, y2, x3, y3, x4, y4);
     g.curve(x1, y1, x2, y2, x3, y3, x4, y4);
   }
 
-  /**
-   * @param z1
-   *          coordinates for the beginning control point
-   * @param z2
-   *          coordinates for the first point
-   * @param z3
-   *          coordinates for the second point
-   * @param z4
-   *          coordinates for the ending control point
-   */
-  public void curve(float x1, float y1, float z1, float x2, float y2, float z2,
-                    float x3, float y3, float z3, float x4, float y4, float z4) {
-    if (recorder != null)
-      recorder.curve(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
+
+   /**
+    * @param z1 coordinates for the beginning control point
+    * @param z2 coordinates for the first point
+    * @param z3 coordinates for the second point
+    * @param z4 coordinates for the ending control point
+    */
+  public void curve(float x1, float y1, float z1,
+                    float x2, float y2, float z2,
+                    float x3, float y3, float z3,
+                    float x4, float y4, float z4) {
+    if (recorder != null) recorder.curve(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
     g.curve(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4);
   }
+
 
   /**
    * ( begin auto-generated from smooth.xml )
@@ -11555,21 +11382,20 @@ public class PApplet implements PConstants {
    * @see PApplet#size(int, int, String)
    */
   public void smooth() {
-    if (recorder != null)
-      recorder.smooth();
+    if (recorder != null) recorder.smooth();
     g.smooth();
   }
 
+
   /**
    *
-   * @param level
-   *          either 2, 4, or 8
+   * @param level either 2, 4, or 8
    */
   public void smooth(int level) {
-    if (recorder != null)
-      recorder.smooth(level);
+    if (recorder != null) recorder.smooth(level);
     g.smooth(level);
   }
+
 
   /**
    * ( begin auto-generated from noSmooth.xml )
@@ -11577,27 +11403,27 @@ public class PApplet implements PConstants {
    * Draws all geometry with jagged (aliased) edges.
    *
    * ( end auto-generated )
-   *
    * @webref shape:attributes
    * @see PGraphics#smooth()
    */
   public void noSmooth() {
-    if (recorder != null)
-      recorder.noSmooth();
+    if (recorder != null) recorder.noSmooth();
     g.noSmooth();
   }
+
 
   /**
    * ( begin auto-generated from imageMode.xml )
    *
    * Modifies the location from which images draw. The default mode is
-   * <b>imageMode(CORNER)</b>, which specifies the location to be the upper left
-   * corner and uses the fourth and fifth parameters of <b>image()</b> to set
-   * the image's width and height. The syntax <b>imageMode(CORNERS)</b> uses the
-   * second and third parameters of <b>image()</b> to set the location of one
-   * corner of the image and uses the fourth and fifth parameters to set the
-   * opposite corner. Use <b>imageMode(CENTER)</b> to draw images centered at
-   * the given x and y position.<br />
+   * <b>imageMode(CORNER)</b>, which specifies the location to be the upper
+   * left corner and uses the fourth and fifth parameters of <b>image()</b>
+   * to set the image's width and height. The syntax
+   * <b>imageMode(CORNERS)</b> uses the second and third parameters of
+   * <b>image()</b> to set the location of one corner of the image and uses
+   * the fourth and fifth parameters to set the opposite corner. Use
+   * <b>imageMode(CENTER)</b> to draw images centered at the given x and y
+   * position.<br />
    * <br />
    * The parameter to <b>imageMode()</b> must be written in ALL CAPS because
    * Processing is a case-sensitive language.
@@ -11605,51 +11431,48 @@ public class PApplet implements PConstants {
    * ( end auto-generated )
    *
    * @webref image:loading_displaying
-   * @param mode
-   *          either CORNER, CORNERS, or CENTER
+   * @param mode either CORNER, CORNERS, or CENTER
    * @see PApplet#loadImage(String, String)
    * @see PImage
    * @see PGraphics#image(PImage, float, float, float, float)
    * @see PGraphics#background(float, float, float, float)
    */
   public void imageMode(int mode) {
-    if (recorder != null)
-      recorder.imageMode(mode);
+    if (recorder != null) recorder.imageMode(mode);
     g.imageMode(mode);
   }
+
 
   /**
    * ( begin auto-generated from image.xml )
    *
    * Displays images to the screen. The images must be in the sketch's "data"
-   * directory to load correctly. Select "Add file..." from the "Sketch" menu to
-   * add the image. Processing currently works with GIF, JPEG, and Targa images.
-   * The <b>img</b> parameter specifies the image to display and the <b>x</b>
-   * and <b>y</b> parameters define the location of the image from its
-   * upper-left corner. The image is displayed at its original size unless the
-   * <b>width</b> and <b>height</b> parameters specify a different size.<br />
+   * directory to load correctly. Select "Add file..." from the "Sketch" menu
+   * to add the image. Processing currently works with GIF, JPEG, and Targa
+   * images. The <b>img</b> parameter specifies the image to display and the
+   * <b>x</b> and <b>y</b> parameters define the location of the image from
+   * its upper-left corner. The image is displayed at its original size
+   * unless the <b>width</b> and <b>height</b> parameters specify a different
+   * size.<br />
    * <br />
    * The <b>imageMode()</b> function changes the way the parameters work. For
-   * example, a call to <b>imageMode(CORNERS)</b> will change the <b>width</b>
-   * and <b>height</b> parameters to define the x and y values of the opposite
-   * corner of the image.<br />
+   * example, a call to <b>imageMode(CORNERS)</b> will change the
+   * <b>width</b> and <b>height</b> parameters to define the x and y values
+   * of the opposite corner of the image.<br />
    * <br />
-   * The color of an image may be modified with the <b>tint()</b> function. This
-   * function will maintain transparency for GIF and PNG images.
+   * The color of an image may be modified with the <b>tint()</b> function.
+   * This function will maintain transparency for GIF and PNG images.
    *
    * ( end auto-generated )
    *
-   * <h3>Advanced</h3> Starting with release 0124, when using the default
-   * (JAVA2D) renderer, smooth() will also improve image quality of resized
-   * images.
+   * <h3>Advanced</h3>
+   * Starting with release 0124, when using the default (JAVA2D) renderer,
+   * smooth() will also improve image quality of resized images.
    *
    * @webref image:loading_displaying
-   * @param img
-   *          the image to display
-   * @param a
-   *          x-coordinate of the image
-   * @param b
-   *          y-coordinate of the image
+   * @param img the image to display
+   * @param a x-coordinate of the image
+   * @param b y-coordinate of the image
    * @see PApplet#loadImage(String, String)
    * @see PImage
    * @see PGraphics#imageMode(int)
@@ -11658,169 +11481,158 @@ public class PApplet implements PConstants {
    * @see PGraphics#alpha(int)
    */
   public void image(PImage img, float a, float b) {
-    if (recorder != null)
-      recorder.image(img, a, b);
+    if (recorder != null) recorder.image(img, a, b);
     g.image(img, a, b);
   }
 
+
   /**
-   * @param c
-   *          width to display the image
-   * @param d
-   *          height to display the image
+   * @param c width to display the image
+   * @param d height to display the image
    */
   public void image(PImage img, float a, float b, float c, float d) {
-    if (recorder != null)
-      recorder.image(img, a, b, c, d);
+    if (recorder != null) recorder.image(img, a, b, c, d);
     g.image(img, a, b, c, d);
   }
 
+
   /**
-   * Draw an image(), also specifying u/v coordinates. In this method, the u, v
-   * coordinates are always based on image space location, regardless of the
-   * current textureMode().
+   * Draw an image(), also specifying u/v coordinates.
+   * In this method, the  u, v coordinates are always based on image space
+   * location, regardless of the current textureMode().
    *
    * @nowebref
    */
-  public void image(PImage img, float a, float b, float c, float d, int u1,
-                    int v1, int u2, int v2) {
-    if (recorder != null)
-      recorder.image(img, a, b, c, d, u1, v1, u2, v2);
+  public void image(PImage img,
+                    float a, float b, float c, float d,
+                    int u1, int v1, int u2, int v2) {
+    if (recorder != null) recorder.image(img, a, b, c, d, u1, v1, u2, v2);
     g.image(img, a, b, c, d, u1, v1, u2, v2);
   }
+
 
   /**
    * ( begin auto-generated from shapeMode.xml )
    *
    * Modifies the location from which shapes draw. The default mode is
-   * <b>shapeMode(CORNER)</b>, which specifies the location to be the upper left
-   * corner of the shape and uses the third and fourth parameters of
+   * <b>shapeMode(CORNER)</b>, which specifies the location to be the upper
+   * left corner of the shape and uses the third and fourth parameters of
    * <b>shape()</b> to specify the width and height. The syntax
    * <b>shapeMode(CORNERS)</b> uses the first and second parameters of
    * <b>shape()</b> to set the location of one corner and uses the third and
    * fourth parameters to set the opposite corner. The syntax
-   * <b>shapeMode(CENTER)</b> draws the shape from its center point and uses the
-   * third and forth parameters of <b>shape()</b> to specify the width and
-   * height. The parameter must be written in "ALL CAPS" because Processing is a
-   * case sensitive language.
+   * <b>shapeMode(CENTER)</b> draws the shape from its center point and uses
+   * the third and forth parameters of <b>shape()</b> to specify the width
+   * and height. The parameter must be written in "ALL CAPS" because
+   * Processing is a case sensitive language.
    *
    * ( end auto-generated )
    *
    * @webref shape:loading_displaying
-   * @param mode
-   *          either CORNER, CORNERS, CENTER
+   * @param mode either CORNER, CORNERS, CENTER
    * @see PShape
    * @see PGraphics#shape(PShape)
    * @see PGraphics#rectMode(int)
    */
   public void shapeMode(int mode) {
-    if (recorder != null)
-      recorder.shapeMode(mode);
+    if (recorder != null) recorder.shapeMode(mode);
     g.shapeMode(mode);
   }
 
+
   public void shape(PShape shape) {
-    if (recorder != null)
-      recorder.shape(shape);
+    if (recorder != null) recorder.shape(shape);
     g.shape(shape);
   }
+
 
   /**
    * ( begin auto-generated from shape.xml )
    *
    * Displays shapes to the screen. The shapes must be in the sketch's "data"
-   * directory to load correctly. Select "Add file..." from the "Sketch" menu to
-   * add the shape. Processing currently works with SVG shapes only. The
+   * directory to load correctly. Select "Add file..." from the "Sketch" menu
+   * to add the shape. Processing currently works with SVG shapes only. The
    * <b>sh</b> parameter specifies the shape to display and the <b>x</b> and
    * <b>y</b> parameters define the location of the shape from its upper-left
-   * corner. The shape is displayed at its original size unless the <b>width</b>
-   * and <b>height</b> parameters specify a different size. The
-   * <b>shapeMode()</b> function changes the way the parameters work. A call to
-   * <b>shapeMode(CORNERS)</b>, for example, will change the width and height
-   * parameters to define the x and y values of the opposite corner of the
-   * shape. <br />
-   * <br />
-   * Note complex shapes may draw awkwardly with P3D. This renderer does not yet
-   * support shapes that have holes or complicated breaks.
+   * corner. The shape is displayed at its original size unless the
+   * <b>width</b> and <b>height</b> parameters specify a different size. The
+   * <b>shapeMode()</b> function changes the way the parameters work. A call
+   * to <b>shapeMode(CORNERS)</b>, for example, will change the width and
+   * height parameters to define the x and y values of the opposite corner of
+   * the shape.
+   * <br /><br />
+   * Note complex shapes may draw awkwardly with P3D. This renderer does not
+   * yet support shapes that have holes or complicated breaks.
    *
    * ( end auto-generated )
    *
    * @webref shape:loading_displaying
-   * @param shape
-   *          the shape to display
-   * @param x
-   *          x-coordinate of the shape
-   * @param y
-   *          y-coordinate of the shape
+   * @param shape the shape to display
+   * @param x x-coordinate of the shape
+   * @param y y-coordinate of the shape
    * @see PShape
    * @see PApplet#loadShape(String)
    * @see PGraphics#shapeMode(int)
    *
-   *      Convenience method to draw at a particular location.
+   * Convenience method to draw at a particular location.
    */
   public void shape(PShape shape, float x, float y) {
-    if (recorder != null)
-      recorder.shape(shape, x, y);
+    if (recorder != null) recorder.shape(shape, x, y);
     g.shape(shape, x, y);
   }
 
+
   /**
-   * @param a
-   *          x-coordinate of the shape
-   * @param b
-   *          y-coordinate of the shape
-   * @param c
-   *          width to display the shape
-   * @param d
-   *          height to display the shape
+   * @param a x-coordinate of the shape
+   * @param b y-coordinate of the shape
+   * @param c width to display the shape
+   * @param d height to display the shape
    */
   public void shape(PShape shape, float a, float b, float c, float d) {
-    if (recorder != null)
-      recorder.shape(shape, a, b, c, d);
+    if (recorder != null) recorder.shape(shape, a, b, c, d);
     g.shape(shape, a, b, c, d);
   }
 
+
   public void textAlign(int alignX) {
-    if (recorder != null)
-      recorder.textAlign(alignX);
+    if (recorder != null) recorder.textAlign(alignX);
     g.textAlign(alignX);
   }
+
 
   /**
    * ( begin auto-generated from textAlign.xml )
    *
-   * Sets the current alignment for drawing text. The parameters LEFT, CENTER,
-   * and RIGHT set the display characteristics of the letters in relation to the
-   * values for the <b>x</b> and <b>y</b> parameters of the <b>text()</b>
-   * function. <br/>
-   * <br/>
-   * In Processing 0125 and later, an optional second parameter can be used to
-   * vertically align the text. BASELINE is the default, and the vertical
+   * Sets the current alignment for drawing text. The parameters LEFT,
+   * CENTER, and RIGHT set the display characteristics of the letters in
+   * relation to the values for the <b>x</b> and <b>y</b> parameters of the
+   * <b>text()</b> function.
+   * <br/> <br/>
+   * In Processing 0125 and later, an optional second parameter can be used
+   * to vertically align the text. BASELINE is the default, and the vertical
    * alignment will be reset to BASELINE if the second parameter is not used.
    * The TOP and CENTER parameters are straightforward. The BOTTOM parameter
    * offsets the line based on the current <b>textDescent()</b>. For multiple
    * lines, the final line will be aligned to the bottom, with the previous
-   * lines appearing above it. <br/>
-   * <br/>
+   * lines appearing above it.
+   * <br/> <br/>
    * When using <b>text()</b> with width and height parameters, BASELINE is
-   * ignored, and treated as TOP. (Otherwise, text would by default draw outside
-   * the box, since BASELINE is the default setting. BASELINE is not a useful
-   * drawing mode for text drawn in a rectangle.) <br/>
-   * <br/>
-   * The vertical alignment is based on the value of <b>textAscent()</b>, which
-   * many fonts do not specify correctly. It may be necessary to use a hack and
-   * offset by a few pixels by hand so that the offset looks correct. To do this
-   * as less of a hack, use some percentage of <b>textAscent()</b> or
-   * <b>textDescent()</b> so that the hack works even if you change the size of
-   * the font.
+   * ignored, and treated as TOP. (Otherwise, text would by default draw
+   * outside the box, since BASELINE is the default setting. BASELINE is not
+   * a useful drawing mode for text drawn in a rectangle.)
+   * <br/> <br/>
+   * The vertical alignment is based on the value of <b>textAscent()</b>,
+   * which many fonts do not specify correctly. It may be necessary to use a
+   * hack and offset by a few pixels by hand so that the offset looks
+   * correct. To do this as less of a hack, use some percentage of
+   * <b>textAscent()</b> or <b>textDescent()</b> so that the hack works even
+   * if you change the size of the font.
    *
    * ( end auto-generated )
    *
    * @webref typography:attributes
-   * @param alignX
-   *          horizontal alignment, either LEFT, CENTER, or RIGHT
-   * @param alignY
-   *          vertical alignment, either TOP, BOTTOM, CENTER, or BASELINE
+   * @param alignX horizontal alignment, either LEFT, CENTER, or RIGHT
+   * @param alignY vertical alignment, either TOP, BOTTOM, CENTER, or BASELINE
    * @see PApplet#loadFont(String)
    * @see PFont
    * @see PGraphics#text(String, float, float)
@@ -11829,16 +11641,16 @@ public class PApplet implements PConstants {
    * @see PGraphics#textDescent()
    */
   public void textAlign(int alignX, int alignY) {
-    if (recorder != null)
-      recorder.textAlign(alignX, alignY);
+    if (recorder != null) recorder.textAlign(alignX, alignY);
     g.textAlign(alignX, alignY);
   }
+
 
   /**
    * ( begin auto-generated from textAscent.xml )
    *
-   * Returns ascent of the current font at its current size. This information is
-   * useful for determining the height of the font above the baseline. For
+   * Returns ascent of the current font at its current size. This information
+   * is useful for determining the height of the font above the baseline. For
    * example, adding the <b>textAscent()</b> and <b>textDescent()</b> values
    * will give you the total height of the line.
    *
@@ -11851,13 +11663,14 @@ public class PApplet implements PConstants {
     return g.textAscent();
   }
 
+
   /**
    * ( begin auto-generated from textDescent.xml )
    *
-   * Returns descent of the current font at its current size. This information
-   * is useful for determining the height of the font below the baseline. For
-   * example, adding the <b>textAscent()</b> and <b>textDescent()</b> values
-   * will give you the total height of the line.
+   * Returns descent of the current font at its current size. This
+   * information is useful for determining the height of the font below the
+   * baseline. For example, adding the <b>textAscent()</b> and
+   * <b>textDescent()</b> values will give you the total height of the line.
    *
    * ( end auto-generated )
    *
@@ -11868,34 +11681,30 @@ public class PApplet implements PConstants {
     return g.textDescent();
   }
 
+
   /**
    * ( begin auto-generated from textFont.xml )
    *
-   * Sets the current font that will be drawn with the <b>text()</b> function.
-   * Fonts must be loaded with <b>loadFont()</b> before it can be used. This
-   * font will be used in all subsequent calls to the <b>text()</b> function. If
-   * no <b>size</b> parameter is input, the font will appear at its original
-   * size (the size it was created at with the "Create Font..." tool) until it
-   * is changed with <b>textSize()</b>. <br
-   * />
-   * <br />
-   * Because fonts are usually bitmaped, you should create fonts at the sizes
-   * that will be used most commonly. Using <b>textFont()</b> without the size
-   * parameter will result in the cleanest-looking text. <br
-   * />
-   * <br />
-   * With the default (JAVA2D) and PDF renderers, it's also possible to enable
-   * the use of native fonts via the command <b>hint(ENABLE_NATIVE_FONTS)</b>.
-   * This will produce vector text in JAVA2D sketches and PDF output in cases
-   * where the vector data is available: when the font is still installed, or
-   * the font is created via the <b>createFont()</b> function (rather than the
-   * Create Font tool).
+   * Sets the current font that will be drawn with the <b>text()</b>
+   * function. Fonts must be loaded with <b>loadFont()</b> before it can be
+   * used. This font will be used in all subsequent calls to the
+   * <b>text()</b> function. If no <b>size</b> parameter is input, the font
+   * will appear at its original size (the size it was created at with the
+   * "Create Font..." tool) until it is changed with <b>textSize()</b>. <br
+   * /> <br /> Because fonts are usually bitmaped, you should create fonts at
+   * the sizes that will be used most commonly. Using <b>textFont()</b>
+   * without the size parameter will result in the cleanest-looking text. <br
+   * /><br /> With the default (JAVA2D) and PDF renderers, it's also possible
+   * to enable the use of native fonts via the command
+   * <b>hint(ENABLE_NATIVE_FONTS)</b>. This will produce vector text in
+   * JAVA2D sketches and PDF output in cases where the vector data is
+   * available: when the font is still installed, or the font is created via
+   * the <b>createFont()</b> function (rather than the Create Font tool).
    *
    * ( end auto-generated )
    *
    * @webref typography:loading_displaying
-   * @param which
-   *          any variable of the type PFont
+   * @param which any variable of the type PFont
    * @see PApplet#createFont(String, float, boolean)
    * @see PApplet#loadFont(String)
    * @see PFont
@@ -11903,20 +11712,19 @@ public class PApplet implements PConstants {
    * @see PGraphics#textSize(float)
    */
   public void textFont(PFont which) {
-    if (recorder != null)
-      recorder.textFont(which);
+    if (recorder != null) recorder.textFont(which);
     g.textFont(which);
   }
 
+
   /**
-   * @param size
-   *          the size of the letters in units of pixels
+   * @param size the size of the letters in units of pixels
    */
   public void textFont(PFont which, float size) {
-    if (recorder != null)
-      recorder.textFont(which, size);
+    if (recorder != null) recorder.textFont(which, size);
     g.textFont(which, size);
   }
+
 
   /**
    * ( begin auto-generated from textLeading.xml )
@@ -11927,8 +11735,7 @@ public class PApplet implements PConstants {
    * ( end auto-generated )
    *
    * @webref typography:attributes
-   * @param leading
-   *          the size in pixels for spacing between lines
+   * @param leading the size in pixels for spacing between lines
    * @see PApplet#loadFont(String)
    * @see PFont#PFont
    * @see PGraphics#text(String, float, float)
@@ -11936,37 +11743,36 @@ public class PApplet implements PConstants {
    * @see PGraphics#textSize(float)
    */
   public void textLeading(float leading) {
-    if (recorder != null)
-      recorder.textLeading(leading);
+    if (recorder != null) recorder.textLeading(leading);
     g.textLeading(leading);
   }
+
 
   /**
    * ( begin auto-generated from textMode.xml )
    *
    * Sets the way text draws to the screen. In the default configuration, the
-   * <b>MODEL</b> mode, it's possible to rotate, scale, and place letters in two
-   * and three dimensional space.<br />
+   * <b>MODEL</b> mode, it's possible to rotate, scale, and place letters in
+   * two and three dimensional space.<br />
    * <br />
-   * The <b>SHAPE</b> mode draws text using the the glyph outlines of individual
-   * characters rather than as textures. This mode is only supported with the
-   * <b>PDF</b> and <b>P3D</b> renderer settings. With the <b>PDF</b> renderer,
-   * you must call <b>textMode(SHAPE)</b> before any other drawing occurs. If
-   * the outlines are not available, then <b>textMode(SHAPE)</b> will be ignored
-   * and <b>textMode(MODEL)</b> will be used instead.<br />
+   * The <b>SHAPE</b> mode draws text using the the glyph outlines of
+   * individual characters rather than as textures. This mode is only
+   * supported with the <b>PDF</b> and <b>P3D</b> renderer settings. With the
+   * <b>PDF</b> renderer, you must call <b>textMode(SHAPE)</b> before any
+   * other drawing occurs. If the outlines are not available, then
+   * <b>textMode(SHAPE)</b> will be ignored and <b>textMode(MODEL)</b> will
+   * be used instead.<br />
    * <br />
    * The <b>textMode(SHAPE)</b> option in <b>P3D</b> can be combined with
-   * <b>beginRaw()</b> to write vector-accurate text to 2D and 3D output files,
-   * for instance <b>DXF</b> or <b>PDF</b>. The <b>SHAPE</b> mode is not
-   * currently optimized for <b>P3D</b>, so if recording shape data, use
-   * <b>textMode(MODEL)</b> until you're ready to capture the geometry with
-   * <b>beginRaw()</b>.
+   * <b>beginRaw()</b> to write vector-accurate text to 2D and 3D output
+   * files, for instance <b>DXF</b> or <b>PDF</b>. The <b>SHAPE</b> mode is
+   * not currently optimized for <b>P3D</b>, so if recording shape data, use
+   * <b>textMode(MODEL)</b> until you're ready to capture the geometry with <b>beginRaw()</b>.
    *
    * ( end auto-generated )
    *
    * @webref typography:attributes
-   * @param mode
-   *          either MODEL or SHAPE
+   * @param mode either MODEL or SHAPE
    * @see PApplet#loadFont(String)
    * @see PFont#PFont
    * @see PGraphics#text(String, float, float)
@@ -11975,40 +11781,39 @@ public class PApplet implements PConstants {
    * @see PApplet#createFont(String, float, boolean)
    */
   public void textMode(int mode) {
-    if (recorder != null)
-      recorder.textMode(mode);
+    if (recorder != null) recorder.textMode(mode);
     g.textMode(mode);
   }
+
 
   /**
    * ( begin auto-generated from textSize.xml )
    *
-   * Sets the current font size. This size will be used in all subsequent calls
-   * to the <b>text()</b> function. Font size is measured in units of pixels.
+   * Sets the current font size. This size will be used in all subsequent
+   * calls to the <b>text()</b> function. Font size is measured in units of pixels.
    *
    * ( end auto-generated )
    *
    * @webref typography:attributes
-   * @param size
-   *          the size of the letters in units of pixels
+   * @param size the size of the letters in units of pixels
    * @see PApplet#loadFont(String)
    * @see PFont#PFont
    * @see PGraphics#text(String, float, float)
    * @see PGraphics#textFont(PFont)
    */
   public void textSize(float size) {
-    if (recorder != null)
-      recorder.textSize(size);
+    if (recorder != null) recorder.textSize(size);
     g.textSize(size);
   }
 
+
   /**
-   * @param c
-   *          the character to measure
+   * @param c the character to measure
    */
   public float textWidth(char c) {
     return g.textWidth(c);
   }
+
 
   /**
    * ( begin auto-generated from textWidth.xml )
@@ -12018,8 +11823,7 @@ public class PApplet implements PConstants {
    * ( end auto-generated )
    *
    * @webref typography:attributes
-   * @param str
-   *          the String of characters to measure
+   * @param str the String of characters to measure
    * @see PApplet#loadFont(String)
    * @see PFont#PFont
    * @see PGraphics#text(String, float, float)
@@ -12030,6 +11834,7 @@ public class PApplet implements PConstants {
     return g.textWidth(str);
   }
 
+
   /**
    * @nowebref
    */
@@ -12037,32 +11842,30 @@ public class PApplet implements PConstants {
     return g.textWidth(chars, start, length);
   }
 
+
   /**
    * ( begin auto-generated from text.xml )
    *
    * Draws text to the screen. Displays the information specified in the
-   * <b>data</b> or <b>stringdata</b> parameters on the screen in the position
-   * specified by the <b>x</b> and <b>y</b> parameters and the optional <b>z</b>
-   * parameter. A default font will be used unless a font is set with the
-   * <b>textFont()</b> function. Change the color of the text with the
-   * <b>fill()</b> function. The text displays in relation to the
+   * <b>data</b> or <b>stringdata</b> parameters on the screen in the
+   * position specified by the <b>x</b> and <b>y</b> parameters and the
+   * optional <b>z</b> parameter. A default font will be used unless a font
+   * is set with the <b>textFont()</b> function. Change the color of the text
+   * with the <b>fill()</b> function. The text displays in relation to the
    * <b>textAlign()</b> function, which gives the option to draw to the left,
-   * right, and center of the coordinates. <br />
-   * <br />
-   * The <b>x2</b> and <b>y2</b> parameters define a rectangular area to display
-   * within and may only be used with string data. For text drawn inside a
-   * rectangle, the coordinates are interpreted based on the current
+   * right, and center of the coordinates.
+   * <br /><br />
+   * The <b>x2</b> and <b>y2</b> parameters define a rectangular area to
+   * display within and may only be used with string data. For text drawn
+   * inside a rectangle, the coordinates are interpreted based on the current
    * <b>rectMode()</b> setting.
    *
    * ( end auto-generated )
    *
    * @webref typography:loading_displaying
-   * @param c
-   *          the alphanumeric character to be displayed
-   * @param x
-   *          x-coordinate of text
-   * @param y
-   *          y-coordinate of text
+   * @param c the alphanumeric character to be displayed
+   * @param x x-coordinate of text
+   * @param y y-coordinate of text
    * @see PGraphics#textAlign(int, int)
    * @see PGraphics#textFont(PFont)
    * @see PGraphics#textMode(int)
@@ -12076,126 +11879,121 @@ public class PApplet implements PConstants {
    * @see_external String
    */
   public void text(char c, float x, float y) {
-    if (recorder != null)
-      recorder.text(c, x, y);
+    if (recorder != null) recorder.text(c, x, y);
     g.text(c, x, y);
   }
 
+
   /**
-   * @param z
-   *          z-coordinate of text
+   * @param z z-coordinate of text
    */
   public void text(char c, float x, float y, float z) {
-    if (recorder != null)
-      recorder.text(c, x, y, z);
+    if (recorder != null) recorder.text(c, x, y, z);
     g.text(c, x, y, z);
   }
 
+
   /**
-   * <h3>Advanced</h3> Draw a chunk of text. Newlines that are \n (Unix newline
-   * or linefeed char, ascii 10) are honored, but \r (carriage return, Windows
-   * and Mac OS) are ignored.
+   * <h3>Advanced</h3>
+   * Draw a chunk of text.
+   * Newlines that are \n (Unix newline or linefeed char, ascii 10)
+   * are honored, but \r (carriage return, Windows and Mac OS) are
+   * ignored.
    */
   public void text(String str, float x, float y) {
-    if (recorder != null)
-      recorder.text(str, x, y);
+    if (recorder != null) recorder.text(str, x, y);
     g.text(str, x, y);
   }
 
+
   /**
-   * <h3>Advanced</h3> Method to draw text from an array of chars. This method
-   * will usually be more efficient than drawing from a String object, because
-   * the String will not be converted to a char array before drawing.
-   *
-   * @param chars
-   *          the alphanumberic symbols to be displayed
-   * @param start
-   *          array index at which to start writing characters
-   * @param stop
-   *          array index at which to stop writing characters
+   * <h3>Advanced</h3>
+   * Method to draw text from an array of chars. This method will usually be
+   * more efficient than drawing from a String object, because the String will
+   * not be converted to a char array before drawing.
+   * @param chars the alphanumberic symbols to be displayed
+   * @param start array index at which to start writing characters
+   * @param stop array index at which to stop writing characters
    */
   public void text(char[] chars, int start, int stop, float x, float y) {
-    if (recorder != null)
-      recorder.text(chars, start, stop, x, y);
+    if (recorder != null) recorder.text(chars, start, stop, x, y);
     g.text(chars, start, stop, x, y);
   }
+
 
   /**
    * Same as above but with a z coordinate.
    */
   public void text(String str, float x, float y, float z) {
-    if (recorder != null)
-      recorder.text(str, x, y, z);
+    if (recorder != null) recorder.text(str, x, y, z);
     g.text(str, x, y, z);
   }
 
-  public void text(char[] chars, int start, int stop, float x, float y, float z) {
-    if (recorder != null)
-      recorder.text(chars, start, stop, x, y, z);
+
+  public void text(char[] chars, int start, int stop,
+                   float x, float y, float z) {
+    if (recorder != null) recorder.text(chars, start, stop, x, y, z);
     g.text(chars, start, stop, x, y, z);
   }
 
+
   /**
-   * <h3>Advanced</h3> Draw text in a box that is constrained to a particular
-   * size. The current rectMode() determines what the coordinates mean (whether
-   * x1/y1/x2/y2 or x/y/w/h).
+   * <h3>Advanced</h3>
+   * Draw text in a box that is constrained to a particular size.
+   * The current rectMode() determines what the coordinates mean
+   * (whether x1/y1/x2/y2 or x/y/w/h).
    * <P/>
-   * Note that the x,y coords of the start of the box will align with the
-   * *ascent* of the text, not the baseline, as is the case for the other text()
-   * functions.
+   * Note that the x,y coords of the start of the box
+   * will align with the *ascent* of the text, not the baseline,
+   * as is the case for the other text() functions.
    * <P/>
-   * Newlines that are \n (Unix newline or linefeed char, ascii 10) are honored,
-   * and \r (carriage return, Windows and Mac OS) are ignored.
+   * Newlines that are \n (Unix newline or linefeed char, ascii 10)
+   * are honored, and \r (carriage return, Windows and Mac OS) are
+   * ignored.
    *
-   * @param x1
-   *          by default, the x-coordinate of text, see rectMode() for more info
-   * @param y1
-   *          by default, the x-coordinate of text, see rectMode() for more info
-   * @param x2
-   *          by default, the width of the text box, see rectMode() for more
-   *          info
-   * @param y2
-   *          by default, the height of the text box, see rectMode() for more
-   *          info
+   * @param x1 by default, the x-coordinate of text, see rectMode() for more info
+   * @param y1 by default, the x-coordinate of text, see rectMode() for more info
+   * @param x2 by default, the width of the text box, see rectMode() for more info
+   * @param y2 by default, the height of the text box, see rectMode() for more info
    */
   public void text(String str, float x1, float y1, float x2, float y2) {
-    if (recorder != null)
-      recorder.text(str, x1, y1, x2, y2);
+    if (recorder != null) recorder.text(str, x1, y1, x2, y2);
     g.text(str, x1, y1, x2, y2);
   }
 
+
   public void text(int num, float x, float y) {
-    if (recorder != null)
-      recorder.text(num, x, y);
+    if (recorder != null) recorder.text(num, x, y);
     g.text(num, x, y);
   }
+
 
   public void text(int num, float x, float y, float z) {
-    if (recorder != null)
-      recorder.text(num, x, y, z);
+    if (recorder != null) recorder.text(num, x, y, z);
     g.text(num, x, y, z);
   }
 
+
   /**
-   * This does a basic number formatting, to avoid the generally ugly appearance
-   * of printing floats. Users who want more control should use their own nf()
-   * cmmand, or if they want the long, ugly version of float, use
-   * String.valueOf() to convert the float to a String first.
+   * This does a basic number formatting, to avoid the
+   * generally ugly appearance of printing floats.
+   * Users who want more control should use their own nf() cmmand,
+   * or if they want the long, ugly version of float,
+   * use String.valueOf() to convert the float to a String first.
    *
-   * @param num
-   *          the numeric value to be displayed
+   * @param num the numeric value to be displayed
    */
   public void text(float num, float x, float y) {
-    if (recorder != null)
-      recorder.text(num, x, y);
+    if (recorder != null) recorder.text(num, x, y);
     g.text(num, x, y);
   }
 
+
   public void text(float num, float x, float y, float z) {
-    if (recorder != null)
-      recorder.text(num, x, y, z);
+    if (recorder != null) recorder.text(num, x, y, z);
     g.text(num, x, y, z);
   }
+
 
   /**
    * ( begin auto-generated from pushMatrix.xml )
@@ -12205,9 +12003,9 @@ public class PApplet implements PConstants {
    * understanding the concept of a matrix stack. The <b>pushMatrix()</b>
    * function saves the current coordinate system to the stack and
    * <b>popMatrix()</b> restores the prior coordinate system.
-   * <b>pushMatrix()</b> and <b>popMatrix()</b> are used in conjuction with the
-   * other transformation functions and may be embedded to control the scope of
-   * the transformations.
+   * <b>pushMatrix()</b> and <b>popMatrix()</b> are used in conjuction with
+   * the other transformation functions and may be embedded to control the
+   * scope of the transformations.
    *
    * ( end auto-generated )
    *
@@ -12221,21 +12019,21 @@ public class PApplet implements PConstants {
    * @see PGraphics#rotateZ(float)
    */
   public void pushMatrix() {
-    if (recorder != null)
-      recorder.pushMatrix();
+    if (recorder != null) recorder.pushMatrix();
     g.pushMatrix();
   }
+
 
   /**
    * ( begin auto-generated from popMatrix.xml )
    *
-   * Pops the current transformation matrix off the matrix stack. Understanding
-   * pushing and popping requires understanding the concept of a matrix stack.
-   * The <b>pushMatrix()</b> function saves the current coordinate system to the
-   * stack and <b>popMatrix()</b> restores the prior coordinate system.
-   * <b>pushMatrix()</b> and <b>popMatrix()</b> are used in conjuction with the
-   * other transformation functions and may be embedded to control the scope of
-   * the transformations.
+   * Pops the current transformation matrix off the matrix stack.
+   * Understanding pushing and popping requires understanding the concept of
+   * a matrix stack. The <b>pushMatrix()</b> function saves the current
+   * coordinate system to the stack and <b>popMatrix()</b> restores the prior
+   * coordinate system. <b>pushMatrix()</b> and <b>popMatrix()</b> are used
+   * in conjuction with the other transformation functions and may be
+   * embedded to control the scope of the transformations.
    *
    * ( end auto-generated )
    *
@@ -12243,34 +12041,32 @@ public class PApplet implements PConstants {
    * @see PGraphics#pushMatrix()
    */
   public void popMatrix() {
-    if (recorder != null)
-      recorder.popMatrix();
+    if (recorder != null) recorder.popMatrix();
     g.popMatrix();
   }
+
 
   /**
    * ( begin auto-generated from translate.xml )
    *
    * Specifies an amount to displace objects within the display window. The
-   * <b>x</b> parameter specifies left/right translation, the <b>y</b> parameter
-   * specifies up/down translation, and the <b>z</b> parameter specifies
-   * translations toward/away from the screen. Using this function with the
-   * <b>z</b> parameter requires using P3D as a parameter in combination with
-   * size as shown in the above example. Transformations apply to everything
-   * that happens after and subsequent calls to the function accumulates the
-   * effect. For example, calling <b>translate(50, 0)</b> and then
-   * <b>translate(20, 0)</b> is the same as <b>translate(70, 0)</b>. If
-   * <b>translate()</b> is called within <b>draw()</b>, the transformation is
-   * reset when the loop begins again. This function can be further controlled
-   * by the <b>pushMatrix()</b> and <b>popMatrix()</b>.
+   * <b>x</b> parameter specifies left/right translation, the <b>y</b>
+   * parameter specifies up/down translation, and the <b>z</b> parameter
+   * specifies translations toward/away from the screen. Using this function
+   * with the <b>z</b> parameter requires using P3D as a parameter in
+   * combination with size as shown in the above example. Transformations
+   * apply to everything that happens after and subsequent calls to the
+   * function accumulates the effect. For example, calling <b>translate(50,
+   * 0)</b> and then <b>translate(20, 0)</b> is the same as <b>translate(70,
+   * 0)</b>. If <b>translate()</b> is called within <b>draw()</b>, the
+   * transformation is reset when the loop begins again. This function can be
+   * further controlled by the <b>pushMatrix()</b> and <b>popMatrix()</b>.
    *
    * ( end auto-generated )
    *
    * @webref transform
-   * @param x
-   *          left/right translation
-   * @param y
-   *          up/down translation
+   * @param x left/right translation
+   * @param y up/down translation
    * @see PGraphics#popMatrix()
    * @see PGraphics#pushMatrix()
    * @see PGraphics#rotate(float)
@@ -12280,44 +12076,43 @@ public class PApplet implements PConstants {
    * @see PGraphics#scale(float, float, float)
    */
   public void translate(float x, float y) {
-    if (recorder != null)
-      recorder.translate(x, y);
+    if (recorder != null) recorder.translate(x, y);
     g.translate(x, y);
   }
 
+
   /**
-   * @param z
-   *          forward/backward translation
+   * @param z forward/backward translation
    */
   public void translate(float x, float y, float z) {
-    if (recorder != null)
-      recorder.translate(x, y, z);
+    if (recorder != null) recorder.translate(x, y, z);
     g.translate(x, y, z);
   }
+
 
   /**
    * ( begin auto-generated from rotate.xml )
    *
-   * Rotates a shape the amount specified by the <b>angle</b> parameter. Angles
-   * should be specified in radians (values from 0 to TWO_PI) or converted to
-   * radians with the <b>radians()</b> function. <br/>
-   * <br/>
-   * Objects are always rotated around their relative position to the origin and
-   * positive numbers rotate objects in a clockwise direction. Transformations
-   * apply to everything that happens after and subsequent calls to the function
-   * accumulates the effect. For example, calling <b>rotate(HALF_PI)</b> and
-   * then <b>rotate(HALF_PI)</b> is the same as <b>rotate(PI)</b>. All
-   * tranformations are reset when <b>draw()</b> begins again. <br/>
-   * <br/>
-   * Technically, <b>rotate()</b> multiplies the current transformation matrix
-   * by a rotation matrix. This function can be further controlled by the
-   * <b>pushMatrix()</b> and <b>popMatrix()</b>.
+   * Rotates a shape the amount specified by the <b>angle</b> parameter.
+   * Angles should be specified in radians (values from 0 to TWO_PI) or
+   * converted to radians with the <b>radians()</b> function.
+   * <br/> <br/>
+   * Objects are always rotated around their relative position to the origin
+   * and positive numbers rotate objects in a clockwise direction.
+   * Transformations apply to everything that happens after and subsequent
+   * calls to the function accumulates the effect. For example, calling
+   * <b>rotate(HALF_PI)</b> and then <b>rotate(HALF_PI)</b> is the same as
+   * <b>rotate(PI)</b>. All tranformations are reset when <b>draw()</b>
+   * begins again.
+   * <br/> <br/>
+   * Technically, <b>rotate()</b> multiplies the current transformation
+   * matrix by a rotation matrix. This function can be further controlled by
+   * the <b>pushMatrix()</b> and <b>popMatrix()</b>.
    *
    * ( end auto-generated )
    *
    * @webref transform
-   * @param angle
-   *          angle of rotation specified in radians
+   * @param angle angle of rotation specified in radians
    * @see PGraphics#popMatrix()
    * @see PGraphics#pushMatrix()
    * @see PGraphics#rotateX(float)
@@ -12327,31 +12122,31 @@ public class PApplet implements PConstants {
    * @see PApplet#radians(float)
    */
   public void rotate(float angle) {
-    if (recorder != null)
-      recorder.rotate(angle);
+    if (recorder != null) recorder.rotate(angle);
     g.rotate(angle);
   }
+
 
   /**
    * ( begin auto-generated from rotateX.xml )
    *
-   * Rotates a shape around the x-axis the amount specified by the <b>angle</b>
-   * parameter. Angles should be specified in radians (values from 0 to PI*2) or
-   * converted to radians with the <b>radians()</b> function. Objects are always
-   * rotated around their relative position to the origin and positive numbers
-   * rotate objects in a counterclockwise direction. Transformations apply to
-   * everything that happens after and subsequent calls to the function
-   * accumulates the effect. For example, calling <b>rotateX(PI/2)</b> and then
-   * <b>rotateX(PI/2)</b> is the same as <b>rotateX(PI)</b>. If <b>rotateX()</b>
-   * is called within the <b>draw()</b>, the transformation is reset when the
-   * loop begins again. This function requires using P3D as a third parameter to
-   * <b>size()</b> as shown in the example above.
+   * Rotates a shape around the x-axis the amount specified by the
+   * <b>angle</b> parameter. Angles should be specified in radians (values
+   * from 0 to PI*2) or converted to radians with the <b>radians()</b>
+   * function. Objects are always rotated around their relative position to
+   * the origin and positive numbers rotate objects in a counterclockwise
+   * direction. Transformations apply to everything that happens after and
+   * subsequent calls to the function accumulates the effect. For example,
+   * calling <b>rotateX(PI/2)</b> and then <b>rotateX(PI/2)</b> is the same
+   * as <b>rotateX(PI)</b>. If <b>rotateX()</b> is called within the
+   * <b>draw()</b>, the transformation is reset when the loop begins again.
+   * This function requires using P3D as a third parameter to <b>size()</b>
+   * as shown in the example above.
    *
    * ( end auto-generated )
    *
    * @webref transform
-   * @param angle
-   *          angle of rotation specified in radians
+   * @param angle angle of rotation specified in radians
    * @see PGraphics#popMatrix()
    * @see PGraphics#pushMatrix()
    * @see PGraphics#rotate(float)
@@ -12361,31 +12156,31 @@ public class PApplet implements PConstants {
    * @see PGraphics#translate(float, float, float)
    */
   public void rotateX(float angle) {
-    if (recorder != null)
-      recorder.rotateX(angle);
+    if (recorder != null) recorder.rotateX(angle);
     g.rotateX(angle);
   }
+
 
   /**
    * ( begin auto-generated from rotateY.xml )
    *
-   * Rotates a shape around the y-axis the amount specified by the <b>angle</b>
-   * parameter. Angles should be specified in radians (values from 0 to PI*2) or
-   * converted to radians with the <b>radians()</b> function. Objects are always
-   * rotated around their relative position to the origin and positive numbers
-   * rotate objects in a counterclockwise direction. Transformations apply to
-   * everything that happens after and subsequent calls to the function
-   * accumulates the effect. For example, calling <b>rotateY(PI/2)</b> and then
-   * <b>rotateY(PI/2)</b> is the same as <b>rotateY(PI)</b>. If <b>rotateY()</b>
-   * is called within the <b>draw()</b>, the transformation is reset when the
-   * loop begins again. This function requires using P3D as a third parameter to
-   * <b>size()</b> as shown in the examples above.
+   * Rotates a shape around the y-axis the amount specified by the
+   * <b>angle</b> parameter. Angles should be specified in radians (values
+   * from 0 to PI*2) or converted to radians with the <b>radians()</b>
+   * function. Objects are always rotated around their relative position to
+   * the origin and positive numbers rotate objects in a counterclockwise
+   * direction. Transformations apply to everything that happens after and
+   * subsequent calls to the function accumulates the effect. For example,
+   * calling <b>rotateY(PI/2)</b> and then <b>rotateY(PI/2)</b> is the same
+   * as <b>rotateY(PI)</b>. If <b>rotateY()</b> is called within the
+   * <b>draw()</b>, the transformation is reset when the loop begins again.
+   * This function requires using P3D as a third parameter to <b>size()</b>
+   * as shown in the examples above.
    *
    * ( end auto-generated )
    *
    * @webref transform
-   * @param angle
-   *          angle of rotation specified in radians
+   * @param angle angle of rotation specified in radians
    * @see PGraphics#popMatrix()
    * @see PGraphics#pushMatrix()
    * @see PGraphics#rotate(float)
@@ -12395,31 +12190,31 @@ public class PApplet implements PConstants {
    * @see PGraphics#translate(float, float, float)
    */
   public void rotateY(float angle) {
-    if (recorder != null)
-      recorder.rotateY(angle);
+    if (recorder != null) recorder.rotateY(angle);
     g.rotateY(angle);
   }
+
 
   /**
    * ( begin auto-generated from rotateZ.xml )
    *
-   * Rotates a shape around the z-axis the amount specified by the <b>angle</b>
-   * parameter. Angles should be specified in radians (values from 0 to PI*2) or
-   * converted to radians with the <b>radians()</b> function. Objects are always
-   * rotated around their relative position to the origin and positive numbers
-   * rotate objects in a counterclockwise direction. Transformations apply to
-   * everything that happens after and subsequent calls to the function
-   * accumulates the effect. For example, calling <b>rotateZ(PI/2)</b> and then
-   * <b>rotateZ(PI/2)</b> is the same as <b>rotateZ(PI)</b>. If <b>rotateZ()</b>
-   * is called within the <b>draw()</b>, the transformation is reset when the
-   * loop begins again. This function requires using P3D as a third parameter to
-   * <b>size()</b> as shown in the examples above.
+   * Rotates a shape around the z-axis the amount specified by the
+   * <b>angle</b> parameter. Angles should be specified in radians (values
+   * from 0 to PI*2) or converted to radians with the <b>radians()</b>
+   * function. Objects are always rotated around their relative position to
+   * the origin and positive numbers rotate objects in a counterclockwise
+   * direction. Transformations apply to everything that happens after and
+   * subsequent calls to the function accumulates the effect. For example,
+   * calling <b>rotateZ(PI/2)</b> and then <b>rotateZ(PI/2)</b> is the same
+   * as <b>rotateZ(PI)</b>. If <b>rotateZ()</b> is called within the
+   * <b>draw()</b>, the transformation is reset when the loop begins again.
+   * This function requires using P3D as a third parameter to <b>size()</b>
+   * as shown in the examples above.
    *
    * ( end auto-generated )
    *
    * @webref transform
-   * @param angle
-   *          angle of rotation specified in radians
+   * @param angle angle of rotation specified in radians
    * @see PGraphics#popMatrix()
    * @see PGraphics#pushMatrix()
    * @see PGraphics#rotate(float)
@@ -12429,46 +12224,44 @@ public class PApplet implements PConstants {
    * @see PGraphics#translate(float, float, float)
    */
   public void rotateZ(float angle) {
-    if (recorder != null)
-      recorder.rotateZ(angle);
+    if (recorder != null) recorder.rotateZ(angle);
     g.rotateZ(angle);
   }
 
+
   /**
-   * <h3>Advanced</h3> Rotate about a vector in space. Same as the glRotatef()
-   * function.
-   *
+   * <h3>Advanced</h3>
+   * Rotate about a vector in space. Same as the glRotatef() function.
    * @param x
    * @param y
    * @param z
    */
   public void rotate(float angle, float x, float y, float z) {
-    if (recorder != null)
-      recorder.rotate(angle, x, y, z);
+    if (recorder != null) recorder.rotate(angle, x, y, z);
     g.rotate(angle, x, y, z);
   }
+
 
   /**
    * ( begin auto-generated from scale.xml )
    *
    * Increases or decreases the size of a shape by expanding and contracting
-   * vertices. Objects always scale from their relative origin to the coordinate
-   * system. Scale values are specified as decimal percentages. For example, the
-   * function call <b>scale(2.0)</b> increases the dimension of a shape by 200%.
-   * Transformations apply to everything that happens after and subsequent calls
-   * to the function multiply the effect. For example, calling <b>scale(2.0)</b>
-   * and then <b>scale(1.5)</b> is the same as <b>scale(3.0)</b>. If
-   * <b>scale()</b> is called within <b>draw()</b>, the transformation is reset
-   * when the loop begins again. Using this fuction with the <b>z</b> parameter
-   * requires using P3D as a parameter for <b>size()</b> as shown in the example
-   * above. This function can be further controlled by <b>pushMatrix()</b> and
-   * <b>popMatrix()</b>.
+   * vertices. Objects always scale from their relative origin to the
+   * coordinate system. Scale values are specified as decimal percentages.
+   * For example, the function call <b>scale(2.0)</b> increases the dimension
+   * of a shape by 200%. Transformations apply to everything that happens
+   * after and subsequent calls to the function multiply the effect. For
+   * example, calling <b>scale(2.0)</b> and then <b>scale(1.5)</b> is the
+   * same as <b>scale(3.0)</b>. If <b>scale()</b> is called within
+   * <b>draw()</b>, the transformation is reset when the loop begins again.
+   * Using this fuction with the <b>z</b> parameter requires using P3D as a
+   * parameter for <b>size()</b> as shown in the example above. This function
+   * can be further controlled by <b>pushMatrix()</b> and <b>popMatrix()</b>.
    *
    * ( end auto-generated )
    *
    * @webref transform
-   * @param s
-   *          percentage to scale the object
+   * @param s percentage to scale the object
    * @see PGraphics#pushMatrix()
    * @see PGraphics#popMatrix()
    * @see PGraphics#translate(float, float, float)
@@ -12478,61 +12271,58 @@ public class PApplet implements PConstants {
    * @see PGraphics#rotateZ(float)
    */
   public void scale(float s) {
-    if (recorder != null)
-      recorder.scale(s);
+    if (recorder != null) recorder.scale(s);
     g.scale(s);
   }
 
+
   /**
-   * <h3>Advanced</h3> Scale in X and Y. Equivalent to scale(sx, sy, 1).
+   * <h3>Advanced</h3>
+   * Scale in X and Y. Equivalent to scale(sx, sy, 1).
    *
-   * Not recommended for use in 3D, because the z-dimension is just scaled by 1,
-   * since there's no way to know what else to scale it by.
+   * Not recommended for use in 3D, because the z-dimension is just
+   * scaled by 1, since there's no way to know what else to scale it by.
    *
-   * @param x
-   *          percentage to scale the object in the x-axis
-   * @param y
-   *          percentage to scale the object in the y-axis
+   * @param x percentage to scale the object in the x-axis
+   * @param y percentage to scale the object in the y-axis
    */
   public void scale(float x, float y) {
-    if (recorder != null)
-      recorder.scale(x, y);
+    if (recorder != null) recorder.scale(x, y);
     g.scale(x, y);
   }
 
+
   /**
-   * @param z
-   *          percentage to scale the object in the z-axis
+   * @param z percentage to scale the object in the z-axis
    */
   public void scale(float x, float y, float z) {
-    if (recorder != null)
-      recorder.scale(x, y, z);
+    if (recorder != null) recorder.scale(x, y, z);
     g.scale(x, y, z);
   }
+
 
   /**
    * ( begin auto-generated from shearX.xml )
    *
-   * Shears a shape around the x-axis the amount specified by the <b>angle</b>
-   * parameter. Angles should be specified in radians (values from 0 to PI*2) or
-   * converted to radians with the <b>radians()</b> function. Objects are always
-   * sheared around their relative position to the origin and positive numbers
-   * shear objects in a clockwise direction. Transformations apply to everything
-   * that happens after and subsequent calls to the function accumulates the
-   * effect. For example, calling <b>shearX(PI/2)</b> and then
-   * <b>shearX(PI/2)</b> is the same as <b>shearX(PI)</b>. If <b>shearX()</b> is
-   * called within the <b>draw()</b>, the transformation is reset when the loop
-   * begins again. <br/>
-   * <br/>
-   * Technically, <b>shearX()</b> multiplies the current transformation matrix
-   * by a rotation matrix. This function can be further controlled by the
-   * <b>pushMatrix()</b> and <b>popMatrix()</b> functions.
+   * Shears a shape around the x-axis the amount specified by the
+   * <b>angle</b> parameter. Angles should be specified in radians (values
+   * from 0 to PI*2) or converted to radians with the <b>radians()</b>
+   * function. Objects are always sheared around their relative position to
+   * the origin and positive numbers shear objects in a clockwise direction.
+   * Transformations apply to everything that happens after and subsequent
+   * calls to the function accumulates the effect. For example, calling
+   * <b>shearX(PI/2)</b> and then <b>shearX(PI/2)</b> is the same as
+   * <b>shearX(PI)</b>. If <b>shearX()</b> is called within the
+   * <b>draw()</b>, the transformation is reset when the loop begins again.
+   * <br/> <br/>
+   * Technically, <b>shearX()</b> multiplies the current transformation
+   * matrix by a rotation matrix. This function can be further controlled by
+   * the <b>pushMatrix()</b> and <b>popMatrix()</b> functions.
    *
    * ( end auto-generated )
    *
    * @webref transform
-   * @param angle
-   *          angle of shear specified in radians
+   * @param angle angle of shear specified in radians
    * @see PGraphics#popMatrix()
    * @see PGraphics#pushMatrix()
    * @see PGraphics#shearY(float)
@@ -12541,34 +12331,33 @@ public class PApplet implements PConstants {
    * @see PApplet#radians(float)
    */
   public void shearX(float angle) {
-    if (recorder != null)
-      recorder.shearX(angle);
+    if (recorder != null) recorder.shearX(angle);
     g.shearX(angle);
   }
+
 
   /**
    * ( begin auto-generated from shearY.xml )
    *
-   * Shears a shape around the y-axis the amount specified by the <b>angle</b>
-   * parameter. Angles should be specified in radians (values from 0 to PI*2) or
-   * converted to radians with the <b>radians()</b> function. Objects are always
-   * sheared around their relative position to the origin and positive numbers
-   * shear objects in a clockwise direction. Transformations apply to everything
-   * that happens after and subsequent calls to the function accumulates the
-   * effect. For example, calling <b>shearY(PI/2)</b> and then
-   * <b>shearY(PI/2)</b> is the same as <b>shearY(PI)</b>. If <b>shearY()</b> is
-   * called within the <b>draw()</b>, the transformation is reset when the loop
-   * begins again. <br/>
-   * <br/>
-   * Technically, <b>shearY()</b> multiplies the current transformation matrix
-   * by a rotation matrix. This function can be further controlled by the
-   * <b>pushMatrix()</b> and <b>popMatrix()</b> functions.
+   * Shears a shape around the y-axis the amount specified by the
+   * <b>angle</b> parameter. Angles should be specified in radians (values
+   * from 0 to PI*2) or converted to radians with the <b>radians()</b>
+   * function. Objects are always sheared around their relative position to
+   * the origin and positive numbers shear objects in a clockwise direction.
+   * Transformations apply to everything that happens after and subsequent
+   * calls to the function accumulates the effect. For example, calling
+   * <b>shearY(PI/2)</b> and then <b>shearY(PI/2)</b> is the same as
+   * <b>shearY(PI)</b>. If <b>shearY()</b> is called within the
+   * <b>draw()</b>, the transformation is reset when the loop begins again.
+   * <br/> <br/>
+   * Technically, <b>shearY()</b> multiplies the current transformation
+   * matrix by a rotation matrix. This function can be further controlled by
+   * the <b>pushMatrix()</b> and <b>popMatrix()</b> functions.
    *
    * ( end auto-generated )
    *
    * @webref transform
-   * @param angle
-   *          angle of shear specified in radians
+   * @param angle angle of shear specified in radians
    * @see PGraphics#popMatrix()
    * @see PGraphics#pushMatrix()
    * @see PGraphics#shearX(float)
@@ -12577,10 +12366,10 @@ public class PApplet implements PConstants {
    * @see PApplet#radians(float)
    */
   public void shearY(float angle) {
-    if (recorder != null)
-      recorder.shearY(angle);
+    if (recorder != null) recorder.shearY(angle);
     g.shearY(angle);
   }
+
 
   /**
    * ( begin auto-generated from resetMatrix.xml )
@@ -12597,18 +12386,18 @@ public class PApplet implements PConstants {
    * @see PGraphics#printMatrix()
    */
   public void resetMatrix() {
-    if (recorder != null)
-      recorder.resetMatrix();
+    if (recorder != null) recorder.resetMatrix();
     g.resetMatrix();
   }
+
 
   /**
    * ( begin auto-generated from applyMatrix.xml )
    *
-   * Multiplies the current matrix by the one specified through the parameters.
-   * This is very slow because it will try to calculate the inverse of the
-   * transform, so avoid it whenever possible. The equivalent function in OpenGL
-   * is glMultMatrix().
+   * Multiplies the current matrix by the one specified through the
+   * parameters. This is very slow because it will try to calculate the
+   * inverse of the transform, so avoid it whenever possible. The equivalent
+   * function in OpenGL is glMultMatrix().
    *
    * ( end auto-generated )
    *
@@ -12620,129 +12409,114 @@ public class PApplet implements PConstants {
    * @see PGraphics#printMatrix()
    */
   public void applyMatrix(PMatrix source) {
-    if (recorder != null)
-      recorder.applyMatrix(source);
+    if (recorder != null) recorder.applyMatrix(source);
     g.applyMatrix(source);
   }
+
 
   public void applyMatrix(PMatrix2D source) {
-    if (recorder != null)
-      recorder.applyMatrix(source);
+    if (recorder != null) recorder.applyMatrix(source);
     g.applyMatrix(source);
   }
 
+
   /**
-   * @param n00
-   *          numbers which define the 4x4 matrix to be multiplied
-   * @param n01
-   *          numbers which define the 4x4 matrix to be multiplied
-   * @param n02
-   *          numbers which define the 4x4 matrix to be multiplied
-   * @param n10
-   *          numbers which define the 4x4 matrix to be multiplied
-   * @param n11
-   *          numbers which define the 4x4 matrix to be multiplied
-   * @param n12
-   *          numbers which define the 4x4 matrix to be multiplied
+   * @param n00 numbers which define the 4x4 matrix to be multiplied
+   * @param n01 numbers which define the 4x4 matrix to be multiplied
+   * @param n02 numbers which define the 4x4 matrix to be multiplied
+   * @param n10 numbers which define the 4x4 matrix to be multiplied
+   * @param n11 numbers which define the 4x4 matrix to be multiplied
+   * @param n12 numbers which define the 4x4 matrix to be multiplied
    */
-  public void applyMatrix(float n00, float n01, float n02, float n10,
-                          float n11, float n12) {
-    if (recorder != null)
-      recorder.applyMatrix(n00, n01, n02, n10, n11, n12);
+  public void applyMatrix(float n00, float n01, float n02,
+                          float n10, float n11, float n12) {
+    if (recorder != null) recorder.applyMatrix(n00, n01, n02, n10, n11, n12);
     g.applyMatrix(n00, n01, n02, n10, n11, n12);
   }
 
+
   public void applyMatrix(PMatrix3D source) {
-    if (recorder != null)
-      recorder.applyMatrix(source);
+    if (recorder != null) recorder.applyMatrix(source);
     g.applyMatrix(source);
   }
 
+
   /**
-   * @param n03
-   *          numbers which define the 4x4 matrix to be multiplied
-   * @param n13
-   *          numbers which define the 4x4 matrix to be multiplied
-   * @param n20
-   *          numbers which define the 4x4 matrix to be multiplied
-   * @param n21
-   *          numbers which define the 4x4 matrix to be multiplied
-   * @param n22
-   *          numbers which define the 4x4 matrix to be multiplied
-   * @param n23
-   *          numbers which define the 4x4 matrix to be multiplied
-   * @param n30
-   *          numbers which define the 4x4 matrix to be multiplied
-   * @param n31
-   *          numbers which define the 4x4 matrix to be multiplied
-   * @param n32
-   *          numbers which define the 4x4 matrix to be multiplied
-   * @param n33
-   *          numbers which define the 4x4 matrix to be multiplied
+   * @param n03 numbers which define the 4x4 matrix to be multiplied
+   * @param n13 numbers which define the 4x4 matrix to be multiplied
+   * @param n20 numbers which define the 4x4 matrix to be multiplied
+   * @param n21 numbers which define the 4x4 matrix to be multiplied
+   * @param n22 numbers which define the 4x4 matrix to be multiplied
+   * @param n23 numbers which define the 4x4 matrix to be multiplied
+   * @param n30 numbers which define the 4x4 matrix to be multiplied
+   * @param n31 numbers which define the 4x4 matrix to be multiplied
+   * @param n32 numbers which define the 4x4 matrix to be multiplied
+   * @param n33 numbers which define the 4x4 matrix to be multiplied
    */
   public void applyMatrix(float n00, float n01, float n02, float n03,
                           float n10, float n11, float n12, float n13,
                           float n20, float n21, float n22, float n23,
                           float n30, float n31, float n32, float n33) {
-    if (recorder != null)
-      recorder.applyMatrix(n00, n01, n02, n03, n10, n11, n12, n13, n20, n21,
-                           n22, n23, n30, n31, n32, n33);
-    g.applyMatrix(n00, n01, n02, n03, n10, n11, n12, n13, n20, n21, n22, n23,
-                  n30, n31, n32, n33);
+    if (recorder != null) recorder.applyMatrix(n00, n01, n02, n03, n10, n11, n12, n13, n20, n21, n22, n23, n30, n31, n32, n33);
+    g.applyMatrix(n00, n01, n02, n03, n10, n11, n12, n13, n20, n21, n22, n23, n30, n31, n32, n33);
   }
+
 
   public PMatrix getMatrix() {
     return g.getMatrix();
   }
 
+
   /**
-   * Copy the current transformation matrix into the specified target. Pass in
-   * null to create a new matrix.
+   * Copy the current transformation matrix into the specified target.
+   * Pass in null to create a new matrix.
    */
   public PMatrix2D getMatrix(PMatrix2D target) {
     return g.getMatrix(target);
   }
 
+
   /**
-   * Copy the current transformation matrix into the specified target. Pass in
-   * null to create a new matrix.
+   * Copy the current transformation matrix into the specified target.
+   * Pass in null to create a new matrix.
    */
   public PMatrix3D getMatrix(PMatrix3D target) {
     return g.getMatrix(target);
   }
 
+
   /**
    * Set the current transformation matrix to the contents of another.
    */
   public void setMatrix(PMatrix source) {
-    if (recorder != null)
-      recorder.setMatrix(source);
+    if (recorder != null) recorder.setMatrix(source);
     g.setMatrix(source);
   }
+
 
   /**
    * Set the current transformation to the contents of the specified source.
    */
   public void setMatrix(PMatrix2D source) {
-    if (recorder != null)
-      recorder.setMatrix(source);
+    if (recorder != null) recorder.setMatrix(source);
     g.setMatrix(source);
   }
+
 
   /**
    * Set the current transformation to the contents of the specified source.
    */
   public void setMatrix(PMatrix3D source) {
-    if (recorder != null)
-      recorder.setMatrix(source);
+    if (recorder != null) recorder.setMatrix(source);
     g.setMatrix(source);
   }
+
 
   /**
    * ( begin auto-generated from printMatrix.xml )
    *
-   * Prints the current matrix to the Console (the text window at the bottom of
-   * Processing).
+   * Prints the current matrix to the Console (the text window at the bottom
+   * of Processing).
    *
    * ( end auto-generated )
    *
@@ -12753,33 +12527,30 @@ public class PApplet implements PConstants {
    * @see PGraphics#applyMatrix(PMatrix)
    */
   public void printMatrix() {
-    if (recorder != null)
-      recorder.printMatrix();
+    if (recorder != null) recorder.printMatrix();
     g.printMatrix();
   }
+
 
   /**
    * ( begin auto-generated from beginCamera.xml )
    *
-   * The <b>beginCamera()</b> and <b>endCamera()</b> functions enable advanced
-   * customization of the camera space. The functions are useful if you want to
-   * more control over camera movement, however for most users, the
-   * <b>camera()</b> function will be sufficient.<br />
-   * <br />
-   * The camera functions will replace any transformations (such as
-   * <b>rotate()</b> or <b>translate()</b>) that occur before them in
-   * <b>draw()</b>, but they will not automatically replace the camera transform
-   * itself. For this reason, camera functions should be placed at the beginning
-   * of <b>draw()</b> (so that transformations happen afterwards), and the
-   * <b>camera()</b> function can be used after <b>beginCamera()</b> if you want
-   * to reset the camera before applying transformations.<br />
-   * <br
-   * />
-   * This function sets the matrix mode to the camera matrix so calls such as
-   * <b>translate()</b>, <b>rotate()</b>, applyMatrix() and resetMatrix() affect
-   * the camera. <b>beginCamera()</b> should always be used with a following
-   * <b>endCamera()</b> and pairs of <b>beginCamera()</b> and <b>endCamera()</b>
-   * cannot be nested.
+   * The <b>beginCamera()</b> and <b>endCamera()</b> functions enable
+   * advanced customization of the camera space. The functions are useful if
+   * you want to more control over camera movement, however for most users,
+   * the <b>camera()</b> function will be sufficient.<br /><br />The camera
+   * functions will replace any transformations (such as <b>rotate()</b> or
+   * <b>translate()</b>) that occur before them in <b>draw()</b>, but they
+   * will not automatically replace the camera transform itself. For this
+   * reason, camera functions should be placed at the beginning of
+   * <b>draw()</b> (so that transformations happen afterwards), and the
+   * <b>camera()</b> function can be used after <b>beginCamera()</b> if you
+   * want to reset the camera before applying transformations.<br /><br
+   * />This function sets the matrix mode to the camera matrix so calls such
+   * as <b>translate()</b>, <b>rotate()</b>, applyMatrix() and resetMatrix()
+   * affect the camera. <b>beginCamera()</b> should always be used with a
+   * following <b>endCamera()</b> and pairs of <b>beginCamera()</b> and
+   * <b>endCamera()</b> cannot be nested.
    *
    * ( end auto-generated )
    *
@@ -12792,43 +12563,41 @@ public class PApplet implements PConstants {
    * @see PGraphics#scale(float, float, float)
    */
   public void beginCamera() {
-    if (recorder != null)
-      recorder.beginCamera();
+    if (recorder != null) recorder.beginCamera();
     g.beginCamera();
   }
+
 
   /**
    * ( begin auto-generated from endCamera.xml )
    *
-   * The <b>beginCamera()</b> and <b>endCamera()</b> functions enable advanced
-   * customization of the camera space. Please see the reference for
+   * The <b>beginCamera()</b> and <b>endCamera()</b> functions enable
+   * advanced customization of the camera space. Please see the reference for
    * <b>beginCamera()</b> for a description of how the functions are used.
    *
    * ( end auto-generated )
    *
    * @webref lights_camera:camera
-   * @see PGraphics#camera(float, float, float, float, float, float, float,
-   *      float, float)
+   * @see PGraphics#camera(float, float, float, float, float, float, float, float, float)
    */
   public void endCamera() {
-    if (recorder != null)
-      recorder.endCamera();
+    if (recorder != null) recorder.endCamera();
     g.endCamera();
   }
+
 
   /**
    * ( begin auto-generated from camera.xml )
    *
    * Sets the position of the camera through setting the eye position, the
    * center of the scene, and which axis is facing upward. Moving the eye
-   * position and the direction it is pointing (the center of the scene) allows
-   * the images to be seen from different angles. The version without any
-   * parameters sets the camera to the default position, pointing to the center
-   * of the display window with the Y axis as up. The default values are
-   * <b>camera(width/2.0, height/2.0, (height/2.0) / tan(PI*30.0 / 180.0),
-   * width/2.0, height/2.0, 0, 0, 1, 0)</b>. This function is similar to
-   * <b>gluLookAt()</b> in OpenGL, but it first clears the current camera
-   * settings.
+   * position and the direction it is pointing (the center of the scene)
+   * allows the images to be seen from different angles. The version without
+   * any parameters sets the camera to the default position, pointing to the
+   * center of the display window with the Y axis as up. The default values
+   * are <b>camera(width/2.0, height/2.0, (height/2.0) / tan(PI*30.0 /
+   * 180.0), width/2.0, height/2.0, 0, 0, 1, 0)</b>. This function is similar
+   * to <b>gluLookAt()</b> in OpenGL, but it first clears the current camera settings.
    *
    * ( end auto-generated )
    *
@@ -12837,107 +12606,92 @@ public class PApplet implements PConstants {
    * @see PGraphics#frustum(float, float, float, float, float, float)
    */
   public void camera() {
-    if (recorder != null)
-      recorder.camera();
+    if (recorder != null) recorder.camera();
     g.camera();
   }
 
-  /**
-   * @param eyeX
-   *          x-coordinate for the eye
-   * @param eyeY
-   *          y-coordinate for the eye
-   * @param eyeZ
-   *          z-coordinate for the eye
-   * @param centerX
-   *          x-coordinate for the center of the scene
-   * @param centerY
-   *          y-coordinate for the center of the scene
-   * @param centerZ
-   *          z-coordinate for the center of the scene
-   * @param upX
-   *          usually 0.0, 1.0, or -1.0
-   * @param upY
-   *          usually 0.0, 1.0, or -1.0
-   * @param upZ
-   *          usually 0.0, 1.0, or -1.0
-   */
-  public void camera(float eyeX, float eyeY, float eyeZ, float centerX,
-                     float centerY, float centerZ, float upX, float upY,
-                     float upZ) {
-    if (recorder != null)
-      recorder.camera(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY,
-                      upZ);
+
+/**
+ * @param eyeX x-coordinate for the eye
+ * @param eyeY y-coordinate for the eye
+ * @param eyeZ z-coordinate for the eye
+ * @param centerX x-coordinate for the center of the scene
+ * @param centerY y-coordinate for the center of the scene
+ * @param centerZ z-coordinate for the center of the scene
+ * @param upX usually 0.0, 1.0, or -1.0
+ * @param upY usually 0.0, 1.0, or -1.0
+ * @param upZ usually 0.0, 1.0, or -1.0
+ */
+  public void camera(float eyeX, float eyeY, float eyeZ,
+                     float centerX, float centerY, float centerZ,
+                     float upX, float upY, float upZ) {
+    if (recorder != null) recorder.camera(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ);
     g.camera(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ);
   }
 
-  /**
+
+/**
    * ( begin auto-generated from printCamera.xml )
    *
    * Prints the current camera matrix to the Console (the text window at the
    * bottom of Processing).
    *
    * ( end auto-generated )
-   *
-   * @webref lights_camera:camera
-   * @see PGraphics#camera(float, float, float, float, float, float, float,
-   *      float, float)
-   */
+ * @webref lights_camera:camera
+ * @see PGraphics#camera(float, float, float, float, float, float, float, float, float)
+ */
   public void printCamera() {
-    if (recorder != null)
-      recorder.printCamera();
+    if (recorder != null) recorder.printCamera();
     g.printCamera();
   }
+
 
   /**
    * ( begin auto-generated from ortho.xml )
    *
-   * Sets an orthographic projection and defines a parallel clipping volume. All
-   * objects with the same dimension appear the same size, regardless of whether
-   * they are near or far from the camera. The parameters to this function
-   * specify the clipping volume where left and right are the minimum and
-   * maximum x values, top and bottom are the minimum and maximum y values, and
-   * near and far are the minimum and maximum z values. If no parameters are
-   * given, the default is used: ortho(0, width, 0, height, -10, 10).
+   * Sets an orthographic projection and defines a parallel clipping volume.
+   * All objects with the same dimension appear the same size, regardless of
+   * whether they are near or far from the camera. The parameters to this
+   * function specify the clipping volume where left and right are the
+   * minimum and maximum x values, top and bottom are the minimum and maximum
+   * y values, and near and far are the minimum and maximum z values. If no
+   * parameters are given, the default is used: ortho(0, width, 0, height,
+   * -10, 10).
    *
    * ( end auto-generated )
    *
    * @webref lights_camera:camera
    */
   public void ortho() {
-    if (recorder != null)
-      recorder.ortho();
+    if (recorder != null) recorder.ortho();
     g.ortho();
   }
 
+
   /**
-   * @param left
-   *          left plane of the clipping volume
-   * @param right
-   *          right plane of the clipping volume
-   * @param bottom
-   *          bottom plane of the clipping volume
-   * @param top
-   *          top plane of the clipping volume
+   * @param left left plane of the clipping volume
+   * @param right right plane of the clipping volume
+   * @param bottom bottom plane of the clipping volume
+   * @param top top plane of the clipping volume
    */
-  public void ortho(float left, float right, float bottom, float top) {
-    if (recorder != null)
-      recorder.ortho(left, right, bottom, top);
+  public void ortho(float left, float right,
+                    float bottom, float top) {
+    if (recorder != null) recorder.ortho(left, right, bottom, top);
     g.ortho(left, right, bottom, top);
   }
 
+
   /**
-   * @param near
-   *          maximum distance from the origin to the viewer
-   * @param far
-   *          maximum distance from the origin away from the viewer
+   * @param near maximum distance from the origin to the viewer
+   * @param far maximum distance from the origin away from the viewer
    */
-  public void ortho(float left, float right, float bottom, float top,
+  public void ortho(float left, float right,
+                    float bottom, float top,
                     float near, float far) {
-    if (recorder != null)
-      recorder.ortho(left, right, bottom, top, near, far);
+    if (recorder != null) recorder.ortho(left, right, bottom, top, near, far);
     g.ortho(left, right, bottom, top, near, far);
   }
+
 
   /**
    * ( begin auto-generated from perspective.xml )
@@ -12945,92 +12699,80 @@ public class PApplet implements PConstants {
    * Sets a perspective projection applying foreshortening, making distant
    * objects appear smaller than closer ones. The parameters define a viewing
    * volume with the shape of truncated pyramid. Objects near to the front of
-   * the volume appear their actual size, while farther objects appear smaller.
-   * This projection simulates the perspective of the world more accurately than
-   * orthographic projection. The version of perspective without parameters sets
-   * the default perspective and the version with four parameters allows the
-   * programmer to set the area precisely. The default values are:
-   * perspective(PI/3.0, width/height, cameraZ/10.0, cameraZ*10.0) where cameraZ
-   * is ((height/2.0) / tan(PI*60.0/360.0));
+   * the volume appear their actual size, while farther objects appear
+   * smaller. This projection simulates the perspective of the world more
+   * accurately than orthographic projection. The version of perspective
+   * without parameters sets the default perspective and the version with
+   * four parameters allows the programmer to set the area precisely. The
+   * default values are: perspective(PI/3.0, width/height, cameraZ/10.0,
+   * cameraZ*10.0) where cameraZ is ((height/2.0) / tan(PI*60.0/360.0));
    *
    * ( end auto-generated )
    *
    * @webref lights_camera:camera
    */
   public void perspective() {
-    if (recorder != null)
-      recorder.perspective();
+    if (recorder != null) recorder.perspective();
     g.perspective();
   }
 
+
   /**
-   * @param fovy
-   *          field-of-view angle (in radians) for vertical direction
-   * @param aspect
-   *          ratio of width to height
-   * @param zNear
-   *          z-position of nearest clipping plane
-   * @param zFar
-   *          z-position of farthest clipping plane
+   * @param fovy field-of-view angle (in radians) for vertical direction
+   * @param aspect ratio of width to height
+   * @param zNear z-position of nearest clipping plane
+   * @param zFar z-position of farthest clipping plane
    */
   public void perspective(float fovy, float aspect, float zNear, float zFar) {
-    if (recorder != null)
-      recorder.perspective(fovy, aspect, zNear, zFar);
+    if (recorder != null) recorder.perspective(fovy, aspect, zNear, zFar);
     g.perspective(fovy, aspect, zNear, zFar);
   }
+
 
   /**
    * ( begin auto-generated from frustum.xml )
    *
    * Sets a perspective matrix defined through the parameters. Works like
-   * glFrustum, except it wipes out the current perspective matrix rather than
-   * muliplying itself with it.
+   * glFrustum, except it wipes out the current perspective matrix rather
+   * than muliplying itself with it.
    *
    * ( end auto-generated )
    *
    * @webref lights_camera:camera
-   * @param left
-   *          left coordinate of the clipping plane
-   * @param right
-   *          right coordinate of the clipping plane
-   * @param bottom
-   *          bottom coordinate of the clipping plane
-   * @param top
-   *          top coordinate of the clipping plane
-   * @param near
-   *          near component of the clipping plane; must be greater than zero
-   * @param far
-   *          far component of the clipping plane; must be greater than the near
-   *          value
-   * @see PGraphics#camera(float, float, float, float, float, float, float,
-   *      float, float)
+   * @param left left coordinate of the clipping plane
+   * @param right right coordinate of the clipping plane
+   * @param bottom bottom coordinate of the clipping plane
+   * @param top top coordinate of the clipping plane
+   * @param near near component of the clipping plane; must be greater than zero
+   * @param far far component of the clipping plane; must be greater than the near value
+   * @see PGraphics#camera(float, float, float, float, float, float, float, float, float)
    * @see PGraphics#endCamera()
    * @see PGraphics#perspective(float, float, float, float)
    */
-  public void frustum(float left, float right, float bottom, float top,
+  public void frustum(float left, float right,
+                      float bottom, float top,
                       float near, float far) {
-    if (recorder != null)
-      recorder.frustum(left, right, bottom, top, near, far);
+    if (recorder != null) recorder.frustum(left, right, bottom, top, near, far);
     g.frustum(left, right, bottom, top, near, far);
   }
+
 
   /**
    * ( begin auto-generated from printProjection.xml )
    *
-   * Prints the current projection matrix to the Console (the text window at the
-   * bottom of Processing).
+   * Prints the current projection matrix to the Console (the text window at
+   * the bottom of Processing).
    *
    * ( end auto-generated )
    *
    * @webref lights_camera:camera
-   * @see PGraphics#camera(float, float, float, float, float, float, float,
-   *      float, float)
+   * @see PGraphics#camera(float, float, float, float, float, float, float, float, float)
    */
   public void printProjection() {
-    if (recorder != null)
-      recorder.printProjection();
+    if (recorder != null) recorder.printProjection();
     g.printProjection();
   }
+
 
   /**
    * ( begin auto-generated from screenX.xml )
@@ -13041,16 +12783,15 @@ public class PApplet implements PConstants {
    * ( end auto-generated )
    *
    * @webref lights_camera:coordinates
-   * @param x
-   *          3D x-coordinate to be mapped
-   * @param y
-   *          3D y-coordinate to be mapped
+   * @param x 3D x-coordinate to be mapped
+   * @param y 3D y-coordinate to be mapped
    * @see PGraphics#screenY(float, float, float)
    * @see PGraphics#screenZ(float, float, float)
    */
   public float screenX(float x, float y) {
     return g.screenX(x, y);
   }
+
 
   /**
    * ( begin auto-generated from screenY.xml )
@@ -13061,10 +12802,8 @@ public class PApplet implements PConstants {
    * ( end auto-generated )
    *
    * @webref lights_camera:coordinates
-   * @param x
-   *          3D x-coordinate to be mapped
-   * @param y
-   *          3D y-coordinate to be mapped
+   * @param x 3D x-coordinate to be mapped
+   * @param y 3D y-coordinate to be mapped
    * @see PGraphics#screenX(float, float, float)
    * @see PGraphics#screenZ(float, float, float)
    */
@@ -13072,21 +12811,22 @@ public class PApplet implements PConstants {
     return g.screenY(x, y);
   }
 
+
   /**
-   * @param z
-   *          3D z-coordinate to be mapped
+   * @param z 3D z-coordinate to be mapped
    */
   public float screenX(float x, float y, float z) {
     return g.screenX(x, y, z);
   }
 
+
   /**
-   * @param z
-   *          3D z-coordinate to be mapped
+   * @param z 3D z-coordinate to be mapped
    */
   public float screenY(float x, float y, float z) {
     return g.screenY(x, y, z);
   }
+
 
   /**
    * ( begin auto-generated from screenZ.xml )
@@ -13097,12 +12837,9 @@ public class PApplet implements PConstants {
    * ( end auto-generated )
    *
    * @webref lights_camera:coordinates
-   * @param x
-   *          3D x-coordinate to be mapped
-   * @param y
-   *          3D y-coordinate to be mapped
-   * @param z
-   *          3D z-coordinate to be mapped
+   * @param x 3D x-coordinate to be mapped
+   * @param y 3D y-coordinate to be mapped
+   * @param z 3D z-coordinate to be mapped
    * @see PGraphics#screenX(float, float, float)
    * @see PGraphics#screenY(float, float, float)
    */
@@ -13110,30 +12847,29 @@ public class PApplet implements PConstants {
     return g.screenZ(x, y, z);
   }
 
+
   /**
    * ( begin auto-generated from modelX.xml )
    *
-   * Returns the three-dimensional X, Y, Z position in model space. This returns
-   * the X value for a given coordinate based on the current set of
-   * transformations (scale, rotate, translate, etc.) The X value can be used to
-   * place an object in space relative to the location of the original point
-   * once the transformations are no longer in use. <br/>
-   * <br/>
-   * In the example, the <b>modelX()</b>, <b>modelY()</b>, and <b>modelZ()</b>
-   * functions record the location of a box in space after being placed using a
-   * series of translate and rotate commands. After popMatrix() is called, those
-   * transformations no longer apply, but the (x, y, z) coordinate returned by
-   * the model functions is used to place another box in the same location.
+   * Returns the three-dimensional X, Y, Z position in model space. This
+   * returns the X value for a given coordinate based on the current set of
+   * transformations (scale, rotate, translate, etc.) The X value can be used
+   * to place an object in space relative to the location of the original
+   * point once the transformations are no longer in use.
+   * <br/> <br/>
+   * In the example, the <b>modelX()</b>, <b>modelY()</b>, and
+   * <b>modelZ()</b> functions record the location of a box in space after
+   * being placed using a series of translate and rotate commands. After
+   * popMatrix() is called, those transformations no longer apply, but the
+   * (x, y, z) coordinate returned by the model functions is used to place
+   * another box in the same location.
    *
    * ( end auto-generated )
    *
    * @webref lights_camera:coordinates
-   * @param x
-   *          3D x-coordinate to be mapped
-   * @param y
-   *          3D y-coordinate to be mapped
-   * @param z
-   *          3D z-coordinate to be mapped
+   * @param x 3D x-coordinate to be mapped
+   * @param y 3D y-coordinate to be mapped
+   * @param z 3D z-coordinate to be mapped
    * @see PGraphics#modelY(float, float, float)
    * @see PGraphics#modelZ(float, float, float)
    */
@@ -13141,30 +12877,29 @@ public class PApplet implements PConstants {
     return g.modelX(x, y, z);
   }
 
+
   /**
    * ( begin auto-generated from modelY.xml )
    *
-   * Returns the three-dimensional X, Y, Z position in model space. This returns
-   * the Y value for a given coordinate based on the current set of
-   * transformations (scale, rotate, translate, etc.) The Y value can be used to
-   * place an object in space relative to the location of the original point
-   * once the transformations are no longer in use.<br />
+   * Returns the three-dimensional X, Y, Z position in model space. This
+   * returns the Y value for a given coordinate based on the current set of
+   * transformations (scale, rotate, translate, etc.) The Y value can be used
+   * to place an object in space relative to the location of the original
+   * point once the transformations are no longer in use.<br />
    * <br />
-   * In the example, the <b>modelX()</b>, <b>modelY()</b>, and <b>modelZ()</b>
-   * functions record the location of a box in space after being placed using a
-   * series of translate and rotate commands. After popMatrix() is called, those
-   * transformations no longer apply, but the (x, y, z) coordinate returned by
-   * the model functions is used to place another box in the same location.
+   * In the example, the <b>modelX()</b>, <b>modelY()</b>, and
+   * <b>modelZ()</b> functions record the location of a box in space after
+   * being placed using a series of translate and rotate commands. After
+   * popMatrix() is called, those transformations no longer apply, but the
+   * (x, y, z) coordinate returned by the model functions is used to place
+   * another box in the same location.
    *
    * ( end auto-generated )
    *
    * @webref lights_camera:coordinates
-   * @param x
-   *          3D x-coordinate to be mapped
-   * @param y
-   *          3D y-coordinate to be mapped
-   * @param z
-   *          3D z-coordinate to be mapped
+   * @param x 3D x-coordinate to be mapped
+   * @param y 3D y-coordinate to be mapped
+   * @param z 3D z-coordinate to be mapped
    * @see PGraphics#modelX(float, float, float)
    * @see PGraphics#modelZ(float, float, float)
    */
@@ -13172,30 +12907,29 @@ public class PApplet implements PConstants {
     return g.modelY(x, y, z);
   }
 
+
   /**
    * ( begin auto-generated from modelZ.xml )
    *
-   * Returns the three-dimensional X, Y, Z position in model space. This returns
-   * the Z value for a given coordinate based on the current set of
-   * transformations (scale, rotate, translate, etc.) The Z value can be used to
-   * place an object in space relative to the location of the original point
-   * once the transformations are no longer in use.<br />
+   * Returns the three-dimensional X, Y, Z position in model space. This
+   * returns the Z value for a given coordinate based on the current set of
+   * transformations (scale, rotate, translate, etc.) The Z value can be used
+   * to place an object in space relative to the location of the original
+   * point once the transformations are no longer in use.<br />
    * <br />
-   * In the example, the <b>modelX()</b>, <b>modelY()</b>, and <b>modelZ()</b>
-   * functions record the location of a box in space after being placed using a
-   * series of translate and rotate commands. After popMatrix() is called, those
-   * transformations no longer apply, but the (x, y, z) coordinate returned by
-   * the model functions is used to place another box in the same location.
+   * In the example, the <b>modelX()</b>, <b>modelY()</b>, and
+   * <b>modelZ()</b> functions record the location of a box in space after
+   * being placed using a series of translate and rotate commands. After
+   * popMatrix() is called, those transformations no longer apply, but the
+   * (x, y, z) coordinate returned by the model functions is used to place
+   * another box in the same location.
    *
    * ( end auto-generated )
    *
    * @webref lights_camera:coordinates
-   * @param x
-   *          3D x-coordinate to be mapped
-   * @param y
-   *          3D y-coordinate to be mapped
-   * @param z
-   *          3D z-coordinate to be mapped
+   * @param x 3D x-coordinate to be mapped
+   * @param y 3D y-coordinate to be mapped
+   * @param z 3D z-coordinate to be mapped
    * @see PGraphics#modelX(float, float, float)
    * @see PGraphics#modelY(float, float, float)
    */
@@ -13203,22 +12937,24 @@ public class PApplet implements PConstants {
     return g.modelZ(x, y, z);
   }
 
+
   /**
    * ( begin auto-generated from pushStyle.xml )
    *
    * The <b>pushStyle()</b> function saves the current style settings and
    * <b>popStyle()</b> restores the prior settings. Note that these functions
-   * are always used together. They allow you to change the style settings and
-   * later return to what you had. When a new style is started with
+   * are always used together. They allow you to change the style settings
+   * and later return to what you had. When a new style is started with
    * <b>pushStyle()</b>, it builds on the current style information. The
    * <b>pushStyle()</b> and <b>popStyle()</b> functions can be embedded to
-   * provide more control (see the second example above for a demonstration.) <br />
-   * <br />
-   * The style information controlled by the following functions are included in
-   * the style: fill(), stroke(), tint(), strokeWeight(), strokeCap(),
-   * strokeJoin(), imageMode(), rectMode(), ellipseMode(), shapeMode(),
-   * colorMode(), textAlign(), textFont(), textMode(), textSize(),
-   * textLeading(), emissive(), specular(), shininess(), ambient()
+   * provide more control (see the second example above for a demonstration.)
+   * <br /><br />
+   * The style information controlled by the following functions are included
+   * in the style:
+   * fill(), stroke(), tint(), strokeWeight(), strokeCap(), strokeJoin(),
+   * imageMode(), rectMode(), ellipseMode(), shapeMode(), colorMode(),
+   * textAlign(), textFont(), textMode(), textSize(), textLeading(),
+   * emissive(), specular(), shininess(), ambient()
    *
    * ( end auto-generated )
    *
@@ -13226,21 +12962,21 @@ public class PApplet implements PConstants {
    * @see PGraphics#popStyle()
    */
   public void pushStyle() {
-    if (recorder != null)
-      recorder.pushStyle();
+    if (recorder != null) recorder.pushStyle();
     g.pushStyle();
   }
+
 
   /**
    * ( begin auto-generated from popStyle.xml )
    *
    * The <b>pushStyle()</b> function saves the current style settings and
-   * <b>popStyle()</b> restores the prior settings; these functions are always
-   * used together. They allow you to change the style settings and later return
-   * to what you had. When a new style is started with <b>pushStyle()</b>, it
-   * builds on the current style information. The <b>pushStyle()</b> and
-   * <b>popStyle()</b> functions can be embedded to provide more control (see
-   * the second example above for a demonstration.)
+   * <b>popStyle()</b> restores the prior settings; these functions are
+   * always used together. They allow you to change the style settings and
+   * later return to what you had. When a new style is started with
+   * <b>pushStyle()</b>, it builds on the current style information. The
+   * <b>pushStyle()</b> and <b>popStyle()</b> functions can be embedded to
+   * provide more control (see the second example above for a demonstration.)
    *
    * ( end auto-generated )
    *
@@ -13248,101 +12984,99 @@ public class PApplet implements PConstants {
    * @see PGraphics#pushStyle()
    */
   public void popStyle() {
-    if (recorder != null)
-      recorder.popStyle();
+    if (recorder != null) recorder.popStyle();
     g.popStyle();
   }
 
+
   public void style(PStyle s) {
-    if (recorder != null)
-      recorder.style(s);
+    if (recorder != null) recorder.style(s);
     g.style(s);
   }
+
 
   /**
    * ( begin auto-generated from strokeWeight.xml )
    *
-   * Sets the width of the stroke used for lines, points, and the border around
-   * shapes. All widths are set in units of pixels. <br/>
-   * <br/>
-   * When drawing with P3D, series of connected lines (such as the stroke around
-   * a polygon, triangle, or ellipse) produce unattractive results when a thick
-   * stroke weight is set (<a
-   * href="http://code.google.com/p/processing/issues/detail?id=123">see Issue
-   * 123</a>). With P3D, the minimum and maximum values for
-   * <b>strokeWeight()</b> are controlled by the graphics card and the operating
-   * system's OpenGL implementation. For instance, the thickness may not go
-   * higher than 10 pixels.
+   * Sets the width of the stroke used for lines, points, and the border
+   * around shapes. All widths are set in units of pixels.
+   * <br/> <br/>
+   * When drawing with P3D, series of connected lines (such as the stroke
+   * around a polygon, triangle, or ellipse) produce unattractive results
+   * when a thick stroke weight is set (<a
+   * href="http://code.google.com/p/processing/issues/detail?id=123">see
+   * Issue 123</a>). With P3D, the minimum and maximum values for
+   * <b>strokeWeight()</b> are controlled by the graphics card and the
+   * operating system's OpenGL implementation. For instance, the thickness
+   * may not go higher than 10 pixels.
    *
    * ( end auto-generated )
    *
    * @webref shape:attributes
-   * @param weight
-   *          the weight (in pixels) of the stroke
+   * @param weight the weight (in pixels) of the stroke
    * @see PGraphics#stroke(int, float)
    * @see PGraphics#strokeJoin(int)
    * @see PGraphics#strokeCap(int)
    */
   public void strokeWeight(float weight) {
-    if (recorder != null)
-      recorder.strokeWeight(weight);
+    if (recorder != null) recorder.strokeWeight(weight);
     g.strokeWeight(weight);
   }
+
 
   /**
    * ( begin auto-generated from strokeJoin.xml )
    *
-   * Sets the style of the joints which connect line segments. These joints are
-   * either mitered, beveled, or rounded and specified with the corresponding
-   * parameters MITER, BEVEL, and ROUND. The default joint is MITER. <br/>
-   * <br/>
+   * Sets the style of the joints which connect line segments. These joints
+   * are either mitered, beveled, or rounded and specified with the
+   * corresponding parameters MITER, BEVEL, and ROUND. The default joint is
+   * MITER.
+   * <br/> <br/>
    * This function is not available with the P3D renderer, (<a
-   * href="http://code.google.com/p/processing/issues/detail?id=123">see Issue
-   * 123</a>). More information about the renderers can be found in the
+   * href="http://code.google.com/p/processing/issues/detail?id=123">see
+   * Issue 123</a>). More information about the renderers can be found in the
    * <b>size()</b> reference.
    *
    * ( end auto-generated )
    *
    * @webref shape:attributes
-   * @param join
-   *          either MITER, BEVEL, ROUND
+   * @param join either MITER, BEVEL, ROUND
    * @see PGraphics#stroke(int, float)
    * @see PGraphics#strokeWeight(float)
    * @see PGraphics#strokeCap(int)
    */
   public void strokeJoin(int join) {
-    if (recorder != null)
-      recorder.strokeJoin(join);
+    if (recorder != null) recorder.strokeJoin(join);
     g.strokeJoin(join);
   }
+
 
   /**
    * ( begin auto-generated from strokeCap.xml )
    *
-   * Sets the style for rendering line endings. These ends are either squared,
-   * extended, or rounded and specified with the corresponding parameters
-   * SQUARE, PROJECT, and ROUND. The default cap is ROUND. <br/>
-   * <br/>
+   * Sets the style for rendering line endings. These ends are either
+   * squared, extended, or rounded and specified with the corresponding
+   * parameters SQUARE, PROJECT, and ROUND. The default cap is ROUND.
+   * <br/> <br/>
    * This function is not available with the P3D renderer (<a
-   * href="http://code.google.com/p/processing/issues/detail?id=123">see Issue
-   * 123</a>). More information about the renderers can be found in the
+   * href="http://code.google.com/p/processing/issues/detail?id=123">see
+   * Issue 123</a>). More information about the renderers can be found in the
    * <b>size()</b> reference.
    *
    * ( end auto-generated )
    *
    * @webref shape:attributes
-   * @param cap
-   *          either SQUARE, PROJECT, or ROUND
+   * @param cap either SQUARE, PROJECT, or ROUND
    * @see PGraphics#stroke(int, float)
    * @see PGraphics#strokeWeight(float)
    * @see PGraphics#strokeJoin(int)
    * @see PApplet#size(int, int, String, String)
    */
   public void strokeCap(int cap) {
-    if (recorder != null)
-      recorder.strokeCap(cap);
+    if (recorder != null) recorder.strokeCap(cap);
     g.strokeCap(cap);
   }
+
 
   /**
    * ( begin auto-generated from noStroke.xml )
@@ -13358,34 +13092,34 @@ public class PApplet implements PConstants {
    * @see PGraphics#noFill()
    */
   public void noStroke() {
-    if (recorder != null)
-      recorder.noStroke();
+    if (recorder != null) recorder.noStroke();
     g.noStroke();
   }
+
 
   /**
    * ( begin auto-generated from stroke.xml )
    *
-   * Sets the color used to draw lines and borders around shapes. This color is
-   * either specified in terms of the RGB or HSB color depending on the current
-   * <b>colorMode()</b> (the default color space is RGB, with each value in the
-   * range from 0 to 255). <br/>
-   * <br/>
-   * When using hexadecimal notation to specify a color, use "#" or "0x" before
-   * the values (e.g. #CCFFAA, 0xFFCCFFAA). The # syntax uses six digits to
-   * specify a color (the way colors are specified in HTML and CSS). When using
-   * the hexadecimal notation starting with "0x", the hexadecimal value must be
-   * specified with eight characters; the first two characters define the alpha
-   * component and the remainder the red, green, and blue components. <br/>
-   * <br/>
+   * Sets the color used to draw lines and borders around shapes. This color
+   * is either specified in terms of the RGB or HSB color depending on the
+   * current <b>colorMode()</b> (the default color space is RGB, with each
+   * value in the range from 0 to 255).
+   * <br/> <br/>
+   * When using hexadecimal notation to specify a color, use "#" or "0x"
+   * before the values (e.g. #CCFFAA, 0xFFCCFFAA). The # syntax uses six
+   * digits to specify a color (the way colors are specified in HTML and
+   * CSS). When using the hexadecimal notation starting with "0x", the
+   * hexadecimal value must be specified with eight characters; the first two
+   * characters define the alpha component and the remainder the red, green,
+   * and blue components.
+   * <br/> <br/>
    * The value for the parameter "gray" must be less than or equal to the
    * current maximum value as specified by <b>colorMode()</b>. The default
    * maximum value is 255.
    *
    * ( end auto-generated )
    *
-   * @param rgb
-   *          color value in hexadecimal notation
+   * @param rgb color value in hexadecimal notation
    * @see PGraphics#noStroke()
    * @see PGraphics#strokeWeight(float)
    * @see PGraphics#strokeJoin(int)
@@ -13397,57 +13131,52 @@ public class PApplet implements PConstants {
    * @see PGraphics#colorMode(int, float, float, float, float)
    */
   public void stroke(int rgb) {
-    if (recorder != null)
-      recorder.stroke(rgb);
+    if (recorder != null) recorder.stroke(rgb);
     g.stroke(rgb);
   }
 
+
   /**
-   * @param alpha
-   *          opacity of the stroke
+   * @param alpha opacity of the stroke
    */
   public void stroke(int rgb, float alpha) {
-    if (recorder != null)
-      recorder.stroke(rgb, alpha);
+    if (recorder != null) recorder.stroke(rgb, alpha);
     g.stroke(rgb, alpha);
   }
 
+
   /**
-   * @param gray
-   *          specifies a value between white and black
+   * @param gray specifies a value between white and black
    */
   public void stroke(float gray) {
-    if (recorder != null)
-      recorder.stroke(gray);
+    if (recorder != null) recorder.stroke(gray);
     g.stroke(gray);
   }
 
+
   public void stroke(float gray, float alpha) {
-    if (recorder != null)
-      recorder.stroke(gray, alpha);
+    if (recorder != null) recorder.stroke(gray, alpha);
     g.stroke(gray, alpha);
   }
 
+
   /**
-   * @param v1
-   *          red or hue value (depending on current color mode)
-   * @param v2
-   *          green or saturation value (depending on current color mode)
-   * @param v3
-   *          blue or brightness value (depending on current color mode)
+   * @param v1 red or hue value (depending on current color mode)
+   * @param v2 green or saturation value (depending on current color mode)
+   * @param v3 blue or brightness value (depending on current color mode)
    * @webref color:setting
    */
   public void stroke(float v1, float v2, float v3) {
-    if (recorder != null)
-      recorder.stroke(v1, v2, v3);
+    if (recorder != null) recorder.stroke(v1, v2, v3);
     g.stroke(v1, v2, v3);
   }
 
+
   public void stroke(float v1, float v2, float v3, float alpha) {
-    if (recorder != null)
-      recorder.stroke(v1, v2, v3, alpha);
+    if (recorder != null) recorder.stroke(v1, v2, v3, alpha);
     g.stroke(v1, v2, v3, alpha);
   }
+
 
   /**
    * ( begin auto-generated from noTint.xml )
@@ -13463,10 +13192,10 @@ public class PApplet implements PConstants {
    * @see PGraphics#image(PImage, float, float, float, float)
    */
   public void noTint() {
-    if (recorder != null)
-      recorder.noTint();
+    if (recorder != null) recorder.noTint();
     g.noTint();
   }
+
 
   /**
    * ( begin auto-generated from tint.xml )
@@ -13474,84 +13203,80 @@ public class PApplet implements PConstants {
    * Sets the fill value for displaying images. Images can be tinted to
    * specified colors or made transparent by setting the alpha.<br />
    * <br />
-   * To make an image transparent, but not change it's color, use white as the
-   * tint color and specify an alpha value. For instance, tint(255, 128) will
-   * make an image 50% transparent (unless <b>colorMode()</b> has been used).<br />
+   * To make an image transparent, but not change it's color, use white as
+   * the tint color and specify an alpha value. For instance, tint(255, 128)
+   * will make an image 50% transparent (unless <b>colorMode()</b> has been
+   * used).<br />
    * <br />
-   * When using hexadecimal notation to specify a color, use "#" or "0x" before
-   * the values (e.g. #CCFFAA, 0xFFCCFFAA). The # syntax uses six digits to
-   * specify a color (the way colors are specified in HTML and CSS). When using
-   * the hexadecimal notation starting with "0x", the hexadecimal value must be
-   * specified with eight characters; the first two characters define the alpha
-   * component and the remainder the red, green, and blue components.<br />
+   * When using hexadecimal notation to specify a color, use "#" or "0x"
+   * before the values (e.g. #CCFFAA, 0xFFCCFFAA). The # syntax uses six
+   * digits to specify a color (the way colors are specified in HTML and
+   * CSS). When using the hexadecimal notation starting with "0x", the
+   * hexadecimal value must be specified with eight characters; the first two
+   * characters define the alpha component and the remainder the red, green,
+   * and blue components.<br />
    * <br />
    * The value for the parameter "gray" must be less than or equal to the
    * current maximum value as specified by <b>colorMode()</b>. The default
    * maximum value is 255.<br />
    * <br />
-   * The <b>tint()</b> function is also used to control the coloring of textures
-   * in 3D.
+   * The <b>tint()</b> function is also used to control the coloring of
+   * textures in 3D.
    *
    * ( end auto-generated )
    *
    * @webref image:loading_displaying
    * @usage web_application
-   * @param rgb
-   *          color value in hexadecimal notation
+   * @param rgb color value in hexadecimal notation
    * @see PGraphics#noTint()
    * @see PGraphics#image(PImage, float, float, float, float)
    */
   public void tint(int rgb) {
-    if (recorder != null)
-      recorder.tint(rgb);
+    if (recorder != null) recorder.tint(rgb);
     g.tint(rgb);
   }
 
+
   /**
-   * @param alpha
-   *          opacity of the image
+   * @param alpha opacity of the image
    */
   public void tint(int rgb, float alpha) {
-    if (recorder != null)
-      recorder.tint(rgb, alpha);
+    if (recorder != null) recorder.tint(rgb, alpha);
     g.tint(rgb, alpha);
   }
 
+
   /**
-   * @param gray
-   *          specifies a value between white and black
+   * @param gray specifies a value between white and black
    */
   public void tint(float gray) {
-    if (recorder != null)
-      recorder.tint(gray);
+    if (recorder != null) recorder.tint(gray);
     g.tint(gray);
   }
 
+
   public void tint(float gray, float alpha) {
-    if (recorder != null)
-      recorder.tint(gray, alpha);
+    if (recorder != null) recorder.tint(gray, alpha);
     g.tint(gray, alpha);
   }
 
-  /**
-   * @param v1
-   *          red or hue value (depending on current color mode)
-   * @param v2
-   *          green or saturation value (depending on current color mode)
-   * @param v3
-   *          blue or brightness value (depending on current color mode)
-   */
+
+/**
+ * @param v1 red or hue value (depending on current color mode)
+ * @param v2 green or saturation value (depending on current color mode)
+ * @param v3 blue or brightness value (depending on current color mode)
+ */
   public void tint(float v1, float v2, float v3) {
-    if (recorder != null)
-      recorder.tint(v1, v2, v3);
+    if (recorder != null) recorder.tint(v1, v2, v3);
     g.tint(v1, v2, v3);
   }
 
+
   public void tint(float v1, float v2, float v3, float alpha) {
-    if (recorder != null)
-      recorder.tint(v1, v2, v3, alpha);
+    if (recorder != null) recorder.tint(v1, v2, v3, alpha);
     g.tint(v1, v2, v3, alpha);
   }
+
 
   /**
    * ( begin auto-generated from noFill.xml )
@@ -13568,39 +13293,39 @@ public class PApplet implements PConstants {
    * @see PGraphics#noStroke()
    */
   public void noFill() {
-    if (recorder != null)
-      recorder.noFill();
+    if (recorder != null) recorder.noFill();
     g.noFill();
   }
+
 
   /**
    * ( begin auto-generated from fill.xml )
    *
    * Sets the color used to fill shapes. For example, if you run <b>fill(204,
-   * 102, 0)</b>, all subsequent shapes will be filled with orange. This color
-   * is either specified in terms of the RGB or HSB color depending on the
-   * current <b>colorMode()</b> (the default color space is RGB, with each value
-   * in the range from 0 to 255). <br/>
-   * <br/>
-   * When using hexadecimal notation to specify a color, use "#" or "0x" before
-   * the values (e.g. #CCFFAA, 0xFFCCFFAA). The # syntax uses six digits to
-   * specify a color (the way colors are specified in HTML and CSS). When using
-   * the hexadecimal notation starting with "0x", the hexadecimal value must be
-   * specified with eight characters; the first two characters define the alpha
-   * component and the remainder the red, green, and blue components. <br/>
-   * <br/>
+   * 102, 0)</b>, all subsequent shapes will be filled with orange. This
+   * color is either specified in terms of the RGB or HSB color depending on
+   * the current <b>colorMode()</b> (the default color space is RGB, with
+   * each value in the range from 0 to 255).
+   * <br/> <br/>
+   * When using hexadecimal notation to specify a color, use "#" or "0x"
+   * before the values (e.g. #CCFFAA, 0xFFCCFFAA). The # syntax uses six
+   * digits to specify a color (the way colors are specified in HTML and
+   * CSS). When using the hexadecimal notation starting with "0x", the
+   * hexadecimal value must be specified with eight characters; the first two
+   * characters define the alpha component and the remainder the red, green,
+   * and blue components.
+   * <br/> <br/>
    * The value for the parameter "gray" must be less than or equal to the
    * current maximum value as specified by <b>colorMode()</b>. The default
-   * maximum value is 255. <br/>
-   * <br/>
+   * maximum value is 255.
+   * <br/> <br/>
    * To change the color of an image (or a texture), use tint().
    *
    * ( end auto-generated )
    *
    * @webref color:setting
    * @usage web_application
-   * @param rgb
-   *          color variable or hex value
+   * @param rgb color variable or hex value
    * @see PGraphics#noFill()
    * @see PGraphics#stroke(int, float)
    * @see PGraphics#noStroke()
@@ -13609,226 +13334,208 @@ public class PApplet implements PConstants {
    * @see PGraphics#colorMode(int, float, float, float, float)
    */
   public void fill(int rgb) {
-    if (recorder != null)
-      recorder.fill(rgb);
+    if (recorder != null) recorder.fill(rgb);
     g.fill(rgb);
   }
 
+
   /**
-   * @param alpha
-   *          opacity of the fill
+   * @param alpha opacity of the fill
    */
   public void fill(int rgb, float alpha) {
-    if (recorder != null)
-      recorder.fill(rgb, alpha);
+    if (recorder != null) recorder.fill(rgb, alpha);
     g.fill(rgb, alpha);
   }
 
+
   /**
-   * @param gray
-   *          number specifying value between white and black
+   * @param gray number specifying value between white and black
    */
   public void fill(float gray) {
-    if (recorder != null)
-      recorder.fill(gray);
+    if (recorder != null) recorder.fill(gray);
     g.fill(gray);
   }
 
+
   public void fill(float gray, float alpha) {
-    if (recorder != null)
-      recorder.fill(gray, alpha);
+    if (recorder != null) recorder.fill(gray, alpha);
     g.fill(gray, alpha);
   }
 
+
   /**
-   * @param v1
-   *          red or hue value (depending on current color mode)
-   * @param v2
-   *          green or saturation value (depending on current color mode)
-   * @param v3
-   *          blue or brightness value (depending on current color mode)
+   * @param v1 red or hue value (depending on current color mode)
+   * @param v2 green or saturation value (depending on current color mode)
+   * @param v3 blue or brightness value (depending on current color mode)
    */
   public void fill(float v1, float v2, float v3) {
-    if (recorder != null)
-      recorder.fill(v1, v2, v3);
+    if (recorder != null) recorder.fill(v1, v2, v3);
     g.fill(v1, v2, v3);
   }
 
+
   public void fill(float v1, float v2, float v3, float alpha) {
-    if (recorder != null)
-      recorder.fill(v1, v2, v3, alpha);
+    if (recorder != null) recorder.fill(v1, v2, v3, alpha);
     g.fill(v1, v2, v3, alpha);
   }
+
 
   /**
    * ( begin auto-generated from ambient.xml )
    *
    * Sets the ambient reflectance for shapes drawn to the screen. This is
    * combined with the ambient light component of environment. The color
-   * components set through the parameters define the reflectance. For example
-   * in the default color mode, setting v1=255, v2=126, v3=0, would cause all
-   * the red light to reflect and half of the green light to reflect. Used in
-   * combination with <b>emissive()</b>, <b>specular()</b>, and
-   * <b>shininess()</b> in setting the material properties of shapes.
-   *
-   * ( end auto-generated )
-   *
-   * @webref lights_camera:material_properties
-   * @usage web_application
-   * @param rgb
-   *          any value of the color datatype
-   * @see PGraphics#emissive(float, float, float)
-   * @see PGraphics#specular(float, float, float)
-   * @see PGraphics#shininess(float)
-   */
-  public void ambient(int rgb) {
-    if (recorder != null)
-      recorder.ambient(rgb);
-    g.ambient(rgb);
-  }
-
-  /**
-   * @param gray
-   *          number specifying value between white and black
-   */
-  public void ambient(float gray) {
-    if (recorder != null)
-      recorder.ambient(gray);
-    g.ambient(gray);
-  }
-
-  /**
-   * @param v1
-   *          red or hue value (depending on current color mode)
-   * @param v2
-   *          green or saturation value (depending on current color mode)
-   * @param v3
-   *          blue or brightness value (depending on current color mode)
-   */
-  public void ambient(float v1, float v2, float v3) {
-    if (recorder != null)
-      recorder.ambient(v1, v2, v3);
-    g.ambient(v1, v2, v3);
-  }
-
-  /**
-   * ( begin auto-generated from specular.xml )
-   *
-   * Sets the specular color of the materials used for shapes drawn to the
-   * screen, which sets the color of hightlights. Specular refers to light which
-   * bounces off a surface in a perferred direction (rather than bouncing in all
-   * directions like a diffuse light). Used in combination with
-   * <b>emissive()</b>, <b>ambient()</b>, and <b>shininess()</b> in setting the
-   * material properties of shapes.
-   *
-   * ( end auto-generated )
-   *
-   * @webref lights_camera:material_properties
-   * @usage web_application
-   * @param rgb
-   *          color to set
-   * @see PGraphics#lightSpecular(float, float, float)
-   * @see PGraphics#ambient(float, float, float)
-   * @see PGraphics#emissive(float, float, float)
-   * @see PGraphics#shininess(float)
-   */
-  public void specular(int rgb) {
-    if (recorder != null)
-      recorder.specular(rgb);
-    g.specular(rgb);
-  }
-
-  /**
-   * gray number specifying value between white and black
-   */
-  public void specular(float gray) {
-    if (recorder != null)
-      recorder.specular(gray);
-    g.specular(gray);
-  }
-
-  /**
-   * @param v1
-   *          red or hue value (depending on current color mode)
-   * @param v2
-   *          green or saturation value (depending on current color mode)
-   * @param v3
-   *          blue or brightness value (depending on current color mode)
-   */
-  public void specular(float v1, float v2, float v3) {
-    if (recorder != null)
-      recorder.specular(v1, v2, v3);
-    g.specular(v1, v2, v3);
-  }
-
-  /**
-   * ( begin auto-generated from shininess.xml )
-   *
-   * Sets the amount of gloss in the surface of shapes. Used in combination with
-   * <b>ambient()</b>, <b>specular()</b>, and <b>emissive()</b> in setting the
-   * material properties of shapes.
-   *
-   * ( end auto-generated )
-   *
-   * @webref lights_camera:material_properties
-   * @usage web_application
-   * @param shine
-   *          degree of shininess
-   * @see PGraphics#emissive(float, float, float)
-   * @see PGraphics#ambient(float, float, float)
-   * @see PGraphics#specular(float, float, float)
-   */
-  public void shininess(float shine) {
-    if (recorder != null)
-      recorder.shininess(shine);
-    g.shininess(shine);
-  }
-
-  /**
-   * ( begin auto-generated from emissive.xml )
-   *
-   * Sets the emissive color of the material used for drawing shapes drawn to
-   * the screen. Used in combination with <b>ambient()</b>, <b>specular()</b>,
+   * components set through the parameters define the reflectance. For
+   * example in the default color mode, setting v1=255, v2=126, v3=0, would
+   * cause all the red light to reflect and half of the green light to
+   * reflect. Used in combination with <b>emissive()</b>, <b>specular()</b>,
    * and <b>shininess()</b> in setting the material properties of shapes.
    *
    * ( end auto-generated )
    *
    * @webref lights_camera:material_properties
    * @usage web_application
-   * @param rgb
-   *          color to set
+   * @param rgb any value of the color datatype
+   * @see PGraphics#emissive(float, float, float)
+   * @see PGraphics#specular(float, float, float)
+   * @see PGraphics#shininess(float)
+   */
+  public void ambient(int rgb) {
+    if (recorder != null) recorder.ambient(rgb);
+    g.ambient(rgb);
+  }
+
+
+/**
+ * @param gray number specifying value between white and black
+ */
+  public void ambient(float gray) {
+    if (recorder != null) recorder.ambient(gray);
+    g.ambient(gray);
+  }
+
+
+/**
+ * @param v1 red or hue value (depending on current color mode)
+ * @param v2 green or saturation value (depending on current color mode)
+ * @param v3 blue or brightness value (depending on current color mode)
+ */
+  public void ambient(float v1, float v2, float v3) {
+    if (recorder != null) recorder.ambient(v1, v2, v3);
+    g.ambient(v1, v2, v3);
+  }
+
+
+  /**
+   * ( begin auto-generated from specular.xml )
+   *
+   * Sets the specular color of the materials used for shapes drawn to the
+   * screen, which sets the color of hightlights. Specular refers to light
+   * which bounces off a surface in a perferred direction (rather than
+   * bouncing in all directions like a diffuse light). Used in combination
+   * with <b>emissive()</b>, <b>ambient()</b>, and <b>shininess()</b> in
+   * setting the material properties of shapes.
+   *
+   * ( end auto-generated )
+   *
+   * @webref lights_camera:material_properties
+   * @usage web_application
+   * @param rgb color to set
+   * @see PGraphics#lightSpecular(float, float, float)
+   * @see PGraphics#ambient(float, float, float)
+   * @see PGraphics#emissive(float, float, float)
+   * @see PGraphics#shininess(float)
+   */
+  public void specular(int rgb) {
+    if (recorder != null) recorder.specular(rgb);
+    g.specular(rgb);
+  }
+
+
+/**
+ * gray number specifying value between white and black
+ */
+  public void specular(float gray) {
+    if (recorder != null) recorder.specular(gray);
+    g.specular(gray);
+  }
+
+
+/**
+ * @param v1 red or hue value (depending on current color mode)
+ * @param v2 green or saturation value (depending on current color mode)
+ * @param v3 blue or brightness value (depending on current color mode)
+ */
+  public void specular(float v1, float v2, float v3) {
+    if (recorder != null) recorder.specular(v1, v2, v3);
+    g.specular(v1, v2, v3);
+  }
+
+
+  /**
+   * ( begin auto-generated from shininess.xml )
+   *
+   * Sets the amount of gloss in the surface of shapes. Used in combination
+   * with <b>ambient()</b>, <b>specular()</b>, and <b>emissive()</b> in
+   * setting the material properties of shapes.
+   *
+   * ( end auto-generated )
+   *
+   * @webref lights_camera:material_properties
+   * @usage web_application
+   * @param shine degree of shininess
+   * @see PGraphics#emissive(float, float, float)
+   * @see PGraphics#ambient(float, float, float)
+   * @see PGraphics#specular(float, float, float)
+   */
+  public void shininess(float shine) {
+    if (recorder != null) recorder.shininess(shine);
+    g.shininess(shine);
+  }
+
+
+  /**
+   * ( begin auto-generated from emissive.xml )
+   *
+   * Sets the emissive color of the material used for drawing shapes drawn to
+   * the screen. Used in combination with <b>ambient()</b>,
+   * <b>specular()</b>, and <b>shininess()</b> in setting the material
+   * properties of shapes.
+   *
+   * ( end auto-generated )
+   *
+   * @webref lights_camera:material_properties
+   * @usage web_application
+   * @param rgb color to set
    * @see PGraphics#ambient(float, float, float)
    * @see PGraphics#specular(float, float, float)
    * @see PGraphics#shininess(float)
    */
   public void emissive(int rgb) {
-    if (recorder != null)
-      recorder.emissive(rgb);
+    if (recorder != null) recorder.emissive(rgb);
     g.emissive(rgb);
   }
+
 
   /**
    * gray number specifying value between white and black
    */
   public void emissive(float gray) {
-    if (recorder != null)
-      recorder.emissive(gray);
+    if (recorder != null) recorder.emissive(gray);
     g.emissive(gray);
   }
 
+
   /**
-   * @param v1
-   *          red or hue value (depending on current color mode)
-   * @param v2
-   *          green or saturation value (depending on current color mode)
-   * @param v3
-   *          blue or brightness value (depending on current color mode)
+   * @param v1 red or hue value (depending on current color mode)
+   * @param v2 green or saturation value (depending on current color mode)
+   * @param v3 blue or brightness value (depending on current color mode)
    */
   public void emissive(float v1, float v2, float v3) {
-    if (recorder != null)
-      recorder.emissive(v1, v2, v3);
+    if (recorder != null) recorder.emissive(v1, v2, v3);
     g.emissive(v1, v2, v3);
   }
+
 
   /**
    * ( begin auto-generated from lights.xml )
@@ -13836,10 +13543,10 @@ public class PApplet implements PConstants {
    * Sets the default ambient light, directional light, falloff, and specular
    * values. The defaults are ambientLight(128, 128, 128) and
    * directionalLight(128, 128, 128, 0, 0, -1), lightFalloff(1, 0, 0), and
-   * lightSpecular(0, 0, 0). Lights need to be included in the draw() to remain
-   * persistent in a looping program. Placing them in the setup() of a looping
-   * program will cause them to only have an effect the first time through the
-   * loop.
+   * lightSpecular(0, 0, 0). Lights need to be included in the draw() to
+   * remain persistent in a looping program. Placing them in the setup() of a
+   * looping program will cause them to only have an effect the first time
+   * through the loop.
    *
    * ( end auto-generated )
    *
@@ -13848,23 +13555,22 @@ public class PApplet implements PConstants {
    * @see PGraphics#ambientLight(float, float, float, float, float, float)
    * @see PGraphics#directionalLight(float, float, float, float, float, float)
    * @see PGraphics#pointLight(float, float, float, float, float, float)
-   * @see PGraphics#spotLight(float, float, float, float, float, float, float,
-   *      float, float, float, float)
+   * @see PGraphics#spotLight(float, float, float, float, float, float, float, float, float, float, float)
    * @see PGraphics#noLights()
    */
   public void lights() {
-    if (recorder != null)
-      recorder.lights();
+    if (recorder != null) recorder.lights();
     g.lights();
   }
+
 
   /**
    * ( begin auto-generated from noLights.xml )
    *
    * Disable all lighting. Lighting is turned off by default and enabled with
-   * the <b>lights()</b> function. This function can be used to disable lighting
-   * so that 2D geometry (which does not require lighting) can be drawn after a
-   * set of lighted 3D geometry.
+   * the <b>lights()</b> function. This function can be used to disable
+   * lighting so that 2D geometry (which does not require lighting) can be
+   * drawn after a set of lighted 3D geometry.
    *
    * ( end auto-generated )
    *
@@ -13873,376 +13579,327 @@ public class PApplet implements PConstants {
    * @see PGraphics#lights()
    */
   public void noLights() {
-    if (recorder != null)
-      recorder.noLights();
+    if (recorder != null) recorder.noLights();
     g.noLights();
   }
+
 
   /**
    * ( begin auto-generated from ambientLight.xml )
    *
    * Adds an ambient light. Ambient light doesn't come from a specific
-   * direction, the rays have light have bounced around so much that objects are
-   * evenly lit from all sides. Ambient lights are almost always used in
-   * combination with other types of lights. Lights need to be included in the
-   * <b>draw()</b> to remain persistent in a looping program. Placing them in
-   * the <b>setup()</b> of a looping program will cause them to only have an
-   * effect the first time through the loop. The effect of the parameters is
-   * determined by the current color mode.
+   * direction, the rays have light have bounced around so much that objects
+   * are evenly lit from all sides. Ambient lights are almost always used in
+   * combination with other types of lights. Lights need to be included in
+   * the <b>draw()</b> to remain persistent in a looping program. Placing
+   * them in the <b>setup()</b> of a looping program will cause them to only
+   * have an effect the first time through the loop. The effect of the
+   * parameters is determined by the current color mode.
    *
    * ( end auto-generated )
    *
    * @webref lights_camera:lights
    * @usage web_application
-   * @param v1
-   *          red or hue value (depending on current color mode)
-   * @param v2
-   *          green or saturation value (depending on current color mode)
-   * @param v3
-   *          blue or brightness value (depending on current color mode)
+   * @param v1 red or hue value (depending on current color mode)
+   * @param v2 green or saturation value (depending on current color mode)
+   * @param v3 blue or brightness value (depending on current color mode)
    * @see PGraphics#lights()
    * @see PGraphics#directionalLight(float, float, float, float, float, float)
    * @see PGraphics#pointLight(float, float, float, float, float, float)
-   * @see PGraphics#spotLight(float, float, float, float, float, float, float,
-   *      float, float, float, float)
+   * @see PGraphics#spotLight(float, float, float, float, float, float, float, float, float, float, float)
    */
   public void ambientLight(float v1, float v2, float v3) {
-    if (recorder != null)
-      recorder.ambientLight(v1, v2, v3);
+    if (recorder != null) recorder.ambientLight(v1, v2, v3);
     g.ambientLight(v1, v2, v3);
   }
 
+
   /**
-   * @param x
-   *          x-coordinate of the light
-   * @param y
-   *          y-coordinate of the light
-   * @param z
-   *          z-coordinate of the light
+   * @param x x-coordinate of the light
+   * @param y y-coordinate of the light
+   * @param z z-coordinate of the light
    */
-  public void ambientLight(float v1, float v2, float v3, float x, float y,
-                           float z) {
-    if (recorder != null)
-      recorder.ambientLight(v1, v2, v3, x, y, z);
+  public void ambientLight(float v1, float v2, float v3,
+                           float x, float y, float z) {
+    if (recorder != null) recorder.ambientLight(v1, v2, v3, x, y, z);
     g.ambientLight(v1, v2, v3, x, y, z);
   }
+
 
   /**
    * ( begin auto-generated from directionalLight.xml )
    *
-   * Adds a directional light. Directional light comes from one direction and is
-   * stronger when hitting a surface squarely and weaker if it hits at a a
-   * gentle angle. After hitting a surface, a directional lights scatters in all
-   * directions. Lights need to be included in the <b>draw()</b> to remain
-   * persistent in a looping program. Placing them in the <b>setup()</b> of a
-   * looping program will cause them to only have an effect the first time
-   * through the loop. The affect of the <b>v1</b>, <b>v2</b>, and <b>v3</b>
-   * parameters is determined by the current color mode. The <b>nx</b>,
-   * <b>ny</b>, and <b>nz</b> parameters specify the direction the light is
-   * facing. For example, setting <b>ny</b> to -1 will cause the geometry to be
-   * lit from below (the light is facing directly upward).
+   * Adds a directional light. Directional light comes from one direction and
+   * is stronger when hitting a surface squarely and weaker if it hits at a a
+   * gentle angle. After hitting a surface, a directional lights scatters in
+   * all directions. Lights need to be included in the <b>draw()</b> to
+   * remain persistent in a looping program. Placing them in the
+   * <b>setup()</b> of a looping program will cause them to only have an
+   * effect the first time through the loop. The affect of the <b>v1</b>,
+   * <b>v2</b>, and <b>v3</b> parameters is determined by the current color
+   * mode. The <b>nx</b>, <b>ny</b>, and <b>nz</b> parameters specify the
+   * direction the light is facing. For example, setting <b>ny</b> to -1 will
+   * cause the geometry to be lit from below (the light is facing directly upward).
    *
    * ( end auto-generated )
    *
    * @webref lights_camera:lights
    * @usage web_application
-   * @param v1
-   *          red or hue value (depending on current color mode)
-   * @param v2
-   *          green or saturation value (depending on current color mode)
-   * @param v3
-   *          blue or brightness value (depending on current color mode)
-   * @param nx
-   *          direction along the x-axis
-   * @param ny
-   *          direction along the y-axis
-   * @param nz
-   *          direction along the z-axis
+   * @param v1 red or hue value (depending on current color mode)
+   * @param v2 green or saturation value (depending on current color mode)
+   * @param v3 blue or brightness value (depending on current color mode)
+   * @param nx direction along the x-axis
+   * @param ny direction along the y-axis
+   * @param nz direction along the z-axis
    * @see PGraphics#lights()
    * @see PGraphics#ambientLight(float, float, float, float, float, float)
    * @see PGraphics#pointLight(float, float, float, float, float, float)
-   * @see PGraphics#spotLight(float, float, float, float, float, float, float,
-   *      float, float, float, float)
+   * @see PGraphics#spotLight(float, float, float, float, float, float, float, float, float, float, float)
    */
-  public void directionalLight(float v1, float v2, float v3, float nx,
-                               float ny, float nz) {
-    if (recorder != null)
-      recorder.directionalLight(v1, v2, v3, nx, ny, nz);
+  public void directionalLight(float v1, float v2, float v3,
+                               float nx, float ny, float nz) {
+    if (recorder != null) recorder.directionalLight(v1, v2, v3, nx, ny, nz);
     g.directionalLight(v1, v2, v3, nx, ny, nz);
   }
+
 
   /**
    * ( begin auto-generated from pointLight.xml )
    *
    * Adds a point light. Lights need to be included in the <b>draw()</b> to
-   * remain persistent in a looping program. Placing them in the <b>setup()</b>
-   * of a looping program will cause them to only have an effect the first time
-   * through the loop. The affect of the <b>v1</b>, <b>v2</b>, and <b>v3</b>
-   * parameters is determined by the current color mode. The <b>x</b>, <b>y</b>,
-   * and <b>z</b> parameters set the position of the light.
+   * remain persistent in a looping program. Placing them in the
+   * <b>setup()</b> of a looping program will cause them to only have an
+   * effect the first time through the loop. The affect of the <b>v1</b>,
+   * <b>v2</b>, and <b>v3</b> parameters is determined by the current color
+   * mode. The <b>x</b>, <b>y</b>, and <b>z</b> parameters set the position
+   * of the light.
    *
    * ( end auto-generated )
    *
    * @webref lights_camera:lights
    * @usage web_application
-   * @param v1
-   *          red or hue value (depending on current color mode)
-   * @param v2
-   *          green or saturation value (depending on current color mode)
-   * @param v3
-   *          blue or brightness value (depending on current color mode)
-   * @param x
-   *          x-coordinate of the light
-   * @param y
-   *          y-coordinate of the light
-   * @param z
-   *          z-coordinate of the light
+   * @param v1 red or hue value (depending on current color mode)
+   * @param v2 green or saturation value (depending on current color mode)
+   * @param v3 blue or brightness value (depending on current color mode)
+   * @param x x-coordinate of the light
+   * @param y y-coordinate of the light
+   * @param z z-coordinate of the light
    * @see PGraphics#lights()
    * @see PGraphics#directionalLight(float, float, float, float, float, float)
    * @see PGraphics#ambientLight(float, float, float, float, float, float)
-   * @see PGraphics#spotLight(float, float, float, float, float, float, float,
-   *      float, float, float, float)
+   * @see PGraphics#spotLight(float, float, float, float, float, float, float, float, float, float, float)
    */
-  public void pointLight(float v1, float v2, float v3, float x, float y, float z) {
-    if (recorder != null)
-      recorder.pointLight(v1, v2, v3, x, y, z);
+  public void pointLight(float v1, float v2, float v3,
+                         float x, float y, float z) {
+    if (recorder != null) recorder.pointLight(v1, v2, v3, x, y, z);
     g.pointLight(v1, v2, v3, x, y, z);
   }
+
 
   /**
    * ( begin auto-generated from spotLight.xml )
    *
    * Adds a spot light. Lights need to be included in the <b>draw()</b> to
-   * remain persistent in a looping program. Placing them in the <b>setup()</b>
-   * of a looping program will cause them to only have an effect the first time
-   * through the loop. The affect of the <b>v1</b>, <b>v2</b>, and <b>v3</b>
-   * parameters is determined by the current color mode. The <b>x</b>, <b>y</b>,
-   * and <b>z</b> parameters specify the position of the light and <b>nx</b>,
-   * <b>ny</b>, <b>nz</b> specify the direction or light. The <b>angle</b>
-   * parameter affects angle of the spotlight cone.
+   * remain persistent in a looping program. Placing them in the
+   * <b>setup()</b> of a looping program will cause them to only have an
+   * effect the first time through the loop. The affect of the <b>v1</b>,
+   * <b>v2</b>, and <b>v3</b> parameters is determined by the current color
+   * mode. The <b>x</b>, <b>y</b>, and <b>z</b> parameters specify the
+   * position of the light and <b>nx</b>, <b>ny</b>, <b>nz</b> specify the
+   * direction or light. The <b>angle</b> parameter affects angle of the
+   * spotlight cone.
    *
    * ( end auto-generated )
    *
    * @webref lights_camera:lights
    * @usage web_application
-   * @param v1
-   *          red or hue value (depending on current color mode)
-   * @param v2
-   *          green or saturation value (depending on current color mode)
-   * @param v3
-   *          blue or brightness value (depending on current color mode)
-   * @param x
-   *          x-coordinate of the light
-   * @param y
-   *          y-coordinate of the light
-   * @param z
-   *          z-coordinate of the light
-   * @param nx
-   *          direction along the x axis
-   * @param ny
-   *          direction along the y axis
-   * @param nz
-   *          direction along the z axis
-   * @param angle
-   *          angle of the spotlight cone
-   * @param concentration
-   *          exponent determining the center bias of the cone
+   * @param v1 red or hue value (depending on current color mode)
+   * @param v2 green or saturation value (depending on current color mode)
+   * @param v3 blue or brightness value (depending on current color mode)
+   * @param x x-coordinate of the light
+   * @param y y-coordinate of the light
+   * @param z z-coordinate of the light
+   * @param nx direction along the x axis
+   * @param ny direction along the y axis
+   * @param nz direction along the z axis
+   * @param angle angle of the spotlight cone
+   * @param concentration exponent determining the center bias of the cone
    * @see PGraphics#lights()
    * @see PGraphics#directionalLight(float, float, float, float, float, float)
    * @see PGraphics#pointLight(float, float, float, float, float, float)
    * @see PGraphics#ambientLight(float, float, float, float, float, float)
    */
-  public void spotLight(float v1, float v2, float v3, float x, float y,
-                        float z, float nx, float ny, float nz, float angle,
-                        float concentration) {
-    if (recorder != null)
-      recorder.spotLight(v1, v2, v3, x, y, z, nx, ny, nz, angle, concentration);
+  public void spotLight(float v1, float v2, float v3,
+                        float x, float y, float z,
+                        float nx, float ny, float nz,
+                        float angle, float concentration) {
+    if (recorder != null) recorder.spotLight(v1, v2, v3, x, y, z, nx, ny, nz, angle, concentration);
     g.spotLight(v1, v2, v3, x, y, z, nx, ny, nz, angle, concentration);
   }
+
 
   /**
    * ( begin auto-generated from lightFalloff.xml )
    *
-   * Sets the falloff rates for point lights, spot lights, and ambient lights.
-   * The parameters are used to determine the falloff with the following
-   * equation:<br />
-   * <br />
-   * d = distance from light position to vertex position<br />
-   * falloff = 1 / (CONSTANT + d * LINEAR + (d*d) * QUADRATIC)<br />
-   * <br />
-   * Like <b>fill()</b>, it affects only the elements which are created after it
-   * in the code. The default value if <b>LightFalloff(1.0, 0.0, 0.0)</b>.
-   * Thinking about an ambient light with a falloff can be tricky. It is used,
-   * for example, if you wanted a region of your scene to be lit ambiently one
-   * color and another region to be lit ambiently by another color, you would
-   * use an ambient light with location and falloff. You can think of it as a
-   * point light that doesn't care which direction a surface is facing.
+   * Sets the falloff rates for point lights, spot lights, and ambient
+   * lights. The parameters are used to determine the falloff with the
+   * following equation:<br /><br />d = distance from light position to
+   * vertex position<br />falloff = 1 / (CONSTANT + d * LINEAR + (d*d) *
+   * QUADRATIC)<br /><br />Like <b>fill()</b>, it affects only the elements
+   * which are created after it in the code. The default value if
+   * <b>LightFalloff(1.0, 0.0, 0.0)</b>. Thinking about an ambient light with
+   * a falloff can be tricky. It is used, for example, if you wanted a region
+   * of your scene to be lit ambiently one color and another region to be lit
+   * ambiently by another color, you would use an ambient light with location
+   * and falloff. You can think of it as a point light that doesn't care
+   * which direction a surface is facing.
    *
    * ( end auto-generated )
    *
    * @webref lights_camera:lights
    * @usage web_application
-   * @param constant
-   *          constant value or determining falloff
-   * @param linear
-   *          linear value for determining falloff
-   * @param quadratic
-   *          quadratic value for determining falloff
+   * @param constant constant value or determining falloff
+   * @param linear linear value for determining falloff
+   * @param quadratic quadratic value for determining falloff
    * @see PGraphics#lights()
    * @see PGraphics#ambientLight(float, float, float, float, float, float)
    * @see PGraphics#pointLight(float, float, float, float, float, float)
-   * @see PGraphics#spotLight(float, float, float, float, float, float, float,
-   *      float, float, float, float)
+   * @see PGraphics#spotLight(float, float, float, float, float, float, float, float, float, float, float)
    * @see PGraphics#lightSpecular(float, float, float)
    */
   public void lightFalloff(float constant, float linear, float quadratic) {
-    if (recorder != null)
-      recorder.lightFalloff(constant, linear, quadratic);
+    if (recorder != null) recorder.lightFalloff(constant, linear, quadratic);
     g.lightFalloff(constant, linear, quadratic);
   }
+
 
   /**
    * ( begin auto-generated from lightSpecular.xml )
    *
-   * Sets the specular color for lights. Like <b>fill()</b>, it affects only the
-   * elements which are created after it in the code. Specular refers to light
-   * which bounces off a surface in a perferred direction (rather than bouncing
-   * in all directions like a diffuse light) and is used for creating
-   * highlights. The specular quality of a light interacts with the specular
-   * material qualities set through the <b>specular()</b> and <b>shininess()</b>
-   * functions.
+   * Sets the specular color for lights. Like <b>fill()</b>, it affects only
+   * the elements which are created after it in the code. Specular refers to
+   * light which bounces off a surface in a perferred direction (rather than
+   * bouncing in all directions like a diffuse light) and is used for
+   * creating highlights. The specular quality of a light interacts with the
+   * specular material qualities set through the <b>specular()</b> and
+   * <b>shininess()</b> functions.
    *
    * ( end auto-generated )
    *
    * @webref lights_camera:lights
    * @usage web_application
-   * @param v1
-   *          red or hue value (depending on current color mode)
-   * @param v2
-   *          green or saturation value (depending on current color mode)
-   * @param v3
-   *          blue or brightness value (depending on current color mode)
+   * @param v1 red or hue value (depending on current color mode)
+   * @param v2 green or saturation value (depending on current color mode)
+   * @param v3 blue or brightness value (depending on current color mode)
    * @see PGraphics#specular(float, float, float)
    * @see PGraphics#lights()
    * @see PGraphics#ambientLight(float, float, float, float, float, float)
    * @see PGraphics#pointLight(float, float, float, float, float, float)
-   * @see PGraphics#spotLight(float, float, float, float, float, float, float,
-   *      float, float, float, float)
+   * @see PGraphics#spotLight(float, float, float, float, float, float, float, float, float, float, float)
    */
   public void lightSpecular(float v1, float v2, float v3) {
-    if (recorder != null)
-      recorder.lightSpecular(v1, v2, v3);
+    if (recorder != null) recorder.lightSpecular(v1, v2, v3);
     g.lightSpecular(v1, v2, v3);
   }
+
 
   /**
    * ( begin auto-generated from background.xml )
    *
-   * The <b>background()</b> function sets the color used for the background of
-   * the Processing window. The default background is light gray. In the
-   * <b>draw()</b> function, the background color is used to clear the display
-   * window at the beginning of each frame. <br/>
-   * <br/>
-   * An image can also be used as the background for a sketch, however its width
-   * and height must be the same size as the sketch window. To resize an image
-   * 'b' to the size of the sketch window, use b.resize(width, height). <br/>
-   * <br/>
-   * Images used as background will ignore the current <b>tint()</b> setting. <br/>
-   * <br/>
+   * The <b>background()</b> function sets the color used for the background
+   * of the Processing window. The default background is light gray. In the
+   * <b>draw()</b> function, the background color is used to clear the
+   * display window at the beginning of each frame.
+   * <br/> <br/>
+   * An image can also be used as the background for a sketch, however its
+   * width and height must be the same size as the sketch window. To resize
+   * an image 'b' to the size of the sketch window, use b.resize(width, height).
+   * <br/> <br/>
+   * Images used as background will ignore the current <b>tint()</b> setting.
+   * <br/> <br/>
    * It is not possible to use transparency (alpha) in background colors with
-   * the main drawing surface, however they will work properly with
-   * <b>createGraphics()</b>.
+   * the main drawing surface, however they will work properly with <b>createGraphics()</b>.
    *
    * ( end auto-generated )
    *
    * <h3>Advanced</h3>
-   * <p>
-   * Clear the background with a color that includes an alpha value. This can
+   * <p>Clear the background with a color that includes an alpha value. This can
    * only be used with objects created by createGraphics(), because the main
-   * drawing surface cannot be set transparent.
-   * </p>
-   * <p>
-   * It might be tempting to use this function to partially clear the screen on
-   * each frame, however that's not how this function works. When calling
+   * drawing surface cannot be set transparent.</p>
+   * <p>It might be tempting to use this function to partially clear the screen
+   * on each frame, however that's not how this function works. When calling
    * background(), the pixels will be replaced with pixels that have that level
    * of transparency. To do a semi-transparent overlay, use fill() with alpha
-   * and draw a rectangle.
-   * </p>
+   * and draw a rectangle.</p>
    *
    * @webref color:setting
    * @usage web_application
-   * @param rgb
-   *          any value of the color datatype
+   * @param rgb any value of the color datatype
    * @see PGraphics#stroke(float)
    * @see PGraphics#fill(float)
    * @see PGraphics#tint(float)
    * @see PGraphics#colorMode(int)
    */
   public void background(int rgb) {
-    if (recorder != null)
-      recorder.background(rgb);
+    if (recorder != null) recorder.background(rgb);
     g.background(rgb);
   }
 
+
   /**
-   * @param alpha
-   *          opacity of the background
+   * @param alpha opacity of the background
    */
   public void background(int rgb, float alpha) {
-    if (recorder != null)
-      recorder.background(rgb, alpha);
+    if (recorder != null) recorder.background(rgb, alpha);
     g.background(rgb, alpha);
   }
 
+
   /**
-   * @param gray
-   *          specifies a value between white and black
+   * @param gray specifies a value between white and black
    */
   public void background(float gray) {
-    if (recorder != null)
-      recorder.background(gray);
+    if (recorder != null) recorder.background(gray);
     g.background(gray);
   }
 
+
   public void background(float gray, float alpha) {
-    if (recorder != null)
-      recorder.background(gray, alpha);
+    if (recorder != null) recorder.background(gray, alpha);
     g.background(gray, alpha);
   }
 
+
   /**
-   * @param v1
-   *          red or hue value (depending on the current color mode)
-   * @param v2
-   *          green or saturation value (depending on the current color mode)
-   * @param v3
-   *          blue or brightness value (depending on the current color mode)
+   * @param v1 red or hue value (depending on the current color mode)
+   * @param v2 green or saturation value (depending on the current color mode)
+   * @param v3 blue or brightness value (depending on the current color mode)
    */
   public void background(float v1, float v2, float v3) {
-    if (recorder != null)
-      recorder.background(v1, v2, v3);
+    if (recorder != null) recorder.background(v1, v2, v3);
     g.background(v1, v2, v3);
   }
 
+
   public void background(float v1, float v2, float v3, float alpha) {
-    if (recorder != null)
-      recorder.background(v1, v2, v3, alpha);
+    if (recorder != null) recorder.background(v1, v2, v3, alpha);
     g.background(v1, v2, v3, alpha);
   }
+
 
   /**
    * @webref color:setting
    */
   public void clear() {
-    if (recorder != null)
-      recorder.clear();
+    if (recorder != null) recorder.clear();
     g.clear();
   }
 
+
   /**
-   * Takes an RGB or ARGB image and sets it as the background. The width and
-   * height of the image must be the same size as the sketch. Use
-   * image.resize(width, height) to make short work of such a task.<br/>
+   * Takes an RGB or ARGB image and sets it as the background.
+   * The width and height of the image must be the same size as the sketch.
+   * Use image.resize(width, height) to make short work of such a task.<br/>
    * <br/>
    * Note that even if the image is set as RGB, the high 8 bits of each pixel
    * should be set opaque (0xFF000000) because the image data will be copied
@@ -14251,80 +13908,70 @@ public class PApplet implements PConstants {
    * <br/>
    * When using 3D, this will also clear the zbuffer (if it exists).
    *
-   * @param image
-   *          PImage to set as background (must be same size as the sketch
-   *          window)
+   * @param image PImage to set as background (must be same size as the sketch window)
    */
   public void background(PImage image) {
-    if (recorder != null)
-      recorder.background(image);
+    if (recorder != null) recorder.background(image);
     g.background(image);
   }
+
 
   /**
    * ( begin auto-generated from colorMode.xml )
    *
    * Changes the way Processing interprets color data. By default, the
    * parameters for <b>fill()</b>, <b>stroke()</b>, <b>background()</b>, and
-   * <b>color()</b> are defined by values between 0 and 255 using the RGB color
-   * model. The <b>colorMode()</b> function is used to change the numerical
-   * range used for specifying colors and to switch color systems. For example,
-   * calling <b>colorMode(RGB, 1.0)</b> will specify that values are specified
-   * between 0 and 1. The limits for defining colors are altered by setting the
-   * parameters range1, range2, range3, and range 4.
+   * <b>color()</b> are defined by values between 0 and 255 using the RGB
+   * color model. The <b>colorMode()</b> function is used to change the
+   * numerical range used for specifying colors and to switch color systems.
+   * For example, calling <b>colorMode(RGB, 1.0)</b> will specify that values
+   * are specified between 0 and 1. The limits for defining colors are
+   * altered by setting the parameters range1, range2, range3, and range 4.
    *
    * ( end auto-generated )
    *
    * @webref color:setting
    * @usage web_application
-   * @param mode
-   *          Either RGB or HSB, corresponding to Red/Green/Blue and
-   *          Hue/Saturation/Brightness
+   * @param mode Either RGB or HSB, corresponding to Red/Green/Blue and Hue/Saturation/Brightness
    * @see PGraphics#background(float)
    * @see PGraphics#fill(float)
    * @see PGraphics#stroke(float)
    */
   public void colorMode(int mode) {
-    if (recorder != null)
-      recorder.colorMode(mode);
+    if (recorder != null) recorder.colorMode(mode);
     g.colorMode(mode);
   }
 
+
   /**
-   * @param max
-   *          range for all color elements
+   * @param max range for all color elements
    */
   public void colorMode(int mode, float max) {
-    if (recorder != null)
-      recorder.colorMode(mode, max);
+    if (recorder != null) recorder.colorMode(mode, max);
     g.colorMode(mode, max);
   }
 
+
   /**
-   * @param max1
-   *          range for the red or hue depending on the current color mode
-   * @param max2
-   *          range for the green or saturation depending on the current color
-   *          mode
-   * @param max3
-   *          range for the blue or brightness depending on the current color
-   *          mode
+   * @param max1 range for the red or hue depending on the current color mode
+   * @param max2 range for the green or saturation depending on the current color mode
+   * @param max3 range for the blue or brightness depending on the current color mode
    */
   public void colorMode(int mode, float max1, float max2, float max3) {
-    if (recorder != null)
-      recorder.colorMode(mode, max1, max2, max3);
+    if (recorder != null) recorder.colorMode(mode, max1, max2, max3);
     g.colorMode(mode, max1, max2, max3);
   }
 
+
   /**
-   * @param maxA
-   *          range for the alpha
+   * @param maxA range for the alpha
    */
-  public void colorMode(int mode, float max1, float max2, float max3, float maxA) {
-    if (recorder != null)
-      recorder.colorMode(mode, max1, max2, max3, maxA);
+  public void colorMode(int mode,
+                        float max1, float max2, float max3, float maxA) {
+    if (recorder != null) recorder.colorMode(mode, max1, max2, max3, maxA);
     g.colorMode(mode, max1, max2, max3, maxA);
   }
+
 
   /**
    * ( begin auto-generated from alpha.xml )
@@ -14332,11 +13979,9 @@ public class PApplet implements PConstants {
    * Extracts the alpha value from a color.
    *
    * ( end auto-generated )
-   *
    * @webref color:creating_reading
    * @usage web_application
-   * @param rgb
-   *          any value of the color datatype
+   * @param rgb any value of the color datatype
    * @see PGraphics#red(int)
    * @see PGraphics#green(int)
    * @see PGraphics#blue(int)
@@ -14348,31 +13993,25 @@ public class PApplet implements PConstants {
     return g.alpha(rgb);
   }
 
+
   /**
    * ( begin auto-generated from red.xml )
    *
    * Extracts the red value from a color, scaled to match current
-   * <b>colorMode()</b>. This value is always returned as a float so be careful
-   * not to assign it to an int value.<br />
-   * <br />
-   * The red() function is easy to use and undestand, but is slower than another
-   * technique. To achieve the same results when working in <b>colorMode(RGB,
-   * 255)</b>, but with greater speed, use the &gt;&gt; (right shift) operator
-   * with a bit mask. For example, the following two lines of code are
-   * equivalent:<br
-   * />
-   *
-   * <pre>
-   * float r1 = red(myColor);<br />float r2 = myColor &gt;&gt; 16
-   * &amp; 0xFF;
-   * </pre>
+   * <b>colorMode()</b>. This value is always returned as a  float so be
+   * careful not to assign it to an int value.<br /><br />The red() function
+   * is easy to use and undestand, but is slower than another technique. To
+   * achieve the same results when working in <b>colorMode(RGB, 255)</b>, but
+   * with greater speed, use the &gt;&gt; (right shift) operator with a bit
+   * mask. For example, the following two lines of code are equivalent:<br
+   * /><pre>float r1 = red(myColor);<br />float r2 = myColor &gt;&gt; 16
+   * &amp; 0xFF;</pre>
    *
    * ( end auto-generated )
    *
    * @webref color:creating_reading
    * @usage web_application
-   * @param rgb
-   *          any value of the color datatype
+   * @param rgb any value of the color datatype
    * @see PGraphics#green(int)
    * @see PGraphics#blue(int)
    * @see PGraphics#alpha(int)
@@ -14385,30 +14024,25 @@ public class PApplet implements PConstants {
     return g.red(rgb);
   }
 
+
   /**
    * ( begin auto-generated from green.xml )
    *
    * Extracts the green value from a color, scaled to match current
-   * <b>colorMode()</b>. This value is always returned as a float so be careful
-   * not to assign it to an int value.<br />
-   * <br />
-   * The <b>green()</b> function is easy to use and undestand, but is slower
-   * than another technique. To achieve the same results when working in
-   * <b>colorMode(RGB, 255)</b>, but with greater speed, use the &gt;&gt; (right
-   * shift) operator with a bit mask. For example, the following two lines of
-   * code are equivalent:<br />
-   *
-   * <pre>
-   * float r1 = green(myColor);<br />float r2 =
-   * myColor &gt;&gt; 8 &amp; 0xFF;
-   * </pre>
+   * <b>colorMode()</b>. This value is always returned as a  float so be
+   * careful not to assign it to an int value.<br /><br />The <b>green()</b>
+   * function is easy to use and undestand, but is slower than another
+   * technique. To achieve the same results when working in <b>colorMode(RGB,
+   * 255)</b>, but with greater speed, use the &gt;&gt; (right shift)
+   * operator with a bit mask. For example, the following two lines of code
+   * are equivalent:<br /><pre>float r1 = green(myColor);<br />float r2 =
+   * myColor &gt;&gt; 8 &amp; 0xFF;</pre>
    *
    * ( end auto-generated )
    *
    * @webref color:creating_reading
    * @usage web_application
-   * @param rgb
-   *          any value of the color datatype
+   * @param rgb any value of the color datatype
    * @see PGraphics#red(int)
    * @see PGraphics#blue(int)
    * @see PGraphics#alpha(int)
@@ -14421,30 +14055,25 @@ public class PApplet implements PConstants {
     return g.green(rgb);
   }
 
+
   /**
    * ( begin auto-generated from blue.xml )
    *
    * Extracts the blue value from a color, scaled to match current
-   * <b>colorMode()</b>. This value is always returned as a float so be careful
-   * not to assign it to an int value.<br />
-   * <br />
-   * The <b>blue()</b> function is easy to use and undestand, but is slower than
-   * another technique. To achieve the same results when working in
-   * <b>colorMode(RGB, 255)</b>, but with greater speed, use a bit mask to
-   * remove the other color components. For example, the following two lines of
-   * code are equivalent:<br />
-   *
-   * <pre>
-   * float r1 = blue(myColor);<br />float r2 = myColor
-   * &amp; 0xFF;
-   * </pre>
+   * <b>colorMode()</b>. This value is always returned as a  float so be
+   * careful not to assign it to an int value.<br /><br />The <b>blue()</b>
+   * function is easy to use and undestand, but is slower than another
+   * technique. To achieve the same results when working in <b>colorMode(RGB,
+   * 255)</b>, but with greater speed, use a bit mask to remove the other
+   * color components. For example, the following two lines of code are
+   * equivalent:<br /><pre>float r1 = blue(myColor);<br />float r2 = myColor
+   * &amp; 0xFF;</pre>
    *
    * ( end auto-generated )
    *
    * @webref color:creating_reading
    * @usage web_application
-   * @param rgb
-   *          any value of the color datatype
+   * @param rgb any value of the color datatype
    * @see PGraphics#red(int)
    * @see PGraphics#green(int)
    * @see PGraphics#alpha(int)
@@ -14457,17 +14086,16 @@ public class PApplet implements PConstants {
     return g.blue(rgb);
   }
 
+
   /**
    * ( begin auto-generated from hue.xml )
    *
    * Extracts the hue value from a color.
    *
    * ( end auto-generated )
-   *
    * @webref color:creating_reading
    * @usage web_application
-   * @param rgb
-   *          any value of the color datatype
+   * @param rgb any value of the color datatype
    * @see PGraphics#red(int)
    * @see PGraphics#green(int)
    * @see PGraphics#blue(int)
@@ -14479,17 +14107,16 @@ public class PApplet implements PConstants {
     return g.hue(rgb);
   }
 
+
   /**
    * ( begin auto-generated from saturation.xml )
    *
    * Extracts the saturation value from a color.
    *
    * ( end auto-generated )
-   *
    * @webref color:creating_reading
    * @usage web_application
-   * @param rgb
-   *          any value of the color datatype
+   * @param rgb any value of the color datatype
    * @see PGraphics#red(int)
    * @see PGraphics#green(int)
    * @see PGraphics#blue(int)
@@ -14501,6 +14128,7 @@ public class PApplet implements PConstants {
     return g.saturation(rgb);
   }
 
+
   /**
    * ( begin auto-generated from brightness.xml )
    *
@@ -14510,8 +14138,7 @@ public class PApplet implements PConstants {
    *
    * @webref color:creating_reading
    * @usage web_application
-   * @param rgb
-   *          any value of the color datatype
+   * @param rgb any value of the color datatype
    * @see PGraphics#red(int)
    * @see PGraphics#green(int)
    * @see PGraphics#blue(int)
@@ -14523,66 +14150,35 @@ public class PApplet implements PConstants {
     return g.brightness(rgb);
   }
 
+
   /**
-<<<<<<< HEAD
    * @nowebref
    * Interpolate between two colors. Like lerp(), but for the
    * individual color components of a color supplied as an int value.
-=======
-   * ( begin auto-generated from lerpColor.xml )
-   *
-   * Calculates a color or colors between two color at a specific increment. The
-   * <b>amt</b> parameter is the amount to interpolate between the two values
-   * where 0.0 equal to the first point, 0.1 is very near the first point, 0.5
-   * is half-way in between, etc.
-   *
-   * ( end auto-generated )
-   *
-   * @webref color:creating_reading
-   * @usage web_application
-   * @param c1
-   *          interpolate from this color
-   * @param c2
-   *          interpolate to this color
-   * @param amt
-   *          between 0.0 and 1.0
-   * @see PImage#blendColor(int, int, int)
-   * @see PGraphics#color(float, float, float, float)
-   * @see PApplet#lerp(float, float, float)
-   */
-  public int lerpColor(int c1, int c2, float amt) {
-    return g.lerpColor(c1, c2, amt);
-  }
-
-  /**
-   * @nowebref Interpolate between two colors. Like lerp(), but for the
-   *           individual color components of a color supplied as an int value.
->>>>>>> Rmaster
    */
   static public int lerpColor(int c1, int c2, float amt, int mode) {
     return PGraphics.lerpColor(c1, c2, amt, mode);
   }
 
+
   /**
    * Display a warning that the specified method is only available with 3D.
-   *
-   * @param method
-   *          The method name (no parentheses)
+   * @param method The method name (no parentheses)
    */
   static public void showDepthWarning(String method) {
     PGraphics.showDepthWarning(method);
   }
 
+
   /**
    * Display a warning that the specified method that takes x, y, z parameters
    * can only be used with x and y parameters in this renderer.
-   *
-   * @param method
-   *          The method name (no parentheses)
+   * @param method The method name (no parentheses)
    */
   static public void showDepthWarningXYZ(String method) {
     PGraphics.showDepthWarningXYZ(method);
   }
+
 
   /**
    * Display a warning that the specified method is simply unavailable.
@@ -14590,6 +14186,7 @@ public class PApplet implements PConstants {
   static public void showMethodWarning(String method) {
     PGraphics.showMethodWarning(method);
   }
+
 
   /**
    * Error that a particular variation of a method is unavailable (even though
@@ -14600,6 +14197,7 @@ public class PApplet implements PConstants {
     PGraphics.showVariationWarning(str);
   }
 
+
   /**
    * Display a warning that the specified method is not implemented, meaning
    * that it could be either a completely missing function, although other
@@ -14609,53 +14207,54 @@ public class PApplet implements PConstants {
     PGraphics.showMissingWarning(method);
   }
 
+
   /**
    * ( begin auto-generated from PImage_get.xml )
    *
    * Reads the color of any pixel or grabs a section of an image. If no
    * parameters are specified, the entire image is returned. Use the <b>x</b>
-   * and <b>y</b> parameters to get the value of one pixel. Get a section of the
-   * display window by specifying an additional <b>width</b> and <b>height</b>
-   * parameter. When getting an image, the <b>x</b> and <b>y</b> parameters
-   * define the coordinates for the upper-left corner of the image, regardless
-   * of the current <b>imageMode()</b>.<br />
+   * and <b>y</b> parameters to get the value of one pixel. Get a section of
+   * the display window by specifying an additional <b>width</b> and
+   * <b>height</b> parameter. When getting an image, the <b>x</b> and
+   * <b>y</b> parameters define the coordinates for the upper-left corner of
+   * the image, regardless of the current <b>imageMode()</b>.<br />
    * <br />
-   * If the pixel requested is outside of the image window, black is returned.
-   * The numbers returned are scaled according to the current color ranges, but
-   * only RGB values are returned by this function. For example, even though you
-   * may have drawn a shape with <b>colorMode(HSB)</b>, the numbers returned
-   * will be in RGB format.<br />
+   * If the pixel requested is outside of the image window, black is
+   * returned. The numbers returned are scaled according to the current color
+   * ranges, but only RGB values are returned by this function. For example,
+   * even though you may have drawn a shape with <b>colorMode(HSB)</b>, the
+   * numbers returned will be in RGB format.<br />
    * <br />
-   * Getting the color of a single pixel with <b>get(x, y)</b> is easy, but not
-   * as fast as grabbing the data directly from <b>pixels[]</b>. The equivalent
-   * statement to <b>get(x, y)</b> using <b>pixels[]</b> is
-   * <b>pixels[y*width+x]</b>. See the reference for <b>pixels[]</b> for more
-   * information.
+   * Getting the color of a single pixel with <b>get(x, y)</b> is easy, but
+   * not as fast as grabbing the data directly from <b>pixels[]</b>. The
+   * equivalent statement to <b>get(x, y)</b> using <b>pixels[]</b> is
+   * <b>pixels[y*width+x]</b>. See the reference for <b>pixels[]</b> for more information.
    *
    * ( end auto-generated )
    *
-   * <h3>Advanced</h3> Returns an ARGB "color" type (a packed 32 bit int with
-   * the color. If the coordinate is outside the image, zero is returned (black,
-   * but completely transparent).
+   * <h3>Advanced</h3>
+   * Returns an ARGB "color" type (a packed 32 bit int with the color.
+   * If the coordinate is outside the image, zero is returned
+   * (black, but completely transparent).
    * <P>
-   * If the image is in RGB format (i.e. on a PVideo object), the value will get
-   * its high bits set, just to avoid cases where they haven't been set already.
+   * If the image is in RGB format (i.e. on a PVideo object),
+   * the value will get its high bits set, just to avoid cases where
+   * they haven't been set already.
    * <P>
-   * If the image is in ALPHA format, this returns a white with its alpha value
-   * set.
+   * If the image is in ALPHA format, this returns a white with its
+   * alpha value set.
    * <P>
-   * This function is included primarily for beginners. It is quite slow because
-   * it has to check to see if the x, y that was provided is inside the bounds,
-   * and then has to check to see what image type it is. If you want things to
-   * be more efficient, access the pixels[] array directly.
+   * This function is included primarily for beginners. It is quite
+   * slow because it has to check to see if the x, y that was provided
+   * is inside the bounds, and then has to check to see what image
+   * type it is. If you want things to be more efficient, access the
+   * pixels[] array directly.
    *
    * @webref image:pixels
    * @brief Reads the color of any pixel or grabs a rectangle of pixels
    * @usage web_application
-   * @param x
-   *          x-coordinate of the pixel
-   * @param y
-   *          y-coordinate of the pixel
+   * @param x x-coordinate of the pixel
+   * @param y y-coordinate of the pixel
    * @see PApplet#set(int, int, int)
    * @see PApplet#pixels
    * @see PApplet#copy(PImage, int, int, int, int, int, int, int, int)
@@ -14664,15 +14263,15 @@ public class PApplet implements PConstants {
     return g.get(x, y);
   }
 
+
   /**
-   * @param w
-   *          width of pixel rectangle to get
-   * @param h
-   *          height of pixel rectangle to get
+   * @param w width of pixel rectangle to get
+   * @param h height of pixel rectangle to get
    */
   public PImage get(int x, int y, int w, int h) {
     return g.get(x, y, w, h);
   }
+
 
   /**
    * Returns a copy of this PImage. Equivalent to get(0, 0, width, height).
@@ -14682,121 +14281,118 @@ public class PApplet implements PConstants {
     return g.get();
   }
 
+
   public PImage copy() {
     return g.copy();
   }
 
+
   /**
    * ( begin auto-generated from PImage_set.xml )
    *
-   * Changes the color of any pixel or writes an image directly into the display
-   * window.<br />
+   * Changes the color of any pixel or writes an image directly into the
+   * display window.<br />
    * <br />
    * The <b>x</b> and <b>y</b> parameters specify the pixel to change and the
    * <b>color</b> parameter specifies the color value. The color parameter is
    * affected by the current color mode (the default is RGB values from 0 to
    * 255). When setting an image, the <b>x</b> and <b>y</b> parameters define
-   * the coordinates for the upper-left corner of the image, regardless of the
-   * current <b>imageMode()</b>. <br />
-   * <br />
-   * Setting the color of a single pixel with <b>set(x, y)</b> is easy, but not
-   * as fast as putting the data directly into <b>pixels[]</b>. The equivalent
-   * statement to <b>set(x, y, #000000)</b> using <b>pixels[]</b> is
-   * <b>pixels[y*width+x] = #000000</b>. See the reference for <b>pixels[]</b>
-   * for more information.
+   * the coordinates for the upper-left corner of the image, regardless of
+   * the current <b>imageMode()</b>.
+   * <br /><br />
+   * Setting the color of a single pixel with <b>set(x, y)</b> is easy, but
+   * not as fast as putting the data directly into <b>pixels[]</b>. The
+   * equivalent statement to <b>set(x, y, #000000)</b> using <b>pixels[]</b>
+   * is <b>pixels[y*width+x] = #000000</b>. See the reference for
+   * <b>pixels[]</b> for more information.
    *
    * ( end auto-generated )
    *
    * @webref image:pixels
    * @brief writes a color to any pixel or writes an image into another
    * @usage web_application
-   * @param x
-   *          x-coordinate of the pixel
-   * @param y
-   *          y-coordinate of the pixel
-   * @param c
-   *          any value of the color datatype
+   * @param x x-coordinate of the pixel
+   * @param y y-coordinate of the pixel
+   * @param c any value of the color datatype
    * @see PImage#get(int, int, int, int)
    * @see PImage#pixels
    * @see PImage#copy(PImage, int, int, int, int, int, int, int, int)
    */
   public void set(int x, int y, int c) {
-    if (recorder != null)
-      recorder.set(x, y, c);
+    if (recorder != null) recorder.set(x, y, c);
     g.set(x, y, c);
   }
 
+
   /**
-   * <h3>Advanced</h3> Efficient method of drawing an image's pixels directly to
-   * this surface. No variations are employed, meaning that any scale, tint, or
-   * imageMode settings will be ignored.
+   * <h3>Advanced</h3>
+   * Efficient method of drawing an image's pixels directly to this surface.
+   * No variations are employed, meaning that any scale, tint, or imageMode
+   * settings will be ignored.
    *
-   * @param img
-   *          image to copy into the original image
+   * @param img image to copy into the original image
    */
   public void set(int x, int y, PImage img) {
-    if (recorder != null)
-      recorder.set(x, y, img);
+    if (recorder != null) recorder.set(x, y, img);
     g.set(x, y, img);
   }
+
 
   /**
    * ( begin auto-generated from PImage_mask.xml )
    *
-   * Masks part of an image from displaying by loading another image and using
-   * it as an alpha channel. This mask image should only contain grayscale data,
-   * but only the blue color channel is used. The mask image needs to be the
-   * same size as the image to which it is applied.<br />
+   * Masks part of an image from displaying by loading another image and
+   * using it as an alpha channel. This mask image should only contain
+   * grayscale data, but only the blue color channel is used. The mask image
+   * needs to be the same size as the image to which it is applied.<br />
    * <br />
    * In addition to using a mask image, an integer array containing the alpha
-   * channel data can be specified directly. This method is useful for creating
-   * dynamically generated alpha masks. This array must be of the same length as
-   * the target image's pixels array and should contain only grayscale data of
-   * values between 0-255.
+   * channel data can be specified directly. This method is useful for
+   * creating dynamically generated alpha masks. This array must be of the
+   * same length as the target image's pixels array and should contain only
+   * grayscale data of values between 0-255.
    *
    * ( end auto-generated )
    *
    * <h3>Advanced</h3>
    *
-   * Set alpha channel for an image. Black colors in the source image will make
-   * the destination image completely transparent, and white will make things
-   * fully opaque. Gray values will be in-between steps.
+   * Set alpha channel for an image. Black colors in the source
+   * image will make the destination image completely transparent,
+   * and white will make things fully opaque. Gray values will
+   * be in-between steps.
    * <P>
-   * Strictly speaking the "blue" value from the source image is used as the
-   * alpha color. For a fully grayscale image, this is correct, but for a color
-   * image it's not 100% accurate. For a more accurate conversion, first use
-   * filter(GRAY) which will make the image into a "correct" grayscale by
+   * Strictly speaking the "blue" value from the source image is
+   * used as the alpha color. For a fully grayscale image, this
+   * is correct, but for a color image it's not 100% accurate.
+   * For a more accurate conversion, first use filter(GRAY)
+   * which will make the image into a "correct" grayscale by
    * performing a proper luminance-based conversion.
    *
    * @webref pimage:method
    * @usage web_application
    * @brief Masks part of an image with another image as an alpha channel
-   * @param maskArray
-   *          array of integers used as the alpha channel, needs to be the same
-   *          length as the image's pixel array
+   * @param maskArray array of integers used as the alpha channel, needs to be the same length as the image's pixel array
    */
   public void mask(PImage img) {
-    if (recorder != null)
-      recorder.mask(img);
+    if (recorder != null) recorder.mask(img);
     g.mask(img);
   }
 
+
   public void filter(int kind) {
-    if (recorder != null)
-      recorder.filter(kind);
+    if (recorder != null) recorder.filter(kind);
     g.filter(kind);
   }
+
 
   /**
    * ( begin auto-generated from PImage_filter.xml )
    *
-   * Filters an image as defined by one of the following modes:<br />
-   * <br
-   * />
-   * THRESHOLD - converts the image to black and white pixels depending if they
-   * are above or below the threshold defined by the level parameter. The level
-   * must be between 0.0 (black) and 1.0(white). If no level is specified, 0.5
-   * is used.<br />
+   * Filters an image as defined by one of the following modes:<br /><br
+   * />THRESHOLD - converts the image to black and white pixels depending if
+   * they are above or below the threshold defined by the level parameter.
+   * The level must be between 0.0 (black) and 1.0(white). If no level is
+   * specified, 0.5 is used.<br />
    * <br />
    * GRAY - converts any colors in the image to grayscale equivalents<br />
    * <br />
@@ -14814,12 +14410,12 @@ public class PApplet implements PConstants {
    * ERODE - reduces the light areas with the amount defined by the level
    * parameter<br />
    * <br />
-   * DILATE - increases the light areas with the amount defined by the level
-   * parameter
+   * DILATE - increases the light areas with the amount defined by the level parameter
    *
    * ( end auto-generated )
    *
-   * <h3>Advanced</h3> Method to apply a variety of basic filters to this image.
+   * <h3>Advanced</h3>
+   * Method to apply a variety of basic filters to this image.
    * <P>
    * <UL>
    * <LI>filter(BLUR) provides a basic blur.
@@ -14830,36 +14426,33 @@ public class PApplet implements PConstants {
    * <LI>filter(DILATE) grow white/light areas
    * <LI>filter(ERODE) shrink white/light areas
    * </UL>
-   * Luminance conversion code contributed by <A
-   * HREF="http://www.toxi.co.uk">toxi</A>
+   * Luminance conversion code contributed by
+   * <A HREF="http://www.toxi.co.uk">toxi</A>
    * <P/>
-   * Gaussian blur code contributed by <A
-   * HREF="http://incubator.quasimondo.com">Mario Klingemann</A>
+   * Gaussian blur code contributed by
+   * <A HREF="http://incubator.quasimondo.com">Mario Klingemann</A>
    *
    * @webref image:pixels
    * @brief Converts the image to grayscale or black and white
    * @usage web_application
-   * @param kind
-   *          Either THRESHOLD, GRAY, OPAQUE, INVERT, POSTERIZE, BLUR, ERODE, or
-   *          DILATE
-   * @param param
-   *          unique for each, see above
+   * @param kind Either THRESHOLD, GRAY, OPAQUE, INVERT, POSTERIZE, BLUR, ERODE, or DILATE
+   * @param param unique for each, see above
    */
   public void filter(int kind, float param) {
-    if (recorder != null)
-      recorder.filter(kind, param);
+    if (recorder != null) recorder.filter(kind, param);
     g.filter(kind, param);
   }
+
 
   /**
    * ( begin auto-generated from PImage_copy.xml )
    *
    * Copies a region of pixels from one image into another. If the source and
    * destination regions aren't the same size, it will automatically resize
-   * source pixels to fit the specified target region. No alpha information is
-   * used in the process, however if the source image has an alpha channel set,
-   * it will be copied as well. <br />
-   * <br />
+   * source pixels to fit the specified target region. No alpha information
+   * is used in the process, however if the source image has an alpha channel
+   * set, it will be copied as well.
+   * <br /><br />
    * As of release 0149, this function ignores <b>imageMode()</b>.
    *
    * ( end auto-generated )
@@ -14867,63 +14460,56 @@ public class PApplet implements PConstants {
    * @webref image:pixels
    * @brief Copies the entire image
    * @usage web_application
-   * @param sx
-   *          X coordinate of the source's upper left corner
-   * @param sy
-   *          Y coordinate of the source's upper left corner
-   * @param sw
-   *          source image width
-   * @param sh
-   *          source image height
-   * @param dx
-   *          X coordinate of the destination's upper left corner
-   * @param dy
-   *          Y coordinate of the destination's upper left corner
-   * @param dw
-   *          destination image width
-   * @param dh
-   *          destination image height
+   * @param sx X coordinate of the source's upper left corner
+   * @param sy Y coordinate of the source's upper left corner
+   * @param sw source image width
+   * @param sh source image height
+   * @param dx X coordinate of the destination's upper left corner
+   * @param dy Y coordinate of the destination's upper left corner
+   * @param dw destination image width
+   * @param dh destination image height
    * @see PGraphics#alpha(int)
    * @see PImage#blend(PImage, int, int, int, int, int, int, int, int, int)
    */
-  public void copy(int sx, int sy, int sw, int sh, int dx, int dy, int dw,
-                   int dh) {
-    if (recorder != null)
-      recorder.copy(sx, sy, sw, sh, dx, dy, dw, dh);
+  public void copy(int sx, int sy, int sw, int sh,
+                   int dx, int dy, int dw, int dh) {
+    if (recorder != null) recorder.copy(sx, sy, sw, sh, dx, dy, dw, dh);
     g.copy(sx, sy, sw, sh, dx, dy, dw, dh);
   }
 
-  /**
-   * @param src
-   *          an image variable referring to the source image.
-   */
-  public void copy(PImage src, int sx, int sy, int sw, int sh, int dx, int dy,
-                   int dw, int dh) {
-    if (recorder != null)
-      recorder.copy(src, sx, sy, sw, sh, dx, dy, dw, dh);
+
+/**
+ * @param src an image variable referring to the source image.
+ */
+  public void copy(PImage src,
+                   int sx, int sy, int sw, int sh,
+                   int dx, int dy, int dw, int dh) {
+    if (recorder != null) recorder.copy(src, sx, sy, sw, sh, dx, dy, dw, dh);
     g.copy(src, sx, sy, sw, sh, dx, dy, dw, dh);
   }
 
-  public void blend(int sx, int sy, int sw, int sh, int dx, int dy, int dw,
-                    int dh, int mode) {
-    if (recorder != null)
-      recorder.blend(sx, sy, sw, sh, dx, dy, dw, dh, mode);
+
+  public void blend(int sx, int sy, int sw, int sh,
+                    int dx, int dy, int dw, int dh, int mode) {
+    if (recorder != null) recorder.blend(sx, sy, sw, sh, dx, dy, dw, dh, mode);
     g.blend(sx, sy, sw, sh, dx, dy, dw, dh, mode);
   }
+
 
   /**
    * ( begin auto-generated from PImage_blend.xml )
    *
    * Blends a region of pixels into the image specified by the <b>img</b>
-   * parameter. These copies utilize full alpha channel support and a choice of
-   * the following modes to blend the colors of source pixels (A) with the ones
-   * of pixels in the destination image (B):<br />
+   * parameter. These copies utilize full alpha channel support and a choice
+   * of the following modes to blend the colors of source pixels (A) with the
+   * ones of pixels in the destination image (B):<br />
    * <br />
    * BLEND - linear interpolation of colours: C = A*factor + B<br />
    * <br />
    * ADD - additive blending with white clip: C = min(A*factor + B, 255)<br />
    * <br />
-   * SUBTRACT - subtractive blending with black clip: C = max(B - A*factor, 0)<br />
+   * SUBTRACT - subtractive blending with black clip: C = max(B - A*factor,
+   * 0)<br />
    * <br />
    * DARKEST - only the darkest colour succeeds: C = min(A*factor, B)<br />
    * <br />
@@ -14937,160 +14523,51 @@ public class PApplet implements PConstants {
    * <br />
    * SCREEN - Opposite multiply, uses inverse values of the colors.<br />
    * <br />
-   * OVERLAY - A mix of MULTIPLY and SCREEN. Multiplies dark values, and screens
-   * light values.<br />
+   * OVERLAY - A mix of MULTIPLY and SCREEN. Multiplies dark values,
+   * and screens light values.<br />
    * <br />
    * HARD_LIGHT - SCREEN when greater than 50% gray, MULTIPLY when lower.<br />
    * <br />
-   * SOFT_LIGHT - Mix of DARKEST and LIGHTEST. Works like OVERLAY, but not as
-   * harsh.<br />
+   * SOFT_LIGHT - Mix of DARKEST and LIGHTEST.
+   * Works like OVERLAY, but not as harsh.<br />
    * <br />
-   * DODGE - Lightens light tones and increases contrast, ignores darks. Called
-   * "Color Dodge" in Illustrator and Photoshop.<br />
+   * DODGE - Lightens light tones and increases contrast, ignores darks.
+   * Called "Color Dodge" in Illustrator and Photoshop.<br />
    * <br />
    * BURN - Darker areas are applied, increasing contrast, ignores lights.
    * Called "Color Burn" in Illustrator and Photoshop.<br />
    * <br />
-   * All modes use the alpha information (highest byte) of source image pixels
-   * as the blending factor. If the source and destination regions are different
-   * sizes, the image will be automatically resized to match the destination
-   * size. If the <b>srcImg</b> parameter is not used, the display window is
-   * used as the source image.<br />
+   * All modes use the alpha information (highest byte) of source image
+   * pixels as the blending factor. If the source and destination regions are
+   * different sizes, the image will be automatically resized to match the
+   * destination size. If the <b>srcImg</b> parameter is not used, the
+   * display window is used as the source image.<br />
    * <br />
    * As of release 0149, this function ignores <b>imageMode()</b>.
    *
    * ( end auto-generated )
    *
    * @webref image:pixels
-   * @brief Copies a pixel or rectangle of pixels using different blending modes
-   * @param src
-   *          an image variable referring to the source image
-   * @param sx
-   *          X coordinate of the source's upper left corner
-   * @param sy
-   *          Y coordinate of the source's upper left corner
-   * @param sw
-   *          source image width
-   * @param sh
-   *          source image height
-   * @param dx
-   *          X coordinate of the destinations's upper left corner
-   * @param dy
-   *          Y coordinate of the destinations's upper left corner
-   * @param dw
-   *          destination image width
-   * @param dh
-   *          destination image height
-   * @param mode
-   *          Either BLEND, ADD, SUBTRACT, LIGHTEST, DARKEST, DIFFERENCE,
-   *          EXCLUSION, MULTIPLY, SCREEN, OVERLAY, HARD_LIGHT, SOFT_LIGHT,
-   *          DODGE, BURN
+   * @brief  Copies a pixel or rectangle of pixels using different blending modes
+   * @param src an image variable referring to the source image
+   * @param sx X coordinate of the source's upper left corner
+   * @param sy Y coordinate of the source's upper left corner
+   * @param sw source image width
+   * @param sh source image height
+   * @param dx X coordinate of the destinations's upper left corner
+   * @param dy Y coordinate of the destinations's upper left corner
+   * @param dw destination image width
+   * @param dh destination image height
+   * @param mode Either BLEND, ADD, SUBTRACT, LIGHTEST, DARKEST, DIFFERENCE, EXCLUSION, MULTIPLY, SCREEN, OVERLAY, HARD_LIGHT, SOFT_LIGHT, DODGE, BURN
    *
    * @see PApplet#alpha(int)
    * @see PImage#copy(PImage, int, int, int, int, int, int, int, int)
    * @see PImage#blendColor(int,int,int)
    */
-  public void blend(PImage src, int sx, int sy, int sw, int sh, int dx, int dy,
-                    int dw, int dh, int mode) {
-    if (recorder != null)
-      recorder.blend(src, sx, sy, sw, sh, dx, dy, dw, dh, mode);
+  public void blend(PImage src,
+                    int sx, int sy, int sw, int sh,
+                    int dx, int dy, int dw, int dh, int mode) {
+    if (recorder != null) recorder.blend(src, sx, sy, sw, sh, dx, dy, dw, dh, mode);
     g.blend(src, sx, sy, sw, sh, dx, dy, dw, dh, mode);
-  }
-
-  /**
-   * draw a line from a to b only for 2d yet. ask how to get renderer
-   */
-  public void line(PVector a, PVector b) {
-    line(a.x, a.y, b.x, b.y);
-  }
-
-  public void point(PVector p) {
-    point(p.x, p.y);
-  }
-
-  public float random() {
-    return random(1);
-  }
-
-  public static float sinn(float v) {
-    return (1 + sin(v)) / 2;
-  }
-
-  public static float cosn(float v) {
-    return (1 + sin(v)) / 2;
-  }
-
-  public static float tann(float v) {
-    return (1 + sin(v)) / 2;
-  }
-
-  private float fcScale = 1;
-
-  public void frameCountScale(float scale) {
-    fcScale = scale;
-  }
-
-  public float fcs() {
-    return frameCount * fcScale;
-  }
-
-  // move to right pos to set,
-  public int wh;
-
-  public int hh;
-
-  public float mouseXn() {
-    return (float) mouseX / width;
-  }
-
-  public float mouseYn() {
-    return (float) mouseY / height;
-  }
-
-  public float mouseXmap(float max) {
-    return (float) mouseX / width * max;
-  }
-
-  public float mouseYmap(float max) {
-    return (float) mouseY / width * max;
-  }
-
-  public float mouseXmap(float max, float add) {
-    return (float) mouseX / width * max + add;
-  }
-
-  public float mouseYmap(float max, float add) {
-    return (float) mouseY / width * max + add;
-  }
-
-  public void shadow(int clr) {
-    pushStyle();
-    fill(clr);
-    strokeWeight(1);
-    rect(-2, -2, width + 5, width + 5);
-    popStyle();
-  }
-
-  // multikey
-  private boolean multiKeyEnabled;
-
-  TreeSet<Integer> keys;
-
-  public void enableMultiKey() {
-    if (keys == null)
-      keys = new TreeSet<Integer>();
-    multiKeyEnabled = true;
-  }
-
-  public void disableMultiKey() {
-    multiKeyEnabled = false;
-    keys.clear();
-  }
-
-  public boolean keyPressed(int keyCode) {
-    if (multiKeyEnabled)
-      return keys.contains(keyCode);
-    else
-      return this.keyCode == keyCode;
   }
 }
