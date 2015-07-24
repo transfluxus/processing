@@ -53,6 +53,7 @@ public class ContributionManagerDialog {
   FilterField filterField;
   JButton restartButton;
   JButton retryConnectingButton;
+  JProgressBar progressBar;
 
   // the calling editor, so updates can be applied
   Editor editor;
@@ -168,15 +169,18 @@ public class ContributionManagerDialog {
         }
       });
 
+      progressBar = new JProgressBar();
+      progressBar.setVisible(true);
+
       Toolkit.setIcon(dialog);
       createComponents();
       registerDisposeListeners();
 
       dialog.pack();
       dialog.setLocationRelativeTo(null);
-      contributionListPanel.grabFocus();
     }
     dialog.setVisible(true);
+    contributionListPanel.grabFocus();
 
     if (contribListing.hasDownloadedLatestList()) {
       updateContributionListing();
@@ -275,7 +279,7 @@ public class ContributionManagerDialog {
       scrollPane.setViewportView(contributionListPanel);
 //      scrollPane.getViewport().setOpaque(true);
 //      scrollPane.getViewport().setBackground(contributionListPanel.getBackground());
-      scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+      scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
       scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 //      scrollPane.setBorder(new EmptyBorder(0, 7, 0, 7));
       pane.add(scrollPane, BorderLayout.CENTER);
@@ -293,6 +297,7 @@ public class ContributionManagerDialog {
       statusRestartPane.setOpaque(false);
 
       statusRestartPane.add(status, BorderLayout.WEST);
+      statusRestartPane.add(progressBar, BorderLayout.LINE_END);
 
     // Adding both of these to EAST shouldn't pose too much of a problem,
     // since they can never get added together.
@@ -464,19 +469,28 @@ public class ContributionManagerDialog {
 
   protected void downloadAndUpdateContributionListing() {
     retryConnectingButton.setEnabled(false);
+    status.setMessage(Language.text("contrib.status.downloading_list"));
+    contribListing.downloadAvailableList(new ContribProgressBar(progressBar) {
 
-    contribListing.downloadAvailableList(new ContribProgressMonitor() {
+
+      @Override
+      public void startTask(String name, int maxValue) {
+        super.startTask(name, maxValue);
+        progressBar.setString(null);
+      }
 
       @Override
       public void setProgress(int value) {
         super.setProgress(value);
-        int percent = 100 * value / this.max;
-        status.setMessage(Language.text("contrib.status.downloading_list") + " (" + percent + "%)");
+//        int percent = 100 * value / this.max;
+        progressBar.setValue(value);
+        progressBar.setStringPainted(true);
+        status.setMessage(Language.text("contrib.status.downloading_list"));
       }
 
       @Override
-      public void finished() {
-        super.finished();
+      public void finishedAction() {
+        progressBar.setVisible(false);
 
         updateContributionListing();
         updateCategoryChooser();
@@ -485,9 +499,11 @@ public class ContributionManagerDialog {
 
         if (error) {
           if (exception instanceof SocketTimeoutException) {
-            status.setErrorMessage(Language.text("contrib.errors.list_download.timeout"));
+            status.setErrorMessage(Language
+              .text("contrib.errors.list_download.timeout"));
           } else {
-            status.setErrorMessage(Language.text("contrib.errors.list_download"));
+            status.setErrorMessage(Language
+              .text("contrib.errors.list_download"));
           }
           exception.printStackTrace();
           retryConnectingButton.setVisible(true);

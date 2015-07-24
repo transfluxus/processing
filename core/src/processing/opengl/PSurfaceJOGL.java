@@ -8,7 +8,9 @@ import java.awt.Point;
 //import java.awt.Frame;
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import java.util.List;
 
+import com.jogamp.common.util.IOUtil.ClassResources;
 import com.jogamp.nativewindow.NativeSurface;
 import com.jogamp.nativewindow.ScalableSurface;
 import com.jogamp.opengl.GLAnimatorControl;
@@ -24,8 +26,8 @@ import com.jogamp.newt.NewtFactory;
 import com.jogamp.newt.Screen;
 import com.jogamp.newt.awt.NewtCanvasAWT;
 import com.jogamp.newt.event.InputEvent;
-import com.jogamp.newt.event.WindowAdapter;
-import com.jogamp.newt.event.WindowEvent;
+//import com.jogamp.newt.event.WindowAdapter;
+//import com.jogamp.newt.event.WindowEvent;
 import com.jogamp.newt.opengl.GLWindow;
 import com.jogamp.opengl.util.FPSAnimator;
 
@@ -46,7 +48,6 @@ public class PSurfaceJOGL implements PSurface {
   PJOGL pgl;
 
   GLWindow window;
-//  Frame frame;
   FPSAnimator animator;
   Rectangle screenRect;
 
@@ -58,13 +59,23 @@ public class PSurfaceJOGL implements PSurface {
   int sketchWidth;
   int sketchHeight;
 
+  Display display;
+  Screen screen;
+  List<MonitorDevice> monitors;
   MonitorDevice displayDevice;
   Throwable drawException;
   Object waitObject = new Object();
 
   NewtCanvasAWT canvas;
+  boolean placedWindow = false;
+  boolean requestedStart = false;
 
   float[] currentPixelScale = {0, 0};
+
+  boolean presentMode = false;
+  float offsetX;
+  float offsetY;
+
 
   public PSurfaceJOGL(PGraphics graphics) {
     this.graphics = graphics;
@@ -81,25 +92,41 @@ public class PSurfaceJOGL implements PSurface {
     if (window != null) {
       canvas = new NewtCanvasAWT(window);
       canvas.setBounds(0, 0, window.getWidth(), window.getHeight());
-//      canvas.setBackground(new Color(pg.backgroundColor, true));
       canvas.setFocusable(true);
     }
   }
 
 
-  public void initFrame(PApplet sketch, int backgroundColor,
+  public void initFrame(PApplet sketch) {/*, int backgroundColor,
                         int deviceIndex, boolean fullScreen,
-                        boolean spanDisplays) {
+                        boolean spanDisplays) {*/
     this.sketch = sketch;
+    initIcons();
+    initScreen();
+    initGL();
+    initWindow();
+    initListeners();
+    initAnimator();
+  }
 
-    Display display = NewtFactory.createDisplay(null);
+
+  public Object getNative() {
+//    if (canvas == null) {
+//      initOffscreen(sketch);
+//    }
+//    return canvas;
+    return window;
+  }
+
+
+  protected void initScreen() {
+    display = NewtFactory.createDisplay(null);
     display.addReference();
-    Screen screen = NewtFactory.createScreen(display, 0);
+    screen = NewtFactory.createScreen(display, 0);
     screen.addReference();
 
-    ArrayList<MonitorDevice> monitors = new ArrayList<MonitorDevice>();
-    GraphicsEnvironment environment =
-      GraphicsEnvironment.getLocalGraphicsEnvironment();
+    monitors = new ArrayList<MonitorDevice>();
+    GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
     GraphicsDevice[] devices = environment.getScreenDevices();
     for (GraphicsDevice device: devices) {
       String did = device.getIDstring();
@@ -136,29 +163,18 @@ public class PSurfaceJOGL implements PSurface {
         monitors.add(monitor);
       }
     }
+  }
 
-//    System.out.println("*******************************");
-
-    if (deviceIndex >= 0) {  // if -1, use the default device
-      if (deviceIndex < monitors.size()) {
-        displayDevice = monitors.get(deviceIndex);
-      } else {
-        System.err.format("Display %d does not exist, " +
-          "using the default display instead.", deviceIndex);
-        for (int i = 0; i < monitors.size(); i++) {
-          System.err.format("Display %d is %s\n", i, monitors.get(i));
-        }
-      }
-    }
-
+  protected void initGL() {
+//  System.out.println("*******************************");
     if (profile == null) {
-      if (PJOGL.PROFILE == 2) {
+      if (PJOGL.profile == 2) {
         try {
           profile = GLProfile.getGL2ES1();
         } catch (GLException ex) {
           profile = GLProfile.getMaxFixedFunc(true);
         }
-      } else if (PJOGL.PROFILE == 3) {
+      } else if (PJOGL.profile == 3) {
         try {
           profile = GLProfile.getGL2GL3();
         } catch (GLException ex) {
@@ -167,7 +183,7 @@ public class PSurfaceJOGL implements PSurface {
         if (!profile.isGL3()) {
           PGraphics.showWarning("Requested profile GL3 but is not available, got: " + profile);
         }
-      } else if (PJOGL.PROFILE == 4) {
+      } else if (PJOGL.profile == 4) {
         try {
           profile = GLProfile.getGL4ES3();
         } catch (GLException ex) {
@@ -185,73 +201,64 @@ public class PSurfaceJOGL implements PSurface {
     caps.setDepthBits(PGL.REQUESTED_DEPTH_BITS);
     caps.setStencilBits(PGL.REQUESTED_STENCIL_BITS);
 
-//    caps.setPBuffer(false);
-//    caps.setFBO(false);
+//  caps.setPBuffer(false);
+//  caps.setFBO(false);
 
-    pgl.reqNumSamples = graphics.quality;
+    pgl.reqNumSamples = PGL.smoothToSamples(graphics.smooth);
     caps.setSampleBuffers(true);
     caps.setNumSamples(pgl.reqNumSamples);
     caps.setBackgroundOpaque(true);
     caps.setOnscreen(true);
     pgl.capabilities = caps;
-//    System.err.println("0. create window");
-    window = GLWindow.create(screen, caps);
+  }
+
+
+  protected void initWindow() {
+    window = GLWindow.create(screen, pgl.capabilities);
+    if (displayDevice == null) {
+      displayDevice = window.getMainMonitor();
+    }
+
+    int displayNum = sketch.sketchDisplay();
+    if (displayNum > 0) {  // if -1, use the default device
+      if (displayNum <= monitors.size()) {
+        displayDevice = monitors.get(displayNum - 1);
+      } else {
+        System.err.format("Display %d does not exist, " +
+          "using the default display instead.%n", displayNum);
+        for (int i = 0; i < monitors.size(); i++) {
+          System.err.format("Display %d is %s%n", i+1, monitors.get(i));
+        }
+      }
+    }
+
+    boolean spanDisplays = sketch.sketchDisplay() == PConstants.SPAN;
+    screenRect = spanDisplays ?
+      new Rectangle(0, 0, screen.getWidth(), screen.getHeight()) :
+      new Rectangle(0, 0,
+                    displayDevice.getViewportInWindowUnits().getWidth(),
+                    displayDevice.getViewportInWindowUnits().getHeight());
+
+    // Set the displayWidth/Height variables inside PApplet, so that they're
+    // usable and can even be returned by the sketchWidth()/Height() methods.
+    sketch.displayWidth = screenRect.width;
+    sketch.displayHeight = screenRect.height;
 
     sketchWidth = sketch.sketchWidth();
     sketchHeight = sketch.sketchHeight();
 
-    if (displayDevice == null) {
-      displayDevice = window.getMainMonitor();
-    }
-    sketchX = displayDevice.getViewportInWindowUnits().getX();
-    sketchY = displayDevice.getViewportInWindowUnits().getY();
-
-//    int screenWidth = screen.getWidth();
-//    int screenHeight = screen.getHeight();
-
-    screenRect = spanDisplays ? new Rectangle(0, 0, screen.getWidth(), screen.getHeight()) :
-                                new Rectangle(0, 0, displayDevice.getViewportInWindowUnits().getWidth(),
-                                                    displayDevice.getViewportInWindowUnits().getHeight());
-
-    sketch.displayWidth = screenRect.width;
-    sketch.displayHeight = screenRect.height;
-
+    boolean fullScreen = sketch.sketchFullScreen();
     // Sketch has already requested to be the same as the screen's
     // width and height, so let's roll with full screen mode.
     if (screenRect.width == sketchWidth &&
         screenRect.height == sketchHeight) {
       fullScreen = true;
+      sketch.fullScreen();
     }
 
-    if (fullScreen) {
-      presentMode = sketchWidth < screenRect.width && sketchHeight < screenRect.height;
-    }
-
-    if (spanDisplays) {
+    if (fullScreen || spanDisplays) {
       sketchWidth = screenRect.width;
       sketchHeight = screenRect.height;
-    }
-
-//    window..setBackground(new Color(backgroundColor, true));
-    window.setSize(sketchWidth, sketchHeight);
-    sketch.width = sketch.sketchWidth();
-    sketch.height = sketch.sketchHeight();
-    graphics.setSize(sketch.width, sketch.height);
-
-//    System.out.println("deviceIndex: " + deviceIndex);
-//    System.out.println(displayDevice);
-//    System.out.println("Screen res " + screenWidth + "x" + screenHeight);
-
-    // This example could be useful:
-    // com.jogamp.opengl.test.junit.newt.mm.TestScreenMode01cNEWT
-    if (fullScreen) {
-      PApplet.hideMenuBar();
-      window.setTopLevelPosition(sketchX, sketchY);
-      if (spanDisplays) {
-        window.setFullscreen(monitors);
-      } else {
-        window.setFullscreen(true);
-      }
     }
 
     float[] reqSurfacePixelScale;
@@ -265,7 +272,24 @@ public class PSurfaceJOGL implements PSurface {
                                            ScalableSurface.IDENTITY_PIXELSCALE };
     }
     window.setSurfaceScale(reqSurfacePixelScale);
+    window.setSize(sketchWidth, sketchHeight);
+    setSize(sketchWidth, sketchHeight);
+    sketchX = displayDevice.getViewportInWindowUnits().getX();
+    sketchY = displayDevice.getViewportInWindowUnits().getY();
+    if (fullScreen) {
+      PApplet.hideMenuBar();
+      window.setTopLevelPosition(sketchX, sketchY);
+      placedWindow = true;
+      if (spanDisplays) {
+        window.setFullscreen(monitors);
+      } else {
+        window.setFullscreen(true);
+      }
+    }
+  }
 
+
+  protected void initListeners() {
     NEWTMouseListener mouseListener = new NEWTMouseListener();
     window.addMouseListener(mouseListener);
     NEWTKeyListener keyListener = new NEWTKeyListener();
@@ -275,8 +299,11 @@ public class PSurfaceJOGL implements PSurface {
 
     DrawListener drawlistener = new DrawListener();
     window.addGLEventListener(drawlistener);
+  }
 
-//    System.err.println("1. create animator");
+
+  protected void initAnimator() {
+//  System.err.println("1. create animator");
     animator = new FPSAnimator(window, 60);
     drawException = null;
     animator.setUncaughtExceptionHandler(new GLAnimatorControl.UncaughtExceptionHandler() {
@@ -285,14 +312,14 @@ public class PSurfaceJOGL implements PSurface {
                                     final GLAutoDrawable drawable,
                                     final Throwable cause) {
         synchronized (waitObject) {
-//          System.err.println("Caught exception: " + cause.getMessage());
+//        System.err.println("Caught exception: " + cause.getMessage());
           drawException = cause;
           waitObject.notify();
         }
       }
     });
 
-   new Thread(new Runnable() {
+    new Thread(new Runnable() {
       public void run() {
         synchronized (waitObject) {
           try {
@@ -300,12 +327,12 @@ public class PSurfaceJOGL implements PSurface {
           } catch (InterruptedException e) {
             e.printStackTrace();
           }
-//          System.err.println("Caught exception: " + drawException.getMessage());
+//        System.err.println("Caught exception: " + drawException.getMessage());
           if (drawException != null) {
             Throwable cause = drawException.getCause();
             if (cause instanceof ThreadDeath) {
-//              System.out.println("caught ThreadDeath");
-//              throw (ThreadDeath)cause;
+//            System.out.println("caught ThreadDeath");
+//            throw (ThreadDeath)cause;
             } else if (cause instanceof RuntimeException) {
               throw (RuntimeException)cause;
             } else {
@@ -315,80 +342,44 @@ public class PSurfaceJOGL implements PSurface {
         }
       }
     }).start();
-
-
-    window.addWindowListener(new WindowAdapter() {
-      @Override
-      public void windowDestroyNotify(final WindowEvent e) {
-//        System.out.println("destroy notify");
-        PSurfaceJOGL.this.sketch.dispose();
-        PSurfaceJOGL.this.sketch.exitActual();
-//        animator.stop();
-//        PSurfaceJOGL.this.sketch.exit();
-//        window.destroy();
-//
-      }
-    });
-
-
-    window.setVisible(true);
-//    System.err.println("4. set visible");
-
-    /*
-    try {
-      EventQueue.invokeAndWait(new Runnable() {
-        public void run() {
-          window.setVisible(true);
-          System.err.println("1. set visible");
-      }});
-    } catch (Exception ex) {
-      // error setting the window visible, should quit...
-    }
-*/
-
-//    frame = new DummyFrame();
-//    return frame;
   }
+
 
   @Override
   public void setTitle(String title) {
     window.setTitle(title);
   }
 
+
   @Override
   public void setVisible(boolean visible) {
     window.setVisible(visible);
   }
 
+
   @Override
   public void setResizable(boolean resizable) {
     // TODO Auto-generated method stub
-
   }
 
-  private void setFrameCentered() {
-    // Can't use frame.setLocationRelativeTo(null) because it sends the
-    // frame to the main display, which undermines the --display setting.
-    int sketchX = displayDevice.getViewportInWindowUnits().getX();
-    int sketchY = displayDevice.getViewportInWindowUnits().getY();
-//    System.err.println("just center on the screen at " + sketchX + screenRect.x + (screenRect.width - sketchWidth) / 2 + ", " +
-//                                                         sketchY + screenRect.y + (screenRect.height - sketchHeight) / 2);
-//
-//    System.err.println("  Display starts at " +  sketchX + ", " + sketchY);
-//    System.err.println("  Screen rect pos: " +  screenRect.x + ", " + screenRect.y);
-//    System.err.println("  Screen rect w/h: " +  screenRect.width + ", " + screenRect.height);
-//    System.err.println("  Sketch w/h: " +  sketchWidth + ", " + sketchHeight);
 
-    int w = sketchWidth;
-    int h = sketchHeight;
-//    if (graphics.is2X()) {
-//      w /= 2;
-//      h /= 2;
-//    }
-
-    window.setTopLevelPosition(sketchX + screenRect.x + (screenRect.width - w) / 2,
-                               sketchY + screenRect.y + (screenRect.height - h) / 2);
+  public void setIcon(PImage icon) {
+    // TODO Auto-generated method stub
   }
+
+
+  protected void initIcons() {
+    final int[] sizes = { 16, 32, 48, 64, 128, 256, 512 };
+    String[] iconImages = new String[sizes.length];
+    for (int i = 0; i < sizes.length; i++) {
+      iconImages[i] = "/icon/icon-" + sizes[i] + ".png";
+    }
+    NewtFactory.setWindowIcons(new ClassResources(PApplet.class, iconImages));
+  }
+
+
+//  private void setFrameCentered() {
+//  }
 
 
   @Override
@@ -431,7 +422,28 @@ public class PSurfaceJOGL implements PSurface {
         window.setTopLevelPosition(locationX, locationY);
       }
     } else {  // just center on screen
-      setFrameCentered();
+      // Can't use frame.setLocationRelativeTo(null) because it sends the
+      // frame to the main display, which undermines the --display setting.
+      int sketchX = displayDevice.getViewportInWindowUnits().getX();
+      int sketchY = displayDevice.getViewportInWindowUnits().getY();
+//      System.err.println("just center on the screen at " + sketchX + screenRect.x + (screenRect.width - sketchWidth) / 2 + ", " +
+//                                                           sketchY + screenRect.y + (screenRect.height - sketchHeight) / 2);
+  //
+//      System.err.println("  Display starts at " +  sketchX + ", " + sketchY);
+//      System.err.println("  Screen rect pos: " +  screenRect.x + ", " + screenRect.y);
+//      System.err.println("  Screen rect w/h: " +  screenRect.width + ", " + screenRect.height);
+//      System.err.println("  Sketch w/h: " +  sketchWidth + ", " + sketchHeight);
+
+//      int w = sketchWidth;
+//      int h = sketchHeight;
+//      if (graphics.is2X()) {
+//        w /= 2;
+//        h /= 2;
+//      }
+
+      window.setTopLevelPosition(sketchX + screenRect.x + (screenRect.width - sketchWidth) / 2,
+                                 sketchY + screenRect.y + (screenRect.height - sketchHeight) / 2);
+
     }
 
     Point frameLoc = new Point(x, y);
@@ -441,41 +453,61 @@ public class PSurfaceJOGL implements PSurface {
       window.setTopLevelPosition(frameLoc.x, 30);
     }
 
+    placedWindow = true;
+    if (requestedStart) startThread();
 //    canvas.setBounds((contentW - sketchWidth)/2,
 //                     (contentH - sketchHeight)/2,
 //                     sketchWidth, sketchHeight);
   }
 
-  boolean presentMode = false;
-  float offsetX;
-  float offsetY;
+
   public void placePresent(int stopColor) {
-    if (presentMode) {
+
+//    if (presentMode) {
 //      System.err.println("Present mode");
 //    System.err.println("WILL USE FBO");
-      presentMode = pgl.presentMode = true;
-      offsetX = pgl.offsetX = 0.5f * (screenRect.width - sketchWidth);
-      offsetY = pgl.offsetY = 0.5f * (screenRect.height - sketchHeight);
-      pgl.requestFBOLayer();
-    }
+    presentMode = pgl.presentMode = true;
+    offsetX = pgl.offsetX = 0.5f * (screenRect.width - sketchWidth);
+    offsetY = pgl.offsetY = 0.5f * (screenRect.height - sketchHeight);
+    pgl.requestFBOLayer();
+
+    window.setSize(screenRect.width, screenRect.height);
+    PApplet.hideMenuBar();
+    window.setTopLevelPosition(sketchX + screenRect.x,
+                               sketchY + screenRect.y);
+//    window.setTopLevelPosition(0, 0);
+    window.setFullscreen(true);
+
+
+    placedWindow = true;
+    if (requestedStart) startThread();
+
+//    }
   }
+
 
   public void setupExternalMessages() {
     // TODO Auto-generated method stub
 
   }
 
-  public void startThread() {
-    if (animator != null) {
-//      System.err.println("5. start animator");
-      animator.start();
 
-      if (0 < sketchX && 0 < sketchY) {
-//          System.err.println("5.1 set inital window position");
-          window.setTopLevelPosition(sketchX, sketchY);
-          sketchX = sketchY = 0;
-      }
-//      animator.getThread().setName("Processing-GL-draw");
+  public void startThread() {
+    if (animator == null) return;
+    if (placedWindow) {
+      window.setVisible(true);
+      animator.start();
+      requestedStart = false;
+    } else {
+      // The GL window is not visible until it has been placed, so we cannot
+      // start the animator because it requires the window to be visible.
+      requestedStart = true;
+      // Need this assignment to bypass the while loop in runSketch, otherwise
+      // the programs hangs waiting for defaultSize to be false, but it never
+      // happens because the animation thread is not yet running to avoid showing
+      // the window in the wrong place:
+      // https://github.com/processing/processing/issues/3308
+      sketch.defaultSize = false;
     }
   }
 
@@ -507,24 +539,44 @@ public class PSurfaceJOGL implements PSurface {
     }
   }
 
+
+  public void setLocation(int x, int y) {
+    if (window == null) return;
+    window.setTopLevelPosition(x, y);
+  }
+
+
   public void setSize(int width, int height) {
-    if (animator.isAnimating()) {
+    if (width == sketch.width && height == sketch.height) {
+      return;
+    }
+
+
+//    if (animator.isAnimating()) {
 //      System.err.println("3. set size");
 
       if (!presentMode) {
-        sketch.width = width;
-        sketch.height = height;
+//        sketch.width = width;
+//        sketch.height = height;
+        sketch.setSize(width, height);
+        sketchWidth = width;
+        sketchHeight = height;
         graphics.setSize(width, height);
       }
 
-      sketchWidth = width;
-      sketchHeight = height;
-    }
+
+//    }
   }
 
   public float getPixelScale() {
-    window.getCurrentSurfaceScale(currentPixelScale);
-    return currentPixelScale[0];
+    if (graphics.is2X()) {
+      // Even if the graphics are retina, the user might have moved the window
+      // into a non-retina monitor, so we need to check
+      window.getCurrentSurfaceScale(currentPixelScale);
+      return currentPixelScale[0];
+    } else {
+      return 1;
+    }
   }
 
   public Component getComponent() {
@@ -556,6 +608,7 @@ public class PSurfaceJOGL implements PSurface {
   }
 
   public void requestFocus() {
+    if (window == null) return;
     window.requestFocus();
   }
 
@@ -630,15 +683,20 @@ public class PSurfaceJOGL implements PSurface {
     @Override
     public void windowGainedFocus(com.jogamp.newt.event.WindowEvent arg0) {
 //      pg.parent.focusGained(null);
+//      System.err.println("gain focus");
     }
 
     @Override
     public void windowLostFocus(com.jogamp.newt.event.WindowEvent arg0) {
 //      pg.parent.focusLost(null);
+//      System.err.println("lost focus");
     }
 
     @Override
     public void windowDestroyNotify(com.jogamp.newt.event.WindowEvent arg0) {
+//      System.err.println("bye");
+      PSurfaceJOGL.this.sketch.dispose();
+      PSurfaceJOGL.this.sketch.exitActual();
     }
 
     @Override
@@ -654,7 +712,14 @@ public class PSurfaceJOGL implements PSurface {
     }
 
     @Override
-    public void windowResized(com.jogamp.newt.event.WindowEvent arg0) { }
+    public void windowResized(com.jogamp.newt.event.WindowEvent arg0) {
+//      System.err.println("resized");
+//      System.err.println(window.hasFocus());
+//      window.removeMouseListener(mouseListener);
+//      mouseListener = new NEWTMouseListener();
+//      window.addMouseListener(mouseListener);
+    }
+
   }
 
   // NEWT mouse listener
@@ -688,10 +753,12 @@ public class PSurfaceJOGL implements PSurface {
     }
     @Override
     public void mouseEntered(com.jogamp.newt.event.MouseEvent e) {
+//      System.out.println("enter");
       nativeMouseEvent(e, MouseEvent.ENTER);
     }
     @Override
     public void mouseExited(com.jogamp.newt.event.MouseEvent e) {
+//      System.out.println("exit");
       nativeMouseEvent(e, MouseEvent.EXIT);
     }
   }
@@ -800,6 +867,9 @@ public class PSurfaceJOGL implements PSurface {
     if (isPCodedKey(code)) {
       keyCode = mapToPConst(code);
       keyChar = PConstants.CODED;
+    } else if (isHackyKey(code)) {
+      keyCode = code;
+      keyChar = hackToChar(code, nativeEvent.getKeyChar());
     } else {
       keyCode = code;
       keyChar = nativeEvent.getKeyChar();
@@ -816,9 +886,19 @@ public class PSurfaceJOGL implements PSurface {
                                peAction, peModifiers,
                                keyChar,
                                keyCode);
-//                               nativeEvent.getKeySymbol());
 
     sketch.postEvent(ke);
+  }
+
+  private static boolean isPCodedKey(short code) {
+    return code == com.jogamp.newt.event.KeyEvent.VK_UP ||
+           code == com.jogamp.newt.event.KeyEvent.VK_DOWN ||
+           code == com.jogamp.newt.event.KeyEvent.VK_LEFT ||
+           code == com.jogamp.newt.event.KeyEvent.VK_RIGHT ||
+           code == com.jogamp.newt.event.KeyEvent.VK_ALT ||
+           code == com.jogamp.newt.event.KeyEvent.VK_CONTROL ||
+           code == com.jogamp.newt.event.KeyEvent.VK_SHIFT ||
+           code == com.jogamp.newt.event.KeyEvent.VK_WINDOWS;
   }
 
   // Why do we need this mapping?
@@ -840,18 +920,24 @@ public class PSurfaceJOGL implements PSurface {
       return PConstants.CONTROL;
     } else if (code == com.jogamp.newt.event.KeyEvent.VK_SHIFT) {
       return PConstants.SHIFT;
+    } else if (code == com.jogamp.newt.event.KeyEvent.VK_WINDOWS) {
+      return java.awt.event.KeyEvent.VK_META;
     }
     return code;
   }
 
-  private static boolean isPCodedKey(short code) {
-    return code == com.jogamp.newt.event.KeyEvent.VK_UP ||
-           code == com.jogamp.newt.event.KeyEvent.VK_DOWN ||
-           code == com.jogamp.newt.event.KeyEvent.VK_LEFT ||
-           code == com.jogamp.newt.event.KeyEvent.VK_RIGHT ||
-           code == com.jogamp.newt.event.KeyEvent.VK_ALT ||
-           code == com.jogamp.newt.event.KeyEvent.VK_CONTROL ||
-           code == com.jogamp.newt.event.KeyEvent.VK_SHIFT;
+  private static boolean isHackyKey(short code) {
+    return code == com.jogamp.newt.event.KeyEvent.VK_BACK_SPACE ||
+           code == com.jogamp.newt.event.KeyEvent.VK_TAB;
+  }
+
+  private static char hackToChar(short code, char def) {
+    if (code == com.jogamp.newt.event.KeyEvent.VK_BACK_SPACE) {
+      return '\b';
+    } else if (code == com.jogamp.newt.event.KeyEvent.VK_TAB) {
+      return '\t';
+    }
+    return def;
   }
 
   // . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -882,10 +968,12 @@ public class PSurfaceJOGL implements PSurface {
   }
 
   public void showCursor() {
+    if (window == null) return;
     window.setPointerVisible(true);
   }
 
   public void hideCursor() {
+    if (window != null) return;
     window.setPointerVisible(false);
   }
 }

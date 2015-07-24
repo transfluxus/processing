@@ -26,7 +26,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.*;
-import java.lang.reflect.*;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
 
@@ -49,7 +49,7 @@ public class PSurfaceAWT extends PSurfaceNone {
   Rectangle screenRect;
 
   // 3.0a5 didn't use strategy, and active was shut off during init() w/ retina
-  boolean useStrategy = true;
+//  boolean useStrategy = true;
 
 //  Canvas canvas;
   Component canvas;
@@ -64,6 +64,7 @@ public class PSurfaceAWT extends PSurfaceNone {
     //this.graphics = graphics;
     super(graphics);
 
+    /*
     if (checkRetina()) {
 //      System.out.println("retina in use");
 
@@ -84,10 +85,11 @@ public class PSurfaceAWT extends PSurfaceNone {
       // flicker--pushing pixels out before the screen has finished rendering.
 //      useStrategy = false;
     }
+    */
     canvas = new SmoothCanvas();
-    if (useStrategy) {
-      canvas.setIgnoreRepaint(true);
-    }
+//    if (useStrategy) {
+    //canvas.setIgnoreRepaint(true);
+//    }
 
     // Pass tab key to the sketch, rather than moving between components
     canvas.setFocusTraversalKeysEnabled(false);
@@ -96,7 +98,13 @@ public class PSurfaceAWT extends PSurfaceNone {
       @Override
       public void componentResized(ComponentEvent e) {
         if (!sketch.looping) {
-          sketch.redraw();
+          // make sure this is a real resize event, not just initial setup
+          // https://github.com/processing/processing/issues/3310
+          Dimension canvasSize = canvas.getSize();
+          if (canvasSize.width != sketch.sketchWidth() ||
+              canvasSize.height != sketch.sketchHeight()) {
+            sketch.redraw();
+          }
         }
       }
     });
@@ -104,44 +112,53 @@ public class PSurfaceAWT extends PSurfaceNone {
   }
 
 
-  /**
-   * Handle grabbing the focus on startup. Other renderers can override this
-   * if handling needs to be different. For the AWT, the request is invoked
-   * later on the EDT. Other implementations may not require that, so the
-   * invokeLater() happens in here rather than requiring the caller to wrap it.
-   */
-  @Override
-  void requestFocus() {
-    // for 2.0a6, moving this request to the EDT
-    EventQueue.invokeLater(new Runnable() {
-      public void run() {
-        // Call the request focus event once the image is sure to be on
-        // screen and the component is valid. The OpenGL renderer will
-        // request focus for its canvas inside beginDraw().
-        // http://java.sun.com/j2se/1.4.2/docs/api/java/awt/doc-files/FocusSpec.html
-        // Disabling for 0185, because it causes an assertion failure on OS X
-        // http://code.google.com/p/processing/issues/detail?id=258
-        //        requestFocus();
-
-        // Changing to this version for 0187
-        // http://code.google.com/p/processing/issues/detail?id=279
-        //requestFocusInWindow();
-
-        // For 3.0, just call this directly on the Canvas object
-        if (canvas != null) {
-          canvas.requestFocusInWindow();
-        }
-      }
-    });
-  }
+//  /**
+//   * Handle grabbing the focus on startup. Other renderers can override this
+//   * if handling needs to be different. For the AWT, the request is invoked
+//   * later on the EDT. Other implementations may not require that, so the
+//   * invokeLater() happens in here rather than requiring the caller to wrap it.
+//   */
+//  @Override
+//  void requestFocus() {
+////    System.out.println("requesFocus() outer " + EventQueue.isDispatchThread());
+//    // for 2.0a6, moving this request to the EDT
+//    EventQueue.invokeLater(new Runnable() {
+//      public void run() {
+//        // Call the request focus event once the image is sure to be on
+//        // screen and the component is valid. The OpenGL renderer will
+//        // request focus for its canvas inside beginDraw().
+//        // http://java.sun.com/j2se/1.4.2/docs/api/java/awt/doc-files/FocusSpec.html
+//        // Disabling for 0185, because it causes an assertion failure on OS X
+//        // http://code.google.com/p/processing/issues/detail?id=258
+//        //        requestFocus();
+//
+//        // Changing to this version for 0187
+//        // http://code.google.com/p/processing/issues/detail?id=279
+//        //requestFocusInWindow();
+//
+//        // For 3.0, just call this directly on the Canvas object
+//        if (canvas != null) {
+//          //System.out.println("requesting focus " + EventQueue.isDispatchThread());
+//          //System.out.println("requesting focus " + frame.isVisible());
+//          //canvas.requestFocusInWindow();
+//          canvas.requestFocus();
+//        }
+//      }
+//    });
+//  }
 
 
   // . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
 
-  class SmoothCanvas extends Canvas {
+  public class SmoothCanvas extends Canvas {
     private Dimension oldSize = new Dimension(0, 0);
     private Dimension newSize = new Dimension(0, 0);
+
+
+    public Frame getFrame() {
+      return frame;
+    }
 
 
     @Override
@@ -168,12 +185,14 @@ public class PSurfaceAWT extends PSurfaceNone {
       super.validate();
       newSize.width = getWidth();
       newSize.height = getHeight();
-      if (oldSize.equals(newSize)) {
-//        System.out.println("validate() return " + oldSize);
-        return;
-      } else {
+//      if (oldSize.equals(newSize)) {
+////        System.out.println("validate() return " + oldSize);
+//        return;
+//      } else {
+      if (!oldSize.equals(newSize)) {
 //        System.out.println("validate() render old=" + oldSize + " -> new=" + newSize);
         oldSize = newSize;
+        sketch.setSize(newSize.width, newSize.height);
         render();
       }
     }
@@ -189,22 +208,27 @@ public class PSurfaceAWT extends PSurfaceNone {
     @Override
     public void paint(Graphics screen) {
 //      System.out.println("painting");
-//    validate();
-      if (useStrategy) {
-        render();
-
-      } else {
-//        new Exception("painting").printStackTrace(System.out);
-//        if (graphics.image != null) { // && !sketch.insideDraw) {
-        if (onscreen != null) {
-//          synchronized (graphics.image) {
-          // Needs the width/height to be set so that retina images are properly scaled down
-//          screen.drawImage(graphics.image, 0, 0, sketchWidth, sketchHeight, null);
-          synchronized (offscreenLock) {
-            screen.drawImage(onscreen, 0, 0, sketchWidth, sketchHeight, null);
-          }
-        }
+//      if (useStrategy) {
+      render();
+      /*
+      if (graphics != null) {
+        System.out.println("drawing to screen " + canvas);
+        screen.drawImage(graphics.image, 0, 0, sketchWidth, sketchHeight, null);
       }
+      */
+
+//      } else {
+////        new Exception("painting").printStackTrace(System.out);
+////        if (graphics.image != null) { // && !sketch.insideDraw) {
+//        if (onscreen != null) {
+////          synchronized (graphics.image) {
+//          // Needs the width/height to be set so that retina images are properly scaled down
+////          screen.drawImage(graphics.image, 0, 0, sketchWidth, sketchHeight, null);
+//          synchronized (offscreenLock) {
+//            screen.drawImage(onscreen, 0, 0, sketchWidth, sketchHeight, null);
+//          }
+//        }
+//      }
     }
   }
 
@@ -219,8 +243,8 @@ public class PSurfaceAWT extends PSurfaceNone {
     */
 
 
-  protected synchronized void render() {
-      //System.out.println("render() top");
+  synchronized protected void render() {
+//      System.out.println("render() top");
 
       /*
       if (!EventQueue.isDispatchThread()) {
@@ -311,12 +335,12 @@ public class PSurfaceAWT extends PSurfaceNone {
   }
 
 
-  Object offscreenLock = new Object();
-  BufferedImage offscreen;
-  BufferedImage onscreen;
-//  Graphics off;
+//  Object offscreenLock = new Object();
+//  BufferedImage offscreen;
+//  BufferedImage onscreen;
 
 
+  /*
   protected void blit() {
     // Other folks that call render() (i.e. paint()) are already on the EDT.
     // We need to be using the EDT since we're messing with the Canvas
@@ -358,6 +382,7 @@ public class PSurfaceAWT extends PSurfaceNone {
       }
     }
   }
+  */
 
 
   // what needs to happen here?
@@ -390,22 +415,24 @@ public class PSurfaceAWT extends PSurfaceNone {
 
 
   @Override
-  public void initFrame(PApplet sketch, int backgroundColor,
-                        int deviceIndex, boolean fullScreen, boolean spanDisplays) {
+  public void initFrame(final PApplet sketch) {/*, int backgroundColor,
+                        int deviceIndex, boolean fullScreen, boolean spanDisplays) {*/
     this.sketch = sketch;
 
     GraphicsEnvironment environment =
       GraphicsEnvironment.getLocalGraphicsEnvironment();
 
-    if (deviceIndex >= 0) {  // if -1, use the default device
+    int displayNum = sketch.sketchDisplay();
+//    System.out.println("display from sketch is " + displayNum);
+    if (displayNum > 0) {  // if -1, use the default device
       GraphicsDevice[] devices = environment.getScreenDevices();
-      if (deviceIndex < devices.length) {
-        displayDevice = devices[deviceIndex];
+      if (displayNum <= devices.length) {
+        displayDevice = devices[displayNum - 1];
       } else {
         System.err.format("Display %d does not exist, " +
-          "using the default display instead.", deviceIndex);
+          "using the default display instead.%n", displayNum);
         for (int i = 0; i < devices.length; i++) {
-          System.err.format("Display %d is %s\n", i, devices[i]);
+          System.err.format("Display %d is %s%n", (i+1), devices[i]);
         }
       }
     }
@@ -416,6 +443,7 @@ public class PSurfaceAWT extends PSurfaceNone {
     // Need to save the window bounds at full screen,
     // because pack() will cause the bounds to go to zero.
     // http://dev.processing.org/bugs/show_bug.cgi?id=923
+    boolean spanDisplays = sketch.sketchDisplay() == PConstants.SPAN;
     screenRect = spanDisplays ? getDisplaySpan() :
       displayDevice.getDefaultConfiguration().getBounds();
     // DisplayMode doesn't work here, because we can't get the upper-left
@@ -429,11 +457,13 @@ public class PSurfaceAWT extends PSurfaceNone {
     sketchWidth = sketch.sketchWidth();
     sketchHeight = sketch.sketchHeight();
 
+    boolean fullScreen = sketch.sketchFullScreen();
     // Sketch has already requested to be the same as the screen's
     // width and height, so let's roll with full screen mode.
     if (screenRect.width == sketchWidth &&
         screenRect.height == sketchHeight) {
       fullScreen = true;
+      sketch.fullScreen();  // won't change the renderer
     }
 
     if (fullScreen || spanDisplays) {
@@ -451,12 +481,13 @@ public class PSurfaceAWT extends PSurfaceNone {
 //    ((JFrame) frame).getContentPane().setBackground(WINDOW_BGCOLOR);
 //    // Cannot call setResizable(false) until later due to OS X (issue #467)
 
-    // Removed code above, also removed from what's now in the placeXxxx()
-    // methods. Not sure why it was being double-set; hopefully anachronistic.
-    if (backgroundColor == 0) {
-      backgroundColor = WINDOW_BGCOLOR;
-    }
-    frame.getContentPane().setBackground(new Color(backgroundColor, false));
+//    // Removed code above, also removed from what's now in the placeXxxx()
+//    // methods. Not sure why it was being double-set; hopefully anachronistic.
+//    if (backgroundColor == 0) {
+//      backgroundColor = WINDOW_BGCOLOR;
+//    }
+    final Color windowColor = new Color(sketch.sketchWindowColor(), false);
+    frame.getContentPane().setBackground(windowColor);
 
     // Put the p5 logo in the Frame's corner to override the Java coffee cup.
     setIconImage(frame);
@@ -491,7 +522,8 @@ public class PSurfaceAWT extends PSurfaceNone {
 //      }
       // this may be the bounds of all screens
       frame.setBounds(screenRect);
-      frame.setVisible(true);  // re-add native resources
+      // will be set visible in placeWindow() [3.0a10]
+      //frame.setVisible(true);  // re-add native resources
     }
     frame.setLayout(null);
     //frame.add(applet);
@@ -517,7 +549,20 @@ public class PSurfaceAWT extends PSurfaceNone {
     // http://code.google.com/p/processing/issues/detail?id=467
     frame.setResizable(false);
 
-//    return frame;
+    frame.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowClosing(WindowEvent e) {
+        sketch.exit();  // don't quit, need to just shut everything down (0133)
+      }
+    });
+
+//    sketch.setFrame(frame);
+  }
+
+
+  @Override
+  public Object getNative() {
+    return canvas;
   }
 
 
@@ -689,51 +734,46 @@ public class PSurfaceAWT extends PSurfaceNone {
     int contentW = Math.max(sketchWidth, MIN_WINDOW_WIDTH);
     int contentH = Math.max(sketchHeight, MIN_WINDOW_HEIGHT);
 
-    if (location != null) {
-      // a specific location was received from the Runner
-      // (applet has been run more than once, user placed window)
-      frame.setLocation(location[0], location[1]);
+    // Ignore placement of previous window and editor when full screen
+    if (!sketch.sketchFullScreen()) {
+      if (location != null) {
+        // a specific location was received from the Runner
+        // (applet has been run more than once, user placed window)
+        frame.setLocation(location[0], location[1]);
 
-    } else if (editorLocation != null) {
-      int locationX = editorLocation[0] - 20;
-      int locationY = editorLocation[1];
+      } else if (editorLocation != null) {
+        int locationX = editorLocation[0] - 20;
+        int locationY = editorLocation[1];
 
-      if (locationX - window.width > 10) {
-        // if it fits to the left of the window
-        frame.setLocation(locationX - window.width, locationY);
+        if (locationX - window.width > 10) {
+          // if it fits to the left of the window
+          frame.setLocation(locationX - window.width, locationY);
 
-      } else {  // doesn't fit
-        // if it fits inside the editor window,
-        // offset slightly from upper lefthand corner
-        // so that it's plunked inside the text area
-        locationX = editorLocation[0] + 66;
-        locationY = editorLocation[1] + 66;
+        } else {  // doesn't fit
+          // if it fits inside the editor window,
+          // offset slightly from upper lefthand corner
+          // so that it's plunked inside the text area
+          locationX = editorLocation[0] + 66;
+          locationY = editorLocation[1] + 66;
 
-        if ((locationX + window.width > sketch.displayWidth - 33) ||
+          if ((locationX + window.width > sketch.displayWidth - 33) ||
             (locationY + window.height > sketch.displayHeight - 33)) {
-          // otherwise center on screen
-          locationX = (sketch.displayWidth - window.width) / 2;
-          locationY = (sketch.displayHeight - window.height) / 2;
+            // otherwise center on screen
+            locationX = (sketch.displayWidth - window.width) / 2;
+            locationY = (sketch.displayHeight - window.height) / 2;
+          }
+          frame.setLocation(locationX, locationY);
         }
-        frame.setLocation(locationX, locationY);
+      } else {  // just center on screen
+        setFrameCentered();
       }
-    } else {  // just center on screen
-      setFrameCentered();
+      Point frameLoc = frame.getLocation();
+      if (frameLoc.y < 0) {
+        // Windows actually allows you to place frames where they can't be
+        // closed. Awesome. http://dev.processing.org/bugs/show_bug.cgi?id=1508
+        frame.setLocation(frameLoc.x, 30);
+      }
     }
-    Point frameLoc = frame.getLocation();
-    if (frameLoc.y < 0) {
-      // Windows actually allows you to place frames where they can't be
-      // closed. Awesome. http://dev.processing.org/bugs/show_bug.cgi?id=1508
-      frame.setLocation(frameLoc.x, 30);
-    }
-
-//    if (backgroundColor != null) {
-////    if (backgroundColor == Color.black) {  //BLACK) {
-////      // this means no bg color unless specified
-////      backgroundColor = SystemColor.control;
-////    }
-//      ((JFrame) frame).getContentPane().setBackground(backgroundColor);
-//    }
 
     canvas.setBounds((contentW - sketchWidth)/2,
                      (contentH - sketchHeight)/2,
@@ -742,9 +782,15 @@ public class PSurfaceAWT extends PSurfaceNone {
     // handle frame resizing events
     setupFrameResizeListener();
 
-    // TODO this is much too late... why even create the enormous frame for PDF?
+    // If displayable() is false, then PSurfaceNone should be used, but...
     if (sketch.getGraphics().displayable()) {
       frame.setVisible(true);
+//      System.out.println("setting visible on EDT? " + EventQueue.isDispatchThread());
+      //requestFocus();
+      if (canvas != null) {
+        //canvas.requestFocusInWindow();
+        canvas.requestFocus();
+      }
     }
   }
 
@@ -781,8 +827,9 @@ public class PSurfaceAWT extends PSurfaceNone {
     //initImage(graphics, wide, high);
 
     //throw new RuntimeException("implement me, see readme.md");
-    sketch.width = wide;
-    sketch.height = high;
+    sketch.setSize(wide, high);
+//    sketch.width = wide;
+//    sketch.height = high;
 
     // set PGraphics variables for width/height/pixelWidth/pixelHeight
     graphics.setSize(wide, high);
@@ -817,11 +864,12 @@ public class PSurfaceAWT extends PSurfaceNone {
 //  }
 
 
-  @Override
-  public void setSmooth(int level) {
-  }
+//  @Override
+//  public void setSmooth(int level) {
+//  }
 
 
+  /*
   private boolean checkRetina() {
     if (PApplet.platform == PConstants.MACOSX) {
       // This should probably be reset each time there's a display change.
@@ -847,6 +895,7 @@ public class PSurfaceAWT extends PSurfaceNone {
     }
     return false;
   }
+  */
 
 
   /** Get the bounds rectangle for all displays. */
@@ -896,12 +945,6 @@ public class PSurfaceAWT extends PSurfaceNone {
         sketch.frameMoved(where.x, where.y);
       }
     });
-    frame.addWindowListener(new WindowAdapter() {
-      @Override
-      public void windowClosing(WindowEvent e) {
-        sketch.exit();  // don't quit, need to just shut everything down (0133)
-      }
-    });
   }
 
 
@@ -909,7 +952,7 @@ public class PSurfaceAWT extends PSurfaceNone {
    * Set up a listener that will fire proper component resize events
    * in cases where frame.setResizable(true) is called.
    */
-  public void setupFrameResizeListener() {
+  private void setupFrameResizeListener() {
     frame.addWindowStateListener(new WindowStateListener() {
       @Override
       // Detecting when the frame is resized in order to handle the frame
@@ -975,7 +1018,7 @@ public class PSurfaceAWT extends PSurfaceNone {
       try {
         if (iconImages == null) {
           iconImages = new ArrayList<Image>();
-          final int[] sizes = { 16, 32, 48, 64 };
+          final int[] sizes = { 16, 32, 48, 64, 128, 256, 512 };
 
           for (int sz : sizes) {
             //URL url = getClass().getResource("/icon/icon-" + sz + ".png");
@@ -988,6 +1031,24 @@ public class PSurfaceAWT extends PSurfaceNone {
         frame.setIconImages(iconImages);
 
       } catch (Exception e) { }  // harmless; keep this to ourselves
+
+    } else {
+      // On OS X, set this for AWT surfaces, which handles the dock image
+      // as well as the cmd-tab image that's shown. Just one size, I guess.
+      URL url = PApplet.class.getResource("/icon/icon-512.png");
+      // Seems dangerous to have this in code instead of using reflection, no?
+      //ThinkDifferent.setIconImage(Toolkit.getDefaultToolkit().getImage(url));
+      try {
+        final String td = "processing.core.ThinkDifferent";
+        Class<?> thinkDifferent =
+          Thread.currentThread().getContextClassLoader().loadClass(td);
+        Method method =
+          thinkDifferent.getMethod("setIconImage", new Class[] { java.awt.Image.class });
+        method.invoke(null, new Object[] { Toolkit.getDefaultToolkit().getImage(url) });
+      } catch (Exception e) {
+        e.printStackTrace();  // That's unfortunate
+      }
+
     }
   }
 
@@ -1361,9 +1422,10 @@ public class PSurfaceAWT extends PSurfaceNone {
   public Thread createThread() {
     return new AnimationThread() {
       @Override
-      public void render() {
+      public void callDraw() {
         sketch.handleDraw();
-        blit();
+        //blit();
+        render();
       }
     };
   }

@@ -456,7 +456,6 @@
              classname="com.oracle.appbundler.AppBundlerTask"   
              classpath="macosx/appbundler.jar" />
 
-    <!--icon="macosx/processing.icns"-->
     <bundleapp outputDirectory="macosx/work"
                name="Processing"
                displayName="Processing"
@@ -498,10 +497,8 @@
       <!-- no support for this with Java 7 from Oracle -->
       <!--<arch name="i386"/>-->
 
-      <!--icon="macosx/template.app/Contents/Resources/pde.icns"-->
-      <!--icon="${bundle.icon}"-->
       <bundledocument extensions="pde"
-                      icon="macosx/pde.icns"
+                      icon="macosx/document.icns"
                       name="Processing Source Code"
                       role="Editor">
       </bundledocument>
@@ -670,7 +667,10 @@
   <!-- - - - - - - - -->
   
   <target name="linux-clean" depends="subprojects-clean" description="Clean linux version">
-    <delete dir="linux/work" />
+    <delete>
+      <fileset dir="linux" includes="work" />
+      <fileset dir="linux" includes="processing-*tgz" />
+    </delete>
   </target>
   
   <target name="linux-check-os" unless="linux">
@@ -915,7 +915,10 @@
   
   <target name="windows-clean" depends="subprojects-clean"
           description="Clean windows version">
-    <delete dir="windows/work" />
+    <delete>
+      <fileset dir="windows" includes="work" />
+      <fileset dir="windows" includes="processing-*zip" />
+    </delete>
   </target>
   
   <target name="windows-check-os" unless="windows">
@@ -1058,6 +1061,81 @@
   </target> 
 
 
+  <!-- bundle a bunch of PNGs into an OS X iconset -->
+  <target name="iconset">
+    <mkdir dir="${icon.set}" />
+    <!--<echo message="root = ${icon.root} / set = ${icon.set}" />-->
+    
+    <copy file="${icon.root}-16.png"
+          tofile="${icon.set}/icon_16x16.png" />
+    <copy file="${icon.root}-32.png"
+          tofile="${icon.set}/icon_16x16@2x.png" />
+
+    <copy file="${icon.root}-32.png"
+          tofile="${icon.set}/icon_32x32.png" />
+    <copy file="${icon.root}-64.png"
+          tofile="${icon.set}/icon_32x32@2x.png" />
+    
+    <copy file="${icon.root}-128.png"
+          tofile="${icon.set}/icon_128x128.png" />
+    <copy file="${icon.root}-256.png"
+          tofile="${icon.set}/icon_128x128@2x.png" />
+
+    <copy file="${icon.root}-256.png"
+          tofile="${icon.set}/icon_256x256.png" />
+    <copy file="${icon.root}-512.png"
+          tofile="${icon.set}/icon_256x256@2x.png" />
+
+    <copy file="${icon.root}-512.png"
+          tofile="${icon.set}/icon_512x512.png" />
+    <copy file="${icon.root}-1024.png"
+          tofile="${icon.set}/icon_512x512@2x.png" />
+
+    <exec executable="iconutil" logError="true">
+      <arg line="-c icns -o ${icon.icns} ${icon.set}" />
+    </exec>
+
+    <delete dir="${icon.set}" />
+  </target>
+
+  
+  <!-- Target to create the icons... putting this in here rather than docs.
+       For OS X (though Linux might work), not intended for general use,
+       because it requires things like iconutil (on OS X) or ImageMagick's
+       convert tool (primarily in *nix environments). -->
+  <target name="icons">
+    <property name="icon.set" value="/tmp/pde.iconset" />
+
+    <!-- create iconset for the PDE application for Mac OS X -->
+    <antcall target="iconset">
+      <param name="icon.root" value="shared/lib/icons/pde" />
+      <param name="icon.icns" value="macosx/processing.icns" />
+    </antcall>
+
+    <!-- create iconset for exported sketch on Mac OS X -->
+    <antcall target="iconset">
+      <param name="icon.root" value="../core/src/icon/icon" />
+      <param name="icon.icns" value="../java/application/sketch.icns" />
+    </antcall>
+    
+    <!-- Create .ico for the PDE itself 
+         https://msdn.microsoft.com/en-us/library/dn742485.aspx
+         "Application icons and Control Panel items: The full set includes
+         16x16, 32x32, 48x48, and 256x256 (code scales between 32 and 256).
+         The .ico file format is required. For Classic Mode, the full set
+         is 16x16, 24x24, 32x32, 48x48 and 64x64."
+         We're missing size 24x24, but, eh... -->
+    <exec executable="convert" dir="shared/lib/icons">
+      <arg line="pde-16.png pde-32.png pde-48.png pde-64.png pde-256.png ../../../windows/application.ico" />
+    </exec>
+
+    <!-- Create .ico for exported Java applications -->
+    <exec executable="convert" dir="../core/src/icon">
+      <arg line="icon-16.png icon-32.png icon-48.png icon-64.png icon-256.png ../../../java/application/sketch.ico" />
+    </exec>
+  </target>
+
+  
   <!-- - - - - - - - - - - - - - - - - - -->
   <!-- Package source 'n tag the release -->
   <!-- - - - - - - - - - - - - - - - - - -->

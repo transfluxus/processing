@@ -35,7 +35,6 @@ import java.util.Arrays;
 
 import processing.core.PApplet;
 import processing.core.PGraphics;
-import processing.core.PSurface;
 
 
 /**
@@ -358,6 +357,19 @@ public abstract class PGL {
   }
 
 
+  static protected int smoothToSamples(int smooth) {
+    if (smooth == 0) {
+      // smooth(0) is noSmooth(), which is 1x sampling
+      return 1;
+    } else if (smooth == 1) {
+      // smooth(1) means "default smoothing", which is 2x for OpenGL
+      return 2;
+    } else {
+      // smooth(N) can be used for 4x, 8x, etc
+      return smooth;
+    }
+  }
+
 //  public abstract Object getCanvas();
 //
 //
@@ -589,16 +601,15 @@ public abstract class PGL {
 
 
   IntBuffer labelTex;
-  protected void endDraw(boolean clear0) {
+  protected void endDraw(boolean clear0, int windowColor) {
     if (fboLayerInUse) {
       syncBackTexture();
 
       // Draw the contents of the back texture to the screen framebuffer.
       bindFramebufferImpl(FRAMEBUFFER, 0);
 
-
       if (presentMode) {
-        int argb = PSurface.WINDOW_BGCOLOR;
+        int argb = windowColor;
         float a = ((argb >> 24) & 0xff)  / 255.0f;
         float r = ((argb >> 16) & 0xff) / 255.0f;
         float g = ((argb >> 8) & 0xff) / 255.0f;
@@ -1296,12 +1307,15 @@ public abstract class PGL {
   }
 
 
+  protected static boolean isPowerOfTwo(int val) {
+    return (val & (val - 1)) == 0;
+  }
+
+
   // bit shifting this might be more efficient
   protected static int nextPowerOfTwo(int val) {
     int ret = 1;
-    while (ret < val) {
-      ret <<= 1;
-    }
+    while (ret < val) ret <<= 1;
     return ret;
   }
 

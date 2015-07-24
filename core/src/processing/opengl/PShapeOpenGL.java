@@ -600,22 +600,22 @@ public class PShapeOpenGL extends PShape {
   // Shape creation (temporary hack)
 
 
-  public static PShapeOpenGL createShape3D(PGraphicsOpenGL pg, PShape src) {
+  public static PShapeOpenGL createShape(PGraphicsOpenGL pg, PShape src) {
     PShapeOpenGL dest = null;
     if (src.getFamily() == GROUP) {
       //dest = PGraphics3D.createShapeImpl(pg, GROUP);
-      dest = (PShapeOpenGL) ((PGraphics3D) pg).createShapeFamily(GROUP);
-      copyGroup3D(pg, src, dest);
+      dest = (PShapeOpenGL) pg.createShapeFamily(GROUP);
+      copyGroup(pg, src, dest);
     } else if (src.getFamily() == PRIMITIVE) {
       //dest = PGraphics3D.createShapeImpl(pg, src.getKind(), src.getParams());
-      dest = (PShapeOpenGL) ((PGraphics3D) pg).createShapePrimitive(src.getKind(), src.getParams());
+      dest = (PShapeOpenGL) pg.createShapePrimitive(src.getKind(), src.getParams());
       PShape.copyPrimitive(src, dest);
     } else if (src.getFamily() == GEOMETRY) {
       //dest = PGraphics3D.createShapeImpl(pg, PShape.GEOMETRY);
-      dest = (PShapeOpenGL) ((PGraphics3D) pg).createShapeFamily(PShape.GEOMETRY);
+      dest = (PShapeOpenGL) pg.createShapeFamily(PShape.GEOMETRY);
       PShape.copyGeometry(src, dest);
     } else if (src.getFamily() == PATH) {
-      dest = (PShapeOpenGL) ((PGraphics3D) pg).createShapeFamily(PShape.PATH);
+      dest = (PShapeOpenGL) pg.createShapeFamily(PShape.PATH);
       //dest = PGraphics3D.createShapeImpl(pg, PATH);
       PShape.copyPath(src, dest);
     }
@@ -627,23 +627,24 @@ public class PShapeOpenGL extends PShape {
   }
 
 
+  /*
   static public PShapeOpenGL createShape2D(PGraphicsOpenGL pg, PShape src) {
     PShapeOpenGL dest = null;
     if (src.getFamily() == GROUP) {
       //dest = PGraphics2D.createShapeImpl(pg, GROUP);
-      dest = (PShapeOpenGL) ((PGraphics2D) pg).createShapeFamily(GROUP);
+      dest = (PShapeOpenGL) pg.createShapeFamily(GROUP);
       copyGroup2D(pg, src, dest);
     } else if (src.getFamily() == PRIMITIVE) {
       //dest = PGraphics2D.createShapeImpl(pg, src.getKind(), src.getParams());
-      dest = (PShapeOpenGL) ((PGraphics2D) pg).createShapePrimitive(src.getKind(), src.getParams());
+      dest = (PShapeOpenGL) pg.createShapePrimitive(src.getKind(), src.getParams());
       PShape.copyPrimitive(src, dest);
     } else if (src.getFamily() == GEOMETRY) {
       //dest = PGraphics2D.createShapeImpl(pg, PShape.GEOMETRY);
-      dest = (PShapeOpenGL) ((PGraphics2D) pg).createShapeFamily(PShape.GEOMETRY);
+      dest = (PShapeOpenGL) pg.createShapeFamily(PShape.GEOMETRY);
       PShape.copyGeometry(src, dest);
     } else if (src.getFamily() == PATH) {
       //dest = PGraphics2D.createShapeImpl(pg, PATH);
-      dest = (PShapeOpenGL) ((PGraphics2D) pg).createShapeFamily(PShape.PATH);
+      dest = (PShapeOpenGL) pg.createShapeFamily(PShape.PATH);
       PShape.copyPath(src, dest);
     }
     dest.setName(src.getName());
@@ -651,20 +652,21 @@ public class PShapeOpenGL extends PShape {
     dest.height = src.height;
     return dest;
   }
+*/
 
-
-  static public void copyGroup3D(PGraphicsOpenGL pg, PShape src, PShape dest) {
+  static public void copyGroup(PGraphicsOpenGL pg, PShape src, PShape dest) {
     copyMatrix(src, dest);
     copyStyles(src, dest);
     copyImage(src, dest);
 
     for (int i = 0; i < src.getChildCount(); i++) {
-      PShape c = createShape3D(pg, src.getChild(i));
+      PShape c = createShape(pg, src.getChild(i));
       dest.addChild(c);
     }
   }
 
 
+  /*
   static public void copyGroup2D(PGraphicsOpenGL pg, PShape src, PShape dest) {
     copyMatrix(src, dest);
     copyStyles(src, dest);
@@ -675,7 +677,7 @@ public class PShapeOpenGL extends PShape {
       dest.addChild(c);
     }
   }
-
+*/
 
   ///////////////////////////////////////////////////////////
 
@@ -2788,7 +2790,12 @@ public class PShapeOpenGL extends PShape {
 
 
   protected void tessellate() {
-    if (root == this && parent == null) {
+    if (root == this && parent == null) { // Root shape
+      if (polyAttribs == null) {
+        polyAttribs = PGraphicsOpenGL.newAttributeMap();
+        collectPolyAttribs();
+      }
+
       if (tessGeo == null) {
         tessGeo = PGraphicsOpenGL.newTessGeometry(pg, polyAttribs, PGraphicsOpenGL.RETAINED);
       }
@@ -2807,6 +2814,30 @@ public class PShapeOpenGL extends PShape {
     }
   }
 
+
+  protected void collectPolyAttribs() {
+    AttributeMap rootAttribs = root.polyAttribs;
+
+    if (family == GROUP) {
+      for (int i = 0; i < childCount; i++) {
+        PShapeOpenGL child = (PShapeOpenGL) children[i];
+        child.collectPolyAttribs();
+      }
+    } else {
+      for (int i = 0; i < polyAttribs.size(); i++) {
+        VertexAttribute attrib = polyAttribs.get(i);
+        tessGeo.initAttrib(attrib);
+        if (rootAttribs.containsKey(attrib.name)) {
+          VertexAttribute rattrib = rootAttribs.get(attrib.name);
+          if (rattrib.diff(attrib)) {
+            throw new RuntimeException("Children shapes cannot have different attributes with same name");
+          }
+        } else {
+          rootAttribs.put(attrib.name, attrib);
+        }
+      }
+    }
+  }
 
   protected void tessellateImpl() {
     tessGeo = root.tessGeo;

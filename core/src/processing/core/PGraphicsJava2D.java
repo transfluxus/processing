@@ -93,9 +93,12 @@ public class PGraphicsJava2D extends PGraphics {
   public boolean fillGradient;
   public Paint fillGradientObject;
 
+  protected Stroke strokeObject;
   protected Color strokeColorObject;
   public boolean strokeGradient;
   public Paint strokeGradientObject;
+
+  Font fontObject;
 
 
 
@@ -252,10 +255,10 @@ public class PGraphicsJava2D extends PGraphics {
   // FRAME
 
 
-  @Override
-  public boolean canDraw() {
-    return true;
-  }
+//  @Override
+//  public boolean canDraw() {
+//    return true;
+//  }
 
 
 //  @Override
@@ -272,8 +275,8 @@ public class PGraphicsJava2D extends PGraphics {
 
   public Graphics2D checkImage() {
     if (image == null ||
-      ((BufferedImage) image).getWidth() != width*pixelFactor ||
-      ((BufferedImage) image).getHeight() != height*pixelFactor) {
+      ((BufferedImage) image).getWidth() != width*pixelDensity ||
+      ((BufferedImage) image).getHeight() != height*pixelDensity) {
 //      ((VolatileImage) image).getWidth() != width ||
 //      ((VolatileImage) image).getHeight() != height) {
 //        image = new BufferedImage(width * pixelFactor, height * pixelFactor
@@ -299,10 +302,10 @@ public class PGraphicsJava2D extends PGraphics {
 
       // Formerly this was broken into separate versions based on offscreen or
       // not, but we may as well create a compatible image; it won't hurt, right?
-      int wide = width * pixelFactor;
-      int high = height * pixelFactor;
+      int wide = width * pixelDensity;
+      int high = height * pixelDensity;
 //      System.out.println("re-creating image");
-      image = gc.createCompatibleImage(wide, high);
+      image = gc.createCompatibleImage(wide, high, Transparency.TRANSLUCENT);
 //      image = gc.createCompatibleVolatileImage(wide, high);
       //image = surface.getComponent().createImage(width, height);
     }
@@ -313,10 +316,19 @@ public class PGraphicsJava2D extends PGraphics {
   @Override
   public void beginDraw() {
     g2 = checkImage();
-    //g2 = (Graphics2D) image.getGraphics();
 
-    // Calling getGraphics() seems to nuke the smoothing settings
-    smooth(quality);
+    // Calling getGraphics() seems to nuke several settings.
+    // It seems to be re-creating a new Graphics2D object each time.
+    // https://github.com/processing/processing/issues/3331
+    if (strokeObject != null) {
+      g2.setStroke(strokeObject);
+    }
+    // https://github.com/processing/processing/issues/2617
+    if (fontObject != null) {
+      g2.setFont(fontObject);
+    }
+
+    handleSmooth();
 
     /*
     // NOTE: Calling image.getGraphics() will create a new Graphics context,
@@ -374,6 +386,53 @@ public class PGraphicsJava2D extends PGraphics {
     checkSettings();
     resetMatrix(); // reset model matrix
     vertexCount = 0;
+
+    g2.scale(pixelDensity, pixelDensity);
+  }
+
+
+  /**
+   * Smoothing for Java2D is 2 for bilinear, and 3 for bicubic (the default).
+   * Internally, smooth(1) is the default, smooth(0) is noSmooth().
+   */
+  protected void handleSmooth() {
+    if (smooth == 0) {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                          RenderingHints.VALUE_ANTIALIAS_OFF);
+      g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                          RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+      g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                          RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+
+    } else {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                          RenderingHints.VALUE_ANTIALIAS_ON);
+
+      if (smooth == 1 || smooth == 3) {  // default is bicubic
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                            RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+      } else if (smooth == 2) {
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                            RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+      }
+
+      // http://docs.oracle.com/javase/tutorial/2d/text/renderinghints.html
+      // Oracle Java text anti-aliasing on OS X looks like s*t compared to the
+      // text rendering with Apple's old Java 6. Below, several attempts to fix:
+      g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                          RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+      // Turns out this is the one that actually makes things work.
+      // Kerning is still screwed up, however.
+      g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
+                          RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+//    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+//                        RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);
+//    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+//                         RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+
+//    g2.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION,
+//                        RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+    }
   }
 
 
@@ -383,7 +442,7 @@ public class PGraphicsJava2D extends PGraphics {
     // copy of all the pixels to the surface.. so that's kind of a mess.
     //updatePixels();
 
-    if (primarySurface) {
+    if (primaryGraphics) {
       /*
       //if (canvas != null) {
       if (useCanvas) {
@@ -1395,69 +1454,69 @@ public class PGraphicsJava2D extends PGraphics {
 
 
 
-  //////////////////////////////////////////////////////////////
-
-  // SMOOTH
-
-
-  @Override
-  public void smooth() {
-    smooth = true;
-
-    if (quality == 0) {
-      quality = 4;  // change back to bicubic
-    }
-
-    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                        RenderingHints.VALUE_ANTIALIAS_ON);
-
-    g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                        quality == 4 ?
-                        RenderingHints.VALUE_INTERPOLATION_BICUBIC :
-                        RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-
-    // http://docs.oracle.com/javase/tutorial/2d/text/renderinghints.html
-    // Oracle Java text anti-aliasing on OS X looks like s*t compared to the
-    // text rendering with Apple's old Java 6. Below, several attempts to fix:
-    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-                         RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-    // Turns out this is the one that actually makes things work.
-    // Kerning is still screwed up, however.
-    g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
-                        RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+//  //////////////////////////////////////////////////////////////
+//
+//  // SMOOTH
+//
+//
+//  @Override
+//  public void smooth() {
+//    smooth = true;
+//
+//    if (quality == 0) {
+//      quality = 4;  // change back to bicubic
+//    }
+//
+//    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+//                        RenderingHints.VALUE_ANTIALIAS_ON);
+//
+//    g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+//                        quality == 4 ?
+//                        RenderingHints.VALUE_INTERPOLATION_BICUBIC :
+//                        RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+//
+//    // http://docs.oracle.com/javase/tutorial/2d/text/renderinghints.html
+//    // Oracle Java text anti-aliasing on OS X looks like s*t compared to the
+//    // text rendering with Apple's old Java 6. Below, several attempts to fix:
 //    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-//                        RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);
+//                         RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+//    // Turns out this is the one that actually makes things work.
+//    // Kerning is still screwed up, however.
+//    g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
+//                        RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+////    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+////                        RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);
+////    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+////                         RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+//
+////    g2.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION,
+////                        RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+//
+//  }
+//
+//
+//  @Override
+//  public void smooth(int quality) {
+//    this.quality = quality;
+//    if (quality == 0) {
+//      noSmooth();
+//    } else {
+//      smooth();
+//    }
+//  }
+//
+//
+//  @Override
+//  public void noSmooth() {
+//    smooth = false;
+//    quality = 0;  // https://github.com/processing/processing/issues/3113
+//    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+//                        RenderingHints.VALUE_ANTIALIAS_OFF);
+//    g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+//                        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 //    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-//                         RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-
-//    g2.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION,
-//                        RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
-
-  }
-
-
-  @Override
-  public void smooth(int quality) {
-    this.quality = quality;
-    if (quality == 0) {
-      noSmooth();
-    } else {
-      smooth();
-    }
-  }
-
-
-  @Override
-  public void noSmooth() {
-    smooth = false;
-    quality = 0;  // https://github.com/processing/processing/issues/3113
-    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                        RenderingHints.VALUE_ANTIALIAS_OFF);
-    g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-                        RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-  }
+//                        RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+//  }
 
 
 
@@ -1849,6 +1908,7 @@ public class PGraphicsJava2D extends PGraphics {
       font = font.deriveFont(map);
       g2.setFont(font);
       textFont.setNative(font);
+      fontObject = font;
 
 //      Font dfont = font.deriveFont(size);
 ////      Map<TextAttribute, ?> attrs = dfont.getAttributes();
@@ -2322,7 +2382,8 @@ public class PGraphicsJava2D extends PGraphics {
       join = BasicStroke.JOIN_ROUND;
     }
 
-    g2.setStroke(new BasicStroke(strokeWeight, cap, join));
+    strokeObject = new BasicStroke(strokeWeight, cap, join);
+    g2.setStroke(strokeObject);
   }
 
 
@@ -2588,7 +2649,7 @@ public class PGraphicsJava2D extends PGraphics {
 
   protected WritableRaster getRaster() {
     WritableRaster raster = null;
-    if (primarySurface) {
+    if (primaryGraphics) {
       /*
       // 'offscreen' will probably be removed in the next release
       if (useOffscreen) {
@@ -2812,7 +2873,7 @@ public class PGraphicsJava2D extends PGraphics {
   @Override
   @SuppressWarnings("deprecation")
   public void mask(int[] alpha) {
-    if (primarySurface) {
+    if (primaryGraphics) {
       showWarning(MASK_WARNING);
 
     } else {
@@ -2823,7 +2884,7 @@ public class PGraphicsJava2D extends PGraphics {
 
   @Override
   public void mask(PImage alpha) {
-    if (primarySurface) {
+    if (primaryGraphics) {
       showWarning(MASK_WARNING);
 
     } else {

@@ -151,7 +151,7 @@ public class PGraphics2D extends PGraphicsOpenGL {
 
   @Override
   protected void defaultCamera() {
-    cameraEyeX = cameraEyeY = cameraEyeZ = 0;
+    eyeDist = 1;
     resetMatrix();
   }
 
@@ -243,7 +243,7 @@ public class PGraphics2D extends PGraphicsOpenGL {
                                         String filename, String extension) {
     if (extension.equals("svg") || extension.equals("svgz")) {
       PShapeSVG svg = new PShapeSVG(pg.parent.loadXML(filename));
-      return PShapeOpenGL.createShape2D((PGraphicsOpenGL) pg, svg);
+      return PShapeOpenGL.createShape((PGraphicsOpenGL) pg, svg);
     }
     return null;
   }

@@ -3,7 +3,7 @@
 /*
   Part of the Processing project - http://processing.org
 
-  Copyright (c) 2013-14 The Processing Foundation
+  Copyright (c) 2013-15 The Processing Foundation
   Copyright (c) 2004-12 Ben Fry and Casey Reas
   Copyright (c) 2001-04 Massachusetts Institute of Technology
 
@@ -28,6 +28,7 @@ package processing.core;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
+import java.awt.Frame;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.font.FontRenderContext;
@@ -157,11 +158,12 @@ public class PGraphics extends PImage implements PConstants {
   /// width * height (useful for many calculations)
   public int pixelCount;
 
-  /// true if smoothing is enabled (read-only)
-  public boolean smooth;
+//  /// true if smoothing is enabled (read-only)
+//  public boolean smooth;
 
   /// the anti-aliasing level for renderers that support it
-  public int quality;
+  public int smooth;
+
 
   // ........................................................
 
@@ -180,12 +182,10 @@ public class PGraphics extends PImage implements PConstants {
   protected String path;
 
   /**
-   * true if this is the main drawing surface for a particular sketch.
-   * This would be set to false for an offscreen buffer or if it were
-   * created any other way than size(). When this is set, the listeners
-   * are also added to the sketch.
+   * True if this is the main graphics context for a sketch.
+   * False for offscreen buffers retrieved via createGraphics().
    */
-  protected boolean primarySurface;
+  protected boolean primaryGraphics;
 
 //  // TODO nervous about leaving this here since it seems likely to create
 //  // back-references where we don't want them
@@ -445,6 +445,9 @@ public class PGraphics extends PImage implements PConstants {
   /** The current text leading (read-only) */
   public float textLeading;
 
+  static final protected String ERROR_TEXTFONT_NULL_PFONT =
+    "A null PFont was passed to textFont()";
+
   // ........................................................
 
   // Material properties
@@ -483,6 +486,11 @@ public class PGraphics extends PImage implements PConstants {
   protected float backgroundR, backgroundG, backgroundB, backgroundA;
   protected int backgroundRi, backgroundGi, backgroundBi, backgroundAi;
 
+  static final protected String ERROR_BACKGROUND_IMAGE_SIZE =
+    "background image must be the same size as your application";
+  static final protected String ERROR_BACKGROUND_IMAGE_FORMAT =
+    "background images should be RGB or ARGB";
+
 
   /** The current blending mode. */
   protected int blendMode;
@@ -506,6 +514,12 @@ public class PGraphics extends PImage implements PConstants {
 //  int matrixStackDepth;
 
   static final int MATRIX_STACK_DEPTH = 32;
+
+  static final protected String ERROR_PUSHMATRIX_OVERFLOW =
+    "Too many calls to pushMatrix().";
+  static final protected String ERROR_PUSHMATRIX_UNDERFLOW =
+    "Too many calls to popMatrix(), and not enough to pushMatrix().";
+
 
   // ........................................................
 
@@ -699,9 +713,11 @@ public class PGraphics extends PImage implements PConstants {
 
   public void setParent(PApplet parent) {  // ignore
     this.parent = parent;
+
     // Some renderers (OpenGL) need to know what smoothing level will be used
     // before the rendering surface is even created.
-    quality = parent.sketchQuality();
+    smooth = parent.sketchSmooth();
+    pixelDensity = parent.sketchPixelDensity();
   }
 
 
@@ -711,12 +727,12 @@ public class PGraphics extends PImage implements PConstants {
    * else that goes along with that.
    */
   public void setPrimary(boolean primary) {  // ignore
-    this.primarySurface = primary;
+    this.primaryGraphics = primary;
 
     // base images must be opaque (for performance and general
     // headache reasons.. argh, a semi-transparent opengl surface?)
     // use createGraphics() if you want a transparent surface.
-    if (primarySurface) {
+    if (primaryGraphics) {
       format = RGB;
     }
   }
@@ -748,8 +764,8 @@ public class PGraphics extends PImage implements PConstants {
     height = h;
 
     /** {@link PImage.pixelFactor} set in {@link PImage#PImage()} */
-    pixelWidth = width * pixelFactor;
-    pixelHeight = height * pixelFactor;
+    pixelWidth = width * pixelDensity;
+    pixelHeight = height * pixelDensity;
 
 //    if (surface != null) {
 //      allocate();
@@ -757,6 +773,11 @@ public class PGraphics extends PImage implements PConstants {
 //    reapplySettings();
     reapplySettings = true;
   }
+
+
+//  public void setSmooth(int level) {
+//    this.smooth = level;
+//  }
 
 
 //  /**
@@ -828,12 +849,12 @@ public class PGraphics extends PImage implements PConstants {
   // FRAME
 
 
-  /**
-   * Some renderers have requirements re: when they are ready to draw.
-   */
-  public boolean canDraw() {  // ignore
-    return true;
-  }
+//  /**
+//   * Some renderers have requirements re: when they are ready to draw.
+//   */
+//  public boolean canDraw() {  // ignore
+//    return true;
+//  }
 
 
   // removing because renderers will have their own animation threads and
@@ -916,12 +937,12 @@ public class PGraphics extends PImage implements PConstants {
   protected void defaultSettings() {  // ignore
 //    System.out.println("PGraphics.defaultSettings() " + width + " " + height);
 
-    //smooth();  // 2.0a5
-    if (quality > 0) {  // 2.0a5
-      smooth();
-    } else {
-      noSmooth();
-    }
+//    //smooth();  // 2.0a5
+//    if (quality > 0) {  // 2.0a5
+//      smooth();
+//    } else {
+//      noSmooth();
+//    }
 
     colorMode(RGB, 255);
     fill(255);
@@ -954,7 +975,7 @@ public class PGraphics extends PImage implements PConstants {
     // a gray background (when just a transparent surface or an empty pdf
     // is what's desired).
     // this background() call is for the Java 2D and OpenGL renderers.
-    if (primarySurface) {
+    if (primaryGraphics) {
       //System.out.println("main drawing surface bg " + getClass().getName());
       background(backgroundColor);
     }
@@ -1012,12 +1033,12 @@ public class PGraphics extends PImage implements PConstants {
     } else {
       noTint();
     }
-    if (smooth) {
-      smooth();
-    } else {
-      // Don't bother setting this, cuz it'll anger P3D.
-      noSmooth();
-    }
+//    if (smooth) {
+//      smooth();
+//    } else {
+//      // Don't bother setting this, cuz it'll anger P3D.
+//      noSmooth();
+//    }
     if (textFont != null) {
 //      System.out.println("  textFont in reapply is " + textFont);
       // textFont() resets the leading, so save it in case it's changed
@@ -1095,6 +1116,7 @@ public class PGraphics extends PImage implements PConstants {
    * enabled or disabled.
    *
    * ( end auto-generated )
+   *
    * @webref rendering
    * @param which name of the hint to be enabled or disabled
    * @see PGraphics
@@ -1949,7 +1971,7 @@ public class PGraphics extends PImage implements PConstants {
    *
    * ( end auto-generated )
    *
-   * @webref Rendering
+   * @webref rendering
    * @param mode the blending mode to use
    */
   public void blendMode(int mode) {
@@ -3555,50 +3577,35 @@ public class PGraphics extends PImage implements PConstants {
   // SMOOTHING
 
 
-  /**
-   * If true in PImage, use bilinear interpolation for copy()
-   * operations. When inherited by PGraphics, also controls shapes.
-   */
-
-  /**
-   * ( begin auto-generated from smooth.xml )
-   *
-   * Draws all geometry with smooth (anti-aliased) edges. This will sometimes
-   * slow down the frame rate of the application, but will enhance the visual
-   * refinement. Note that <b>smooth()</b> will also improve image quality of
-   * resized images, and <b>noSmooth()</b> will disable image (and font)
-   * smoothing altogether.
-   *
-   * ( end auto-generated )
-   *
-   * @webref shape:attributes
-   * @see PGraphics#noSmooth()
-   * @see PGraphics#hint(int)
-   * @see PApplet#size(int, int, String)
-   */
-  public void smooth() {
-    smooth = true;
+  public void smooth() {  // ignore
+    smooth(1);
   }
 
-  /**
-   *
-   * @param level either 2, 4, or 8
-   */
-  public void smooth(int level) {
-    smooth = true;
+
+  public void smooth(int quality) {  // ignore
+    if (primaryGraphics) {
+      parent.smooth(quality);
+    } else {
+      // for createGraphics(), make sure beginDraw() not called yet
+      if (settingsInited) {
+        // ignore if it's just a repeat of the current state
+        if (this.smooth != quality) {
+          smoothWarning("smooth");
+        }
+      } else {
+        this.smooth = quality;
+      }
+    }
   }
 
-  /**
-   * ( begin auto-generated from noSmooth.xml )
-   *
-   * Draws all geometry with jagged (aliased) edges.
-   *
-   * ( end auto-generated )
-   * @webref shape:attributes
-   * @see PGraphics#smooth()
-   */
-  public void noSmooth() {
-    smooth = false;
+
+  public void noSmooth() {  // ignore
+    smooth(0);
+  }
+
+
+  private void smoothWarning(String method) {
+    PGraphics.showWarning("%s() can only be used before beginDraw()", method);
   }
 
 
@@ -4125,7 +4132,7 @@ public class PGraphics extends PImage implements PConstants {
         // float w = font.getStringBounds(text, g2.getFontRenderContext()).getWidth();
       }
       */
-      textSize(which.size);
+      textSize(which.getDefaultSize());
 
     } else {
       throw new RuntimeException(ERROR_TEXTFONT_NULL_PFONT);
@@ -4814,10 +4821,10 @@ public class PGraphics extends PImage implements PConstants {
     PFont.Glyph glyph = textFont.getGlyph(ch);
     if (glyph != null) {
       if (textMode == MODEL) {
-        float high    = glyph.height     / (float) textFont.size;
-        float bwidth  = glyph.width      / (float) textFont.size;
-        float lextent = glyph.leftExtent / (float) textFont.size;
-        float textent = glyph.topExtent  / (float) textFont.size;
+        float high    = glyph.height     / (float) textFont.getSize();
+        float bwidth  = glyph.width      / (float) textFont.getSize();
+        float lextent = glyph.leftExtent / (float) textFont.getSize();
+        float textent = glyph.topExtent  / (float) textFont.getSize();
 
         float x1 = x + lextent * textSize;
         float y1 = y - textent * textSize;
@@ -4866,6 +4873,7 @@ public class PGraphics extends PImage implements PConstants {
   }
 
 
+  /*
   protected void textCharScreenImpl(PImage glyph,
                                     int xx, int yy,
                                     int w0, int h0) {
@@ -4916,6 +4924,7 @@ public class PGraphics extends PImage implements PConstants {
       }
     }
   }
+  */
 
 
   /**
@@ -4925,6 +4934,10 @@ public class PGraphics extends PImage implements PConstants {
    */
   @SuppressWarnings("deprecation")
   public FontMetrics getFontMetrics(Font font) {  // ignore
+    Frame frame = parent.frame;
+    if (frame != null) {
+      return frame.getToolkit().getFontMetrics(font);
+    }
     return Toolkit.getDefaultToolkit().getFontMetrics(font);
   }
 
@@ -8074,6 +8087,6 @@ public class PGraphics extends PImage implements PConstants {
 
 
   public boolean is2X() {
-    return pixelFactor == 2;
+    return pixelDensity == 2;
   }
 }
