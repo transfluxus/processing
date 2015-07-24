@@ -41,9 +41,9 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.StyleSheet;
 
 import processing.app.Base;
-import processing.app.Editor;
-import processing.app.Toolkit;
 import processing.app.Language;
+import processing.app.ui.Editor;
+import processing.app.ui.Toolkit;
 
 
 // TODO clean up accessors (too many cases of several de-references for basic tasks
@@ -87,13 +87,18 @@ class ContributionPanel extends JPanel {
    */
   private Contribution contrib;
 
+  public Contribution getContrib() {
+    return contrib;
+  }
+
+
   private boolean alreadySelected;
   private boolean enableHyperlinks;
   private HyperlinkListener conditionalHyperlinkOpener;
   private JTextPane descriptionPane;
   private JLabel notificationLabel;
   private JButton updateButton;
-  private JProgressBar installProgressBar;
+  JProgressBar installProgressBar;
   private JButton installRemoveButton;
   private JPopupMenu contextMenu;
   private JMenuItem openFolder;
@@ -103,10 +108,11 @@ class ContributionPanel extends JPanel {
   private ActionListener installActionListener;
   private ActionListener undoActionListener;
 
-  private boolean isUpdateInProgress;
+  boolean isUpdateInProgress;
   private boolean isInstallInProgress;
   private boolean isRemoveInProgress;
-
+  
+  StringBuilder description;
 
   ContributionPanel(ContributionListPanel contributionListPanel) {
     listPanel = contributionListPanel;
@@ -128,19 +134,13 @@ class ContributionPanel extends JPanel {
 
     installActionListener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        listPanel.contribManager.status.clear();
-        isInstallInProgress = true;
-        ((CardLayout) barButtonCardPane.getLayout()).show(barButtonCardPane, PROGRESS_BAR_CONSTRAINT);
-        if (contrib instanceof AvailableContribution) {
-          installContribution((AvailableContribution) contrib);
-          contribListing.replaceContribution(contrib, contrib);
-        }
+       install();
       }
     };
 
     undoActionListener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        listPanel.contribManager.status.clear();
+        listPanel.contributionTab.statusPanel.clear();
         if (contrib instanceof LocalContribution) {
           LocalContribution installed = (LocalContribution) contrib;
           installed.setDeletionFlag(false);
@@ -157,68 +157,14 @@ class ContributionPanel extends JPanel {
               }
             }
           }
-          listPanel.contribManager.restartButton.setVisible(toBeRestarted);
+          listPanel.contributionTab.restartButton.setVisible(toBeRestarted);
         }
       }
     };
 
     removeActionListener = new ActionListener() {
       public void actionPerformed(ActionEvent arg) {
-        listPanel.contribManager.status.clear();
-        if (contrib.isInstalled() && contrib instanceof LocalContribution) {
-          isRemoveInProgress = true;
-          ((CardLayout) barButtonCardPane.getLayout()).show(barButtonCardPane, PROGRESS_BAR_CONSTRAINT);
-          updateButton.setEnabled(false);
-          installRemoveButton.setEnabled(false);
-          installProgressBar.setVisible(true);
-          installProgressBar.setIndeterminate(true);
-
-          ContribProgressBar monitor = new ContribProgressBar(installProgressBar) {
-            public void finishedAction() {
-              // Finished uninstalling the library
-              resetInstallProgressBarState();
-              isRemoveInProgress = false;
-              installRemoveButton.setEnabled(true);
-
-              reorganizePaneComponents();
-              setSelected(true); // Needed for smooth working. Dunno why, though...
-            }
-
-            public void cancel() {
-              super.cancel();
-              resetInstallProgressBarState();
-              isRemoveInProgress = false;
-              installRemoveButton.setEnabled(true);
-
-              reorganizePaneComponents();
-              setSelected(true);
-
-              ContributionManagerDialog manager = listPanel.contribManager;
-              boolean isModeActive = false;
-              if (contrib.getType() == ContributionType.MODE) {
-                ModeContribution m = (ModeContribution) contrib;
-                // TODO there's gotta be a cleaner way to do this accessor
-                for (Editor e : manager.editor.getBase().getEditors()) {
-                //Iterator<Editor> iter = listPanel.contribManager.editor.getBase().getEditors().iterator();
-                //while (iter.hasNext()) {
-                  //Editor e = iter.next();
-                  if (e.getMode().equals(m.getMode())) {
-                    isModeActive = true;
-                    break;
-                  }
-                }
-              }
-              if (isModeActive) {
-                updateButton.setEnabled(true);
-              } else {
-                manager.restartButton.setVisible(true);
-              }
-            }
-          };
-          ContributionManagerDialog manager = listPanel.contribManager;
-          LocalContribution localContrib = (LocalContribution) contrib;
-          localContrib.removeContribution(manager.editor, monitor, manager.status);
-        }
+        remove();
       }
     };
 
@@ -246,9 +192,9 @@ class ContributionPanel extends JPanel {
         if (contrib.isCompatible(Base.getRevision())) {
           listPanel.setSelectedPanel(ContributionPanel.this);
         } else {
-          final String msg = contrib.getName() +
-            " is not compatible with this version of Processing";
-          listPanel.contribManager.status.setErrorMessage(msg);
+          final String msg = contrib.getName()
+            + " is not compatible with this version of Processing";
+          listPanel.contributionTab.statusPanel.setErrorMessage(msg);
         }
       }
     });
@@ -306,69 +252,7 @@ class ContributionPanel extends JPanel {
     updateButton.addActionListener(new ActionListener() {
 
       public void actionPerformed(ActionEvent e) {
-        listPanel.contribManager.status.clear();
-        isUpdateInProgress = true;
-        if (contrib.getType().requiresRestart()) {
-          installRemoveButton.setEnabled(false);
-          installProgressBar.setVisible(true);
-          installProgressBar.setIndeterminate(true);
-
-          ContribProgressBar progress = new ContribProgressBar(installProgressBar) {
-            public void finishedAction() {
-              // Finished uninstalling the library
-              resetInstallProgressBarState();
-              updateButton.setEnabled(false);
-              AvailableContribution ad =
-                contribListing.getAvailableContribution(contrib);
-              String url = ad.link;
-              installContribution(ad, url);
-            }
-
-            @Override
-            public void cancel() {
-              super.cancel();
-              resetInstallProgressBarState();
-              listPanel.contribManager.status.setMessage("");
-              isUpdateInProgress = false;
-              installRemoveButton.setEnabled(true);
-              if (contrib.isDeletionFlagged()) {
-                ((LocalContribution)contrib).setUpdateFlag(true);
-                ((LocalContribution)contrib).setDeletionFlag(false);
-                contribListing.replaceContribution(contrib,contrib);
-              }
-
-              boolean isModeActive = false;
-              if (contrib.getType() == ContributionType.MODE) {
-                ModeContribution m = (ModeContribution) contrib;
-                //Iterator<Editor> iter = listPanel.contribManager.editor.getBase().getEditors().iterator();
-                //while (iter.hasNext()) {
-                // TODO there's gotta be a cleaner way to do this accessor
-                Base base = listPanel.contribManager.editor.getBase();
-                for (Editor e : base.getEditors()) {
-                  //Editor e = iter.next();
-                  if (e.getMode().equals(m.getMode())) {
-                    isModeActive = true;
-                    break;
-                  }
-                }
-              }
-              if (isModeActive) {
-                updateButton.setEnabled(true);
-              } else {
-                listPanel.contribManager.restartButton.setVisible(true);
-              }
-            }
-          };
-          ((LocalContribution) contrib)
-            .removeContribution(listPanel.contribManager.editor,
-                                progress, listPanel.contribManager.status);
-        } else {
-          updateButton.setEnabled(false);
-          installRemoveButton.setEnabled(false);
-          AvailableContribution ad = contribListing.getAvailableContribution(contrib);
-          String url = ad.link;
-          installContribution(ad, url);
-        }
+        update();
       }
     });
 //      add(updateButton, c);
@@ -431,7 +315,7 @@ class ContributionPanel extends JPanel {
 
     JPanel barPane = new JPanel();
     barPane.setOpaque(false);
-    barPane.add(installProgressBar);
+//    barPane.add(installProgressBar);
 
     JPanel buttonPane = new JPanel();
     buttonPane.setOpaque(false);
@@ -488,7 +372,7 @@ class ContributionPanel extends JPanel {
       JPanel barPane = new JPanel();
       barPane.setOpaque(false);
       barPane.setInheritsPopupMenu(true);
-      barPane.add(installProgressBar);
+//      barPane.add(installProgressBar);
       rightPane.add(barPane);
 
       if (isUpdateInProgress)
@@ -502,7 +386,7 @@ class ContributionPanel extends JPanel {
       JPanel barPane = new JPanel();
       barPane.setOpaque(false);
       barPane.setInheritsPopupMenu(true);
-      barPane.add(installProgressBar);
+//      barPane.add(installProgressBar);
 
       JPanel buttonPane = new JPanel();
       buttonPane.setOpaque(false);
@@ -568,7 +452,7 @@ class ContributionPanel extends JPanel {
       add(iconLabel, BorderLayout.WEST);
     }
 
-    StringBuilder description = new StringBuilder();
+    description = new StringBuilder();
     description.append("<html><body><b>");
     if (contrib.getUrl() == null) {
       description.append(contrib.getName());
@@ -689,7 +573,7 @@ class ContributionPanel extends JPanel {
 
   private void installContribution(AvailableContribution info) {
     if (info.link == null) {
-      listPanel.contribManager.status.setErrorMessage(Language.interpolate("contrib.unsupported_operating_system", info.getType()));
+      listPanel.contributionTab.statusPanel.setErrorMessage(Language.interpolate("contrib.unsupported_operating_system", info.getType()));
     } else {
       installContribution(info, info.link);
     }
@@ -729,7 +613,7 @@ class ContributionPanel extends JPanel {
           installRemoveButton.setEnabled(!contrib.isUpdateFlagged());
 
           if (isError()) {
-            listPanel.contribManager.status.setErrorMessage(Language.text("contrib.download_error"));
+            listPanel.contributionTab.statusPanel.setErrorMessage(Language.text("contrib.download_error"));
           }
           ((CardLayout) barButtonCardPane.getLayout()).show(barButtonCardPane, BUTTON_CONSTRAINT);
           isInstallInProgress = false;
@@ -744,10 +628,10 @@ class ContributionPanel extends JPanel {
         }
       };
 
-      ContributionManager.downloadAndInstall(listPanel.contribManager.editor,
+      ContributionManager.downloadAndInstall(listPanel.contributionTab.editor,
                                              downloadUrl, ad,
                                              downloadProgress, installProgress,
-                                             listPanel.contribManager.status);
+                                             listPanel.contributionTab.statusPanel);
 
     } catch (MalformedURLException e) {
       Base.showWarning(Language.text("contrib.errors.install_failed"),
@@ -921,5 +805,146 @@ class ContributionPanel extends JPanel {
         styleSheet.addRule("a { text-decoration:none }");
       }
     }
+  }
+
+
+  public void install() {
+    listPanel.contributionTab.statusPanel.clear();
+    isInstallInProgress = true;
+    ((CardLayout) barButtonCardPane.getLayout()).show(barButtonCardPane, PROGRESS_BAR_CONSTRAINT);
+    if (contrib instanceof AvailableContribution) {
+      installContribution((AvailableContribution) contrib);
+      contribListing.replaceContribution(contrib, contrib);
+    }
+  }
+
+
+  public void update() {
+
+    listPanel.contributionTab.statusPanel.clear();
+    isUpdateInProgress = true;
+    if (contrib.getType().requiresRestart()) {
+      installRemoveButton.setEnabled(false);
+      installProgressBar.setVisible(true);
+      installProgressBar.setIndeterminate(true);
+
+      ContribProgressBar progress = new ContribProgressBar(installProgressBar) {
+        public void finishedAction() {
+          // Finished uninstalling the library
+          resetInstallProgressBarState();
+          updateButton.setEnabled(false);
+          AvailableContribution ad =
+            contribListing.getAvailableContribution(contrib);
+          String url = ad.link;
+          installContribution(ad, url);
+        }
+
+        @Override
+        public void cancel() {
+          super.cancel();
+          resetInstallProgressBarState();
+          listPanel.contributionTab.statusPanel.setMessage("");
+          isUpdateInProgress = false;
+          installRemoveButton.setEnabled(true);
+          if (contrib.isDeletionFlagged()) {
+            ((LocalContribution)contrib).setUpdateFlag(true);
+            ((LocalContribution)contrib).setDeletionFlag(false);
+            contribListing.replaceContribution(contrib,contrib);
+          }
+
+          boolean isModeActive = false;
+          if (contrib.getType() == ContributionType.MODE) {
+            ModeContribution m = (ModeContribution) contrib;
+            //Iterator<Editor> iter = listPanel.contribManager.editor.getBase().getEditors().iterator();
+            //while (iter.hasNext()) {
+            // TODO there's gotta be a cleaner way to do this accessor
+            Base base = listPanel.contributionTab.editor.getBase();
+            for (Editor e : base.getEditors()) {
+              //Editor e = iter.next();
+              if (e.getMode().equals(m.getMode())) {
+                isModeActive = true;
+                break;
+              }
+            }
+          }
+          if (isModeActive) {
+            updateButton.setEnabled(true);
+          } else {
+            listPanel.contributionTab.restartButton.setVisible(true);
+          }
+        }
+      };
+      ((LocalContribution) contrib)
+        .removeContribution(listPanel.contributionTab.editor,
+                            progress, listPanel.contributionTab.statusPanel);
+    } else {
+      updateButton.setEnabled(false);
+      installRemoveButton.setEnabled(false);
+      AvailableContribution ad = contribListing.getAvailableContribution(contrib);
+      String url = ad.link;
+      installContribution(ad, url);
+    }
+    
+  }
+
+
+  public void remove() {
+
+    listPanel.contributionTab.statusPanel.clear();
+    if (contrib.isInstalled() && contrib instanceof LocalContribution) {
+      isRemoveInProgress = true;
+      ((CardLayout) barButtonCardPane.getLayout()).show(barButtonCardPane, PROGRESS_BAR_CONSTRAINT);
+      updateButton.setEnabled(false);
+      installRemoveButton.setEnabled(false);
+      installProgressBar.setVisible(true);
+      installProgressBar.setIndeterminate(true);
+
+      ContribProgressBar monitor = new ContribProgressBar(installProgressBar) {
+        public void finishedAction() {
+          // Finished uninstalling the library
+          resetInstallProgressBarState();
+          isRemoveInProgress = false;
+          installRemoveButton.setEnabled(true);
+
+          reorganizePaneComponents();
+          setSelected(true); // Needed for smooth working. Dunno why, though...
+        }
+
+        public void cancel() {
+          super.cancel();
+          resetInstallProgressBarState();
+          isRemoveInProgress = false;
+          installRemoveButton.setEnabled(true);
+
+          reorganizePaneComponents();
+          setSelected(true);
+
+          ContributionTab contributionTab = listPanel.contributionTab;
+          boolean isModeActive = false;
+          if (contrib.getType() == ContributionType.MODE) {
+            ModeContribution m = (ModeContribution) contrib;
+            // TODO there's gotta be a cleaner way to do this accessor
+            for (Editor e : contributionTab.editor.getBase().getEditors()) {
+            //Iterator<Editor> iter = listPanel.contribManager.editor.getBase().getEditors().iterator();
+            //while (iter.hasNext()) {
+              //Editor e = iter.next();
+              if (e.getMode().equals(m.getMode())) {
+                isModeActive = true;
+                break;
+              }
+            }
+          }
+          if (isModeActive) {
+            updateButton.setEnabled(true);
+          } else {
+            contributionTab.restartButton.setVisible(true);
+          }
+        }
+      };
+      ContributionTab contributionTab = listPanel.contributionTab;
+      LocalContribution localContrib = (LocalContribution) contrib;
+      localContrib.removeContribution(contributionTab.editor, monitor, contributionTab.statusPanel);
+    }
+    
   }
 }

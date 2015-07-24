@@ -22,8 +22,8 @@ import javax.swing.text.Document;
 import org.eclipse.jdt.core.compiler.IProblem;
 
 import processing.core.PApplet;
+import processing.data.StringList;
 import processing.app.*;
-import processing.app.Toolkit;
 import processing.app.contrib.AvailableContribution;
 import processing.app.contrib.Contribution;
 import processing.app.contrib.ContributionListing;
@@ -31,6 +31,15 @@ import processing.app.contrib.ContributionManager;
 import processing.app.contrib.ToolContribution;
 import processing.app.syntax.JEditTextArea;
 import processing.app.syntax.PdeTextAreaDefaults;
+import processing.app.ui.About;
+import processing.app.ui.ColorChooser;
+import processing.app.ui.Editor;
+import processing.app.ui.EditorFooter;
+import processing.app.ui.EditorHeader;
+import processing.app.ui.EditorState;
+import processing.app.ui.EditorToolbar;
+import processing.app.ui.Toolkit;
+import processing.app.ui.Welcome;
 import processing.mode.java.debug.LineBreakpoint;
 import processing.mode.java.debug.LineHighlight;
 import processing.mode.java.debug.LineID;
@@ -255,7 +264,7 @@ public class JavaEditor extends Editor {
 
 //    console = new EditorConsole(this);
 //    footer.addPanel(Language.text("editor.footer.console"), console);
-    footer.addPanel(Language.text("editor.footer.errors"), errorTableScrollPane);
+    footer.addPanel(errorTableScrollPane, Language.text("editor.footer.errors"), "/lib/footer/error");
 
     //return consolePanel;
     return footer;
@@ -340,6 +349,14 @@ public class JavaEditor extends Editor {
       });
       menu.add(item);
     }
+
+    item = new JMenuItem("Welcome to Processing 3");
+    item.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        new Welcome(base, Preferences.getSketchbookPath().equals(Preferences.getOldSketchbookPath()));
+      }
+    });
+    menu.add(item);
 
     item = new JMenuItem(Language.text("menu.help.environment"));
     item.addActionListener(new ActionListener() {
@@ -527,7 +544,7 @@ public class JavaEditor extends Editor {
    *          are to be added
    * @return true if and only if any JMenuItems were added; false otherwise
    */
-  private boolean addLibReferencesToSubMenu(ArrayList<Library> libsList, JMenu subMenu) {
+  private boolean addLibReferencesToSubMenu(List<Library> libsList, JMenu subMenu) {
     boolean isItemAdded = false;
     Iterator<Library> iter = libsList.iterator();
     while (iter.hasNext()) {
@@ -1265,16 +1282,18 @@ public class JavaEditor extends Editor {
     // could also scan the text in the file to see if each import
     // statement is already in there, but if the user has the import
     // commented out, then this will be a problem.
-    String[] list = lib.getSpecifiedImports(); // ask the library for its imports
+    StringList list = lib.getImports(); // ask the library for its imports
     if (list == null) {
       // Default to old behavior and load each package in the primary jar
-      list = Base.packageListFromClassPath(lib.getJarPath());
+      list = Util.packageListFromClassPath(lib.getJarPath());
     }
 
     StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < list.length; i++) {
+//    for (int i = 0; i < list.length; i++) {
+    for (String item : list) {
       sb.append("import ");
-      sb.append(list[i]);
+//      sb.append(list[i]);
+      sb.append(item);
       sb.append(".*;\n");
     }
     sb.append('\n');
@@ -2397,7 +2416,7 @@ public class JavaEditor extends Editor {
    * @param code tab to switch to
    */
   @Override
-  protected void setCode(SketchCode code) {
+  public void setCode(SketchCode code) {
     //System.out.println("tab switch: " + code.getFileName());
     // set the new document in the textarea, etc. need to do this first
     super.setCode(code);
@@ -2667,8 +2686,8 @@ public class JavaEditor extends Editor {
 
   // TWEAK MODE
 
-  static final String prefTweakPort = "tweak.port";
-  static final String prefTweakShowCode = "tweak.showcode";
+  static final String PREF_TWEAK_PORT = "tweak.port";
+  static final String PREF_TWEAK_SHOW_CODE = "tweak.showcode";
 
   public String[] baseCode;
   TweakClient tweakClient;
@@ -2871,9 +2890,9 @@ public class JavaEditor extends Editor {
 
     // get port number from preferences.txt
     int port;
-    String portStr = Preferences.get(prefTweakPort);
+    String portStr = Preferences.get(PREF_TWEAK_PORT);
     if (portStr == null) {
-      Preferences.set(prefTweakPort, "auto");
+      Preferences.set(PREF_TWEAK_PORT, "auto");
       portStr = "auto";
     }
 
@@ -2881,7 +2900,7 @@ public class JavaEditor extends Editor {
       // random port for udp (0xc000 - 0xffff)
       port = (int)(Math.random()*0x3fff) + 0xc000;
     } else {
-      port = Preferences.getInteger(prefTweakPort);
+      port = Preferences.getInteger(PREF_TWEAK_PORT);
     }
 
     // create the client that will send the new values to the sketch
@@ -2936,7 +2955,7 @@ public class JavaEditor extends Editor {
     }
 
     // add the server code that will receive the value change messages
-    header += TweakClient.getServerCode(port, numOfInts>0, numOfFloats>0);
+//    header += TweakClient.getServerCode(port, numOfInts>0, numOfFloats>0);
     header += "TweakModeServer tweakmode_Server;\n";
 
     header += "void tweakmode_initAllVars() {\n";
@@ -2965,15 +2984,18 @@ public class JavaEditor extends Editor {
     setupEndPos = SketchParser.getSetupEnd(c);
     c = replaceString(c, setupEndPos, setupEndPos, addToSetup);
 
-    code[0].setProgram(header + c);
+    // Server code defines a class, so it should go later in the sketch
+    String serverCode =
+      TweakClient.getServerCode(port, numOfInts>0, numOfFloats>0);
+    code[0].setProgram(header + c + serverCode);
 
     // print out modified code
-    String showModCode = Preferences.get(prefTweakShowCode);
+    String showModCode = Preferences.get(PREF_TWEAK_SHOW_CODE);
     if (showModCode == null) {
-      Preferences.setBoolean(prefTweakShowCode, false);
+      Preferences.setBoolean(PREF_TWEAK_SHOW_CODE, false);
     }
 
-    if (Preferences.getBoolean(prefTweakShowCode)) {
+    if (Preferences.getBoolean(PREF_TWEAK_SHOW_CODE)) {
       System.out.println("\nTweakMode modified code:\n");
       for (int i=0; i<code.length; i++) {
         System.out.println("tab " + i + "\n");

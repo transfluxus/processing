@@ -21,10 +21,13 @@
 
 package processing.app;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.SystemColor;
 import java.io.*;
 import java.util.*;
 
+import processing.app.ui.Toolkit;
 import processing.core.*;
 
 
@@ -49,32 +52,13 @@ public class Preferences {
   static final String DEFAULTS_FILE = "defaults.txt"; //$NON-NLS-1$
   static final String PREFS_FILE = "preferences.txt"; //$NON-NLS-1$
 
-  static HashMap<String, String> defaults;
-  static HashMap<String, String> table = new HashMap<String, String>();
+  static Map<String, String> defaults;
+  static Map<String, String> table = new HashMap<String, String>();
   static File preferencesFile;
 
-  static final String PROMPT_YES     = Language.text("prompt.yes");
-  static final String PROMPT_NO      = Language.text("prompt.no");
-  static final String PROMPT_CANCEL  = Language.text("prompt.cancel");
-  static final String PROMPT_OK      = Language.text("prompt.ok");
-  static final String PROMPT_BROWSE  = Language.text("prompt.browse");
 
-  /**
-   * Standardized width for buttons. Mac OS X 10.3 wants 70 as its default,
-   * Windows XP needs 66, and my Ubuntu machine needs 80+, so 80 seems proper.
-   */
-  static public int BUTTON_WIDTH =
-    Integer.parseInt(Language.text("preferences.button.width"));
-
-  // Indents and spacing standards. These probably need to be modified
-  // per platform as well, because Mac OS X is so huge, Windows is smaller,
-  // and Linux is all over the map. Consider these deprecated.
-
-  static final int GUI_BIG     = 13;
-  static final int GUI_BETWEEN = 8;
-  static final int GUI_SMALL   = 6;
-
-
+//  /** @return true if the sketchbook file did not exist */
+//  static public boolean init() {
   static public void init() {
     // start by loading the defaults, in case something
     // important was deleted from the user prefs
@@ -119,7 +103,8 @@ public class Preferences {
 
     // next load user preferences file
     preferencesFile = Base.getSettingsFile(PREFS_FILE);
-    if (preferencesFile.exists()) {
+    boolean firstRun = !preferencesFile.exists();
+    if (!firstRun) {
       try {
         load(new FileInputStream(preferencesFile));
 
@@ -132,7 +117,8 @@ public class Preferences {
       }
     }
 
-    if (checkSketchbookPref() || !preferencesFile.exists()) {
+    if (checkSketchbookPref() || firstRun) {
+//    if (firstRun) {
       // create a new preferences file if none exists
       // saves the defaults out to the file
       save();
@@ -153,30 +139,6 @@ public class Preferences {
     handleProxy("http", "http.proxyHost", "http.proxyPort");
     handleProxy("https", "https.proxyHost", "https.proxyPort");
     handleProxy("socks", "socksProxyHost", "socksProxyPort");
-
-    /*
-    String httpProxyHost = get("proxy.http.host");
-    String httpProxyPort = get("proxy.http.port");
-    if (httpProxyHost != null && httpProxyHost.length() != 0 &&
-        httpProxyPort != null && httpProxyPort.length() != 0) {
-      System.setProperty("http.proxyHost", httpProxyHost);
-      System.setProperty("http.proxyPort", httpProxyPort);
-    }
-    String httpsProxyHost = get("proxy.https.host");
-    String httpsProxyPort = get("proxy.https.port");
-    if (httpsProxyHost != null && httpsProxyHost.length() != 0 &&
-        httpsProxyPort != null && httpsProxyPort.length() != 0) {
-      System.setProperty("https.proxyHost", httpsProxyHost);
-      System.setProperty("https.proxyPort", httpsProxyPort);
-    }
-    String socksProxyHost = get("proxy.socks.host");
-    String socksProxyPort = get("proxy.socks.port");
-    if (socksProxyHost != null && socksProxyHost.length() != 0 &&
-        socksProxyPort != null && socksProxyPort.length() != 0) {
-      System.setProperty("socksProxyHost", socksProxyHost);
-      System.setProperty("socksProxyPort", socksProxyPort);
-    }
-    */
   }
 
 
@@ -192,7 +154,7 @@ public class Preferences {
   }
 
 
-  static protected String getPreferencesPath() {
+  static public String getPreferencesPath() {
     return preferencesFile.getAbsolutePath();
   }
 
@@ -262,7 +224,7 @@ public class Preferences {
   // . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
 
-  static protected void save() {
+  static public void save() {
     // on startup, don't worry about it
     // this is trying to update the prefs for who is open
     // before Preferences.init() has been called.
@@ -452,7 +414,12 @@ public class Preferences {
   }
 
 
-  static protected String getSketchbookPath() {
+  static public String getOldSketchbookPath() {
+    return get("sketchbook.path");
+  }
+
+
+  static public String getSketchbookPath() {
     return get("sketchbook.path.three"); //$NON-NLS-1$
   }
 

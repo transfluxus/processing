@@ -292,6 +292,16 @@ public class PdePreprocessor {
       for (int i = openBrace; i < c.length; i++) {
         if (c[i] == '{') {
           depth++;
+        } else if (c[i] == '\'') {
+          String quoted = readSingleQuote(c, i);
+          sb.append(quoted);
+          i += quoted.length() - 1;
+
+        } else if (c[i] == '\"') {
+          String quoted = readDoubleQuote(c, i);
+          sb.append(quoted);
+          i += quoted.length() - 1;
+
         } else if (c[i] == '}') {
           depth--;
           if (depth == 0) {
@@ -327,6 +337,11 @@ public class PdePreprocessor {
     String[] pixelDensityContents = matchMethod("pixelDensity", searchArea);
     if (pixelDensityContents != null) {
       extraStatements.append(pixelDensityContents[0]);
+    } else {
+      pixelDensityContents = matchDensityMess(searchArea);
+      if (pixelDensityContents != null) {
+        extraStatements.append(pixelDensityContents[0]);
+      }
     }
 
     String[] sizeContents = matchMethod("size", searchArea);
@@ -422,12 +437,64 @@ public class PdePreprocessor {
   }
 
 
+  static String readSingleQuote(char[] c, int i) {
+    StringBuilder sb = new StringBuilder();
+    try {
+      sb.append(c[i++]);  // add the quote
+      if (c[i] == '\\') {
+        sb.append(c[i++]);  // add the escape
+        if (c[i] == 'u') {
+          // grabs uNNN and the fourth N will be added below
+          for (int j = 0; j < 4; j++) {
+            sb.append(c[i++]);
+          }
+        }
+      }
+      sb.append(c[i++]);  // get the char, escapee, or last unicode digit
+      sb.append(c[i++]);  // get the closing quote
+
+    } catch (ArrayIndexOutOfBoundsException ignored) {
+      // this means they have bigger problems with their code
+    }
+    return sb.toString();
+  }
+
+
+  static String readDoubleQuote(char[] c, int i) {
+    StringBuilder sb = new StringBuilder();
+    try {
+      sb.append(c[i++]);  // add the quote
+      while (i < c.length) {
+        if (c[i] == '\\') {
+          sb.append(c[i++]);  // add the escape
+          sb.append(c[i++]);  // add whatever was escaped
+        } else if (c[i] == '\"') {
+          sb.append(c[i++]);
+          break;
+        } else {
+          sb.append(c[i++]);
+        }
+      }
+    } catch (ArrayIndexOutOfBoundsException ignored) {
+      // this means they have bigger problems with their code
+    }
+    return sb.toString();
+  }
+
+
   static protected String[] matchMethod(String methodName, String searchArea) {
     final String left = "(?:^|\\s|;)";
     // doesn't match empty pairs of parens
     //final String right = "\\s*\\(([^\\)]+)\\)\\s*\\;";
     final String right = "\\s*\\(([^\\)]*)\\)\\s*\\;";
     return PApplet.match(searchArea, left + methodName + right);
+  }
+
+
+  static protected String[] matchDensityMess(String searchArea) {
+    final String regexp =
+      "(?:^|\\s|;)pixelDensity\\s*\\(\\s*displayDensity\\s*\\([^\\)]*\\)\\s*\\)\\s*\\;";
+    return PApplet.match(searchArea, regexp);
   }
 
 
@@ -645,7 +712,7 @@ public class PdePreprocessor {
 
 
   public PreprocessorResult write(Writer out, String program,
-                                  String codeFolderPackages[])
+                                  StringList codeFolderPackages)
       throws SketchException, RecognitionException, TokenStreamException {
 
     // these ones have the .* at the end, since a class name might be at the end

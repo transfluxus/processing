@@ -3,7 +3,7 @@
 /*
   Part of the Processing project - http://processing.org
 
-  Copyright (c) 2013 The Processing Foundation
+  Copyright (c) 2013-15 The Processing Foundation
   Copyright (c) 2011-12 Ben Fry and Casey Reas
 
   This program is free software; you can redistribute it and/or modify
@@ -23,19 +23,22 @@ package processing.app.contrib;
 
 import java.io.*;
 import java.net.*;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 import processing.app.Base;
 import processing.app.Library;
+import processing.app.Util;
 import processing.core.PApplet;
+import processing.data.StringDict;
 
 
 public class ContributionListing {
   // Stable URL that will redirect to wherever we're hosting the file
   static final String LISTING_URL =
-    "http://download.processing.org/contribs.txt";
+    "http://download.processing.org/contribs";
+    //"http://download.processing.org/contribs.txt";
+  static final String LOCAL_FILENAME = "contribs.txt";
 
   static volatile ContributionListing singleInstance;
 
@@ -58,7 +61,8 @@ public class ContributionListing {
     allContributions = new ArrayList<Contribution>();
     downloadingListingLock = new ReentrantLock();
 
-    listingFile = Base.getSettingsFile("contributions.txt");
+    //listingFile = Base.getSettingsFile("contributions.txt");
+    listingFile = Base.getSettingsFile(LOCAL_FILENAME);
     listingFile.setWritable(true);
     if (listingFile.exists()) {
       setAdvertisedList(listingFile);
@@ -392,7 +396,8 @@ public class ContributionListing {
    * Starts a new thread to download the advertised list of contributions.
    * Only one instance will run at a time.
    */
-  protected void downloadAvailableList(final ContribProgressMonitor progress) {
+  protected void downloadAvailableList(final Base base,
+                                       final ContribProgressMonitor progress) {
     new Thread(new Runnable() {
       public void run() {
         downloadingListingLock.lock();
@@ -400,28 +405,38 @@ public class ContributionListing {
         URL url = null;
         try {
           url = new URL(LISTING_URL);
+          // testing port
+//          url = new URL("http", "download.processing.org", 8989, "/contribs");
+
+//          "http://download.processing.org/contribs";
+//          System.out.println(url);
+//          final String contribInfo =
+//            base.getInstalledContribsInfo();
+//            "?id=" + Preferences.get("update.id") +
+//            "&" + base.getInstalledContribsInfo();
+//          url = new URL(LISTING_URL + "?" + contribInfo);
+//          System.out.println(contribInfo.length() + " " + contribInfo);
+
+          File tempContribFile = Base.getSettingsFile("contribs.tmp");
+          tempContribFile.setWritable(true);
+          ContributionManager.download(url, base.getInstalledContribsInfo(),
+                                       tempContribFile, progress);
+          if (!progress.isCanceled() && !progress.isError()) {
+            if (listingFile.exists()) {
+              listingFile.delete();  // may silently fail, but below may still work
+            }
+            if (tempContribFile.renameTo(listingFile)) {
+              hasDownloadedLatestList = true;
+              hasListDownloadFailed = false;
+              setAdvertisedList(listingFile);
+            } else {
+              hasListDownloadFailed = true;
+            }
+          }
+
         } catch (MalformedURLException e) {
           progress.error(e);
           progress.finished();
-        }
-
-        if (!progress.isFinished()) {
-          File tempContribFile = Base.getSettingsFile("contributions_temp.txt");
-          tempContribFile.setWritable(true);
-          ContributionManager.download(url, tempContribFile, progress);
-          if (!progress.isCanceled() && !progress.isError()) {
-            try {
-              Files.deleteIfExists(listingFile.toPath());
-              listingFile = new File(Files.move(tempContribFile.toPath(), tempContribFile.toPath().resolveSibling(listingFile.toPath())).toString());
-            } catch (IOException e) {
-              e.printStackTrace();
-            }
-            hasDownloadedLatestList = true;
-            hasListDownloadFailed = false;
-            setAdvertisedList(listingFile);
-          }
-          else
-            hasListDownloadFailed = true;
         }
         downloadingListingLock.unlock();
       }
@@ -439,15 +454,21 @@ public class ContributionListing {
   }
 
   boolean hasUpdates(Base base) {
-    for (ModeContribution m : base.getModeContribs())
-      if (hasUpdates(m))
+    for (ModeContribution mc : base.getModeContribs()) {
+      if (hasUpdates(mc)) {
         return true;
-    for (Library l : base.getActiveEditor().getMode().contribLibraries)
-      if (hasUpdates(l))
+      }
+    }
+    for (Library lib : base.getActiveEditor().getMode().contribLibraries) {
+      if (hasUpdates(lib)) {
         return true;
-    for (ToolContribution t : base.getActiveEditor().getToolContribs())
-      if (hasUpdates(t))
+      }
+    }
+    for (ToolContribution tc : base.getActiveEditor().getToolContribs()) {
+      if (hasUpdates(tc)) {
         return true;
+      }
+    }
     return false;
   }
 
@@ -466,6 +487,9 @@ public class ContributionListing {
 
   String getLatestVersion(Contribution contribution) {
     Contribution newestContrib = getAvailableContribution(contribution);
+    if(newestContrib == null){
+      return null;
+    }
     String latestVersion = newestContrib.getPrettyVersion();
     if (latestVersion != null && !latestVersion.isEmpty()) {
       if (latestVersion.toLowerCase().startsWith("build")) // For Python mode
@@ -547,9 +571,7 @@ public class ContributionListing {
           }
 
           String[] contribLines = PApplet.subset(lines, start, end-start);
-
-          Map<String, String> contribParams = Base.readSettings(file.getName(), contribLines);
-
+          StringDict contribParams = Util.readSettings(file.getName(), contribLines);
           outgoing.add(new AvailableContribution(contribType, contribParams));
           start = end + 1;
         }

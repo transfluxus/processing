@@ -3,7 +3,7 @@
 /*
   Part of the Processing project - http://processing.org
 
-  Copyright (c) 2013 The Processing Foundation
+  Copyright (c) 2013-15 The Processing Foundation
   Copyright (c) 2011-12 Ben Fry and Casey Reas
 
   This program is free software; you can redistribute it and/or modify
@@ -15,7 +15,7 @@
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
 
-  You should have received a copy of the GNU General Public License along 
+  You should have received a copy of the GNU General Public License along
   with this program; if not, write to the Free Software Foundation, Inc.
   59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
@@ -31,10 +31,13 @@ import java.util.zip.*;
 import javax.swing.JOptionPane;
 
 import processing.app.*;
+import processing.app.ui.Editor;
 import processing.core.PApplet;
+import processing.data.StringDict;
+import processing.data.StringList;
 
 
-/** 
+/**
  * A contribution that has been downloaded to the disk, and may or may not
  * be installed.
  */
@@ -42,12 +45,13 @@ public abstract class LocalContribution extends Contribution {
   static public final String DELETION_FLAG = "marked_for_deletion";
   static public final String UPDATE_FLAGGED = "marked_for_update";
   static public final String RESTART_FLAG = "requires_restart";
-  
+
   protected String id;          // 1 (unique id for this library)
   protected int latestVersion;  // 103
   protected File folder;
-  protected Map<String, String> properties;
+  protected StringDict properties;
   protected ClassLoader loader;
+
 
   public LocalContribution(File folder) {
     this.folder = folder;
@@ -55,16 +59,20 @@ public abstract class LocalContribution extends Contribution {
     // required for contributed modes, but not for built-in core modes
     File propertiesFile = new File(folder, getTypeName() + ".properties");
     if (propertiesFile.exists()) {
-      properties = Base.readSettings(propertiesFile);
+      properties = Util.readSettings(propertiesFile);
 
       name = properties.get("name");
       id = properties.get("id");
-      categories = parseCategories(properties.get("category"));
-      specifiedImports = parseImports(properties.get("imports"));
+      categories = parseCategories(properties);
+      imports = parseImports(properties);
       if (name == null) {
         name = folder.getName();
       }
-      authorList = properties.get("authorList");
+      // changing to 'authors' in 3.0a11
+      authors = properties.get(AUTHORS_PROPERTY);
+      if (authors == null) {
+        authors = properties.get("authorList");
+      }
       url = properties.get("url");
       sentence = properties.get("sentence");
       paragraph = properties.get("paragraph");
@@ -75,15 +83,15 @@ public abstract class LocalContribution extends Contribution {
         System.err.println("The version number for the “" + name + "” library is not set properly.");
         System.err.println("Please contact the library author to fix it according to the guidelines.");
       }
-      
+
       prettyVersion = properties.get("prettyVersion");
-      
+
       try {
         lastUpdated = Long.parseLong(properties.get("lastUpdated"));
       } catch (NumberFormatException e) {
         lastUpdated = 0;
 
-      // Better comment these out till all contribs have a lastUpdated 
+      // Better comment these out till all contribs have a lastUpdated
 //        System.err.println("The last updated timestamp for the “" + name + "” library is not set properly.");
 //        System.err.println("Please contact the library author to fix it according to the guidelines.");
       }
@@ -92,31 +100,34 @@ public abstract class LocalContribution extends Contribution {
       if (minRev != null) {
         minRevision = PApplet.parseInt(minRev, 0);
       }
-      
+
       String maxRev = properties.get("maxRevision");
       if (maxRev != null) {
         maxRevision = PApplet.parseInt(maxRev, 0);
       }
-      
+
     } else {
       Base.log("No properties file at " + propertiesFile.getAbsolutePath());
       // We'll need this to be set at a minimum.
       name = folder.getName();
-      categories = defaultCategory();
+      categories = unknownCategoryList();
     }
-    
-    if (categories.contains(SPECIAL_CATEGORY_NAME))
+
+    if (categories.hasValue(SPECIAL_CATEGORY)) {
       validateSpecial();
+    }
   }
 
 
   private void validateSpecial() {
-    for (AvailableContribution available : ContributionListing.getInstance().advertisedContributions)
+    for (AvailableContribution available : ContributionListing.getInstance().advertisedContributions) {
       if (available.getName().equals(name)) {
-        if (!available.isSpecial())
-          categories.remove(SPECIAL_CATEGORY_NAME);
+        if (!available.isSpecial()) {
+          categories.removeValue(SPECIAL_CATEGORY);
+        }
       }
-      return;
+      break;
+    }
   }
 
 
@@ -142,7 +153,7 @@ public abstract class LocalContribution extends Contribution {
       }
 
       // Add .jar and .zip files from the "mode" folder into the classpath
-      File[] archives = Base.listJarFiles(modeDirectory);
+      File[] archives = Util.listJarFiles(modeDirectory);
       if (archives != null && archives.length > 0) {
         URL[] urlList = new URL[archives.length];
         for (int j = 0; j < urlList.length; j++) {
@@ -187,8 +198,8 @@ public abstract class LocalContribution extends Contribution {
 //    return (potential.isDirectory() &&
 //      new File(potential, type.getFolderName()).exists());
 //  }
-//  
-//  
+//
+//
 //  /**
 //   * Return a list of directories that have the necessary subfolder for this
 //   * contribution type. For instance, a list of folders that have a 'mode'
@@ -210,34 +221,34 @@ public abstract class LocalContribution extends Contribution {
 //   */
 //  static protected File findCandidate(File folder, final ContributionType type) {
 //    File[] folders = listCandidates(folder, type);
-//    
+//
 //    if (folders.length == 0) {
 //      return null;
-//    
+//
 //    } else if (folders.length > 1) {
 //      Base.log("More than one " + type.toString() + " found inside " + folder.getAbsolutePath());
 //    }
 //    return folders[0];
 //  }
-  
-  
-  LocalContribution copyAndLoad(Base base, 
-                                boolean confirmReplace, 
+
+
+  LocalContribution copyAndLoad(Base base,
+                                boolean confirmReplace,
                                 StatusPanel status) {
 // NOTE: null status => function is called on startup when Editor objects, et al. aren't ready
-    
+
     String contribFolderName = getFolder().getName();
 
     File contribTypeFolder = getType().getSketchbookFolder();
     File contribFolder = new File(contribTypeFolder, contribFolderName);
-    
+
     if (status != null) { // when status != null, install is not occurring on startup
-    
+
       Editor editor = base.getActiveEditor();
-      
-      ArrayList<LocalContribution> oldContribs = 
+
+      ArrayList<LocalContribution> oldContribs =
         getType().listContributions(editor);
-    
+
       // In case an update marker exists, and the user wants to install, delete the update marker
       if (contribFolder.exists() && !contribFolder.isDirectory()) {
         contribFolder.delete();
@@ -290,25 +301,26 @@ public abstract class LocalContribution extends Contribution {
 
       // At this point it should be safe to replace this fella
       if (contribFolder.exists()) {
-        Base.removeDir(contribFolder);
+        Util.removeDir(contribFolder);
       }
-    
+
     }
     else {
-      // This if should ideally never happen, since this function is to be called only when restarting on update
+      // This if should ideally never happen, since this function
+      // is to be called only when restarting on update
       if (contribFolder.exists() && contribFolder.isDirectory()) {
-        Base.removeDir(contribFolder);
+        Util.removeDir(contribFolder);
       }
       else if (contribFolder.exists()) {
         contribFolder.delete();
         contribFolder = new File(contribTypeFolder, contribFolderName);
       }
     }
-    
+
     File oldFolder = getFolder();
 
     try {
-      Base.copyDir(oldFolder,  contribFolder);
+      Util.copyDir(oldFolder, contribFolder);
     } catch (IOException e) {
       status.setErrorMessage("Could not copy " + getTypeName() +
                              " \"" + getName() + "\" to the sketchbook.");
@@ -319,12 +331,12 @@ public abstract class LocalContribution extends Contribution {
 
     /*
     if (!getFolder().renameTo(contribFolder)) {
-      status.setErrorMessage("Could not move " + getTypeName() + 
+      status.setErrorMessage("Could not move " + getTypeName() +
                                 " \"" + getName() + "\" to the sketchbook.");
       return null;
     }
     */
-    
+
     return getType().load(base, contribFolder);
   }
 
@@ -337,20 +349,20 @@ public abstract class LocalContribution extends Contribution {
    */
   boolean backup(Editor editor, boolean deleteOriginal, StatusPanel status) {
     File backupFolder = getType().createBackupFolder(status);
-    
+
     boolean success = false;
     if (backupFolder != null) {
       String libFolderName = getFolder().getName();
       String prefix = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
       final String backupName = prefix + " " + libFolderName;
-      File backupSubFolder = 
+      File backupSubFolder =
         ContributionManager.getUniqueName(backupFolder, backupName);
 
       if (deleteOriginal) {
         success = getFolder().renameTo(backupSubFolder);
       } else {
         try {
-          Base.copyDir(getFolder(), backupSubFolder);
+          Util.copyDir(getFolder(), backupSubFolder);
           success = true;
         } catch (IOException e) { }
       }
@@ -372,16 +384,16 @@ public abstract class LocalContribution extends Contribution {
       public void run() {
         remove(editor,
                pm,
-               status, 
-               ContributionListing.getInstance()); 
+               status,
+               ContributionListing.getInstance());
       }
     }, "Contribution Uninstaller").start();
   }
-  
-  
+
+
   void remove(final Editor editor,
               final ContribProgressMonitor pm,
-              final StatusPanel status, 
+              final StatusPanel status,
               final ContributionListing contribListing) {
     pm.startTask("Removing", ContribProgressMonitor.UNKNOWN);
 
@@ -415,7 +427,7 @@ public abstract class LocalContribution extends Contribution {
         return;
       }
     }
-    
+
     if (getType() == ContributionType.TOOL) {
       ToolContribution t = (ToolContribution) this;
       Iterator<Editor> iter = editor.getBase().getEditors().iterator();
@@ -425,11 +437,11 @@ public abstract class LocalContribution extends Contribution {
       }
       t.clearClassLoader(editor.getBase());
     }
-    
+
     if (doBackup) {
       success = backup(editor, true, status);
     } else {
-      Base.removeDir(getFolder());
+      Util.removeDir(getFolder());
       success = !getFolder().exists();
     }
 
@@ -446,7 +458,7 @@ public abstract class LocalContribution extends Contribution {
       } else {
         contribListing.replaceContribution(this, advertisedVersion);
       }
-    } 
+    }
     else {
       // There was a failure backing up the folder
           if (!doBackup || (doBackup && backup(editor, false, status))) {
@@ -465,7 +477,7 @@ public abstract class LocalContribution extends Contribution {
       pm.cancel();
   }
 
-  
+
   public File getFolder() {
     return folder;
   }
@@ -474,7 +486,7 @@ public abstract class LocalContribution extends Contribution {
   public boolean isInstalled() {
     return folder != null;
   }
-  
+
 
 //  public String getCategory() {
 //    return category;
@@ -542,51 +554,54 @@ public abstract class LocalContribution extends Contribution {
     return null;
   }
   */
+
+
   /**
    * Returns the imports (package-names) for a library, as specified in its library.properties
-   * (e.g., imports=libname.*,libname.support.*) 
-   * 
+   * (e.g., imports=libname.*,libname.support.*)
+   *
    * @return String[] packageNames (without wildcards) or null if none are specified
    */
-  public String[] getSpecifiedImports() {
-    
-    return specifiedImports != null ? specifiedImports.toArray(new String[0]) : null;
+  public StringList getImports() {
+    //return imports != null ? imports.toArray(new String[0]) : null;
+    return imports;
   }
 
-  /**
-   * @return the list of Java imports to be added to the sketch when the library is imported
-   * or null if none are specified
-   */
-  protected static List<String> parseImports(String importsStr) {
-    
-    List<String> outgoing = new ArrayList<String>();
 
-    if (importsStr != null) {
-      
-      String[] listing = PApplet.trim(PApplet.split(importsStr, ','));
-      for (String imp : listing) {
-        
-        // In case the wildcard is specified, strip it, as it gets added later)
-        if (imp.endsWith(".*")) { 
+  // this duplicates code found in Contribution (though that version doesn't check for .* at the end)
+//  /**
+//   * @return the list of Java imports to be added to the sketch when the library is imported
+//   * or null if none are specified
+//   */
+//  static StringList parseImports(String importsStr) {
+//    StringList outgoing = new StringList();
+//
+//    if (importsStr != null) {
+//      String[] listing = PApplet.trim(PApplet.split(importsStr, ','));
+//      for (String imp : listing) {
+//
+//        // In case the wildcard is specified, strip it, as it gets added later)
+//        if (imp.endsWith(".*")) {
+//
+//          imp = imp.substring(0, imp.length() - 2);
+//        }
+//
+//        outgoing.add(imp);
+//      }
+//    }
+////    return (outgoing.size() > 0) ? outgoing : null;
+//    return outgoing;
+//  }
 
-          imp = imp.substring(0, imp.length() - 2);
-        }
-        
-        outgoing.add(imp);
-      }
-    }
-    
-    return (outgoing.size() > 0) ? outgoing : null; 
-  }
-  
+
   // . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
-  
+
   boolean setDeletionFlag(boolean flag) {
     return setFlag(DELETION_FLAG, flag);
   }
-  
-  
+
+
   boolean isDeletionFlagged() {
     return isDeletionFlagged(getFolder());
   }
@@ -595,16 +610,16 @@ public abstract class LocalContribution extends Contribution {
   static boolean isDeletionFlagged(File folder) {
     return isFlagged(folder, DELETION_FLAG);
   }
-  
-  
+
+
   // . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
-  
+
   boolean setUpdateFlag(boolean flag) {
     return setFlag(UPDATE_FLAGGED, flag);
   }
-  
-  
+
+
   boolean isUpdateFlagged() {
     return isUpdateFlagged(getFolder());
   }
@@ -613,24 +628,24 @@ public abstract class LocalContribution extends Contribution {
   static boolean isUpdateFlagged(File folder) {
     return isFlagged(folder, UPDATE_FLAGGED);
   }
-  
-  
+
+
   // . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
-  
+
   boolean setRestartFlag() {
     //System.out.println("setting restart flag for " + folder);
     return setFlag(RESTART_FLAG, true);
   }
-  
-  
+
+
   @Override
   boolean isRestartFlagged() {
     //System.out.println("checking for restart inside LocalContribution for " + getName());
     return isFlagged(getFolder(), RESTART_FLAG);
   }
-  
-  
+
+
   static void clearRestartFlags(File folder) {
     File restartFlag = new File(folder, RESTART_FLAG);
     if (restartFlag.exists()) {
@@ -638,7 +653,7 @@ public abstract class LocalContribution extends Contribution {
     }
   }
 
-  
+
   // . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
 
@@ -653,19 +668,19 @@ public abstract class LocalContribution extends Contribution {
         return false;
       }
     } else {
-      return new File(getFolder(), flagFilename).delete();  
+      return new File(getFolder(), flagFilename).delete();
     }
   }
-  
-  
+
+
   static private boolean isFlagged(File folder, String flagFilename) {
-    return new File(folder, flagFilename).exists(); 
+    return new File(folder, flagFilename).exists();
   }
 
-  
+
   // . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
-  
+
   /**
    *
    * @param base name of the class, with or without the package

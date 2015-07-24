@@ -20,18 +20,40 @@
   Boston, MA  02111-1307  USA
 */
 
-package processing.core;
+package processing.awt;
 
-import java.awt.*;
+import java.awt.Canvas;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Image;
+import java.awt.Insets;
+import java.awt.Label;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.*;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JFrame;
 
+import processing.core.PApplet;
+import processing.core.PConstants;
+import processing.core.PGraphics;
+import processing.core.PImage;
+import processing.core.PSurfaceNone;
 import processing.event.KeyEvent;
 import processing.event.MouseEvent;
 
@@ -43,7 +65,11 @@ public class PSurfaceAWT extends PSurfaceNone {
 //  boolean resizable;  // default is false
 
   // Internally, we know it's always a JFrame (not just a Frame)
-  JFrame frame;
+//  JFrame frame;
+  // Trying Frame again with a11 to see if this avoids some Swing nastiness.
+  // In the past, AWT Frames caused some problems on Windows and Linux,
+  // but those may not be a problem for our reworked PSurfaceAWT class.
+  Frame frame;
 
   // Note that x and y may not be zero, depending on the display configuration
   Rectangle screenRect;
@@ -51,8 +77,8 @@ public class PSurfaceAWT extends PSurfaceNone {
   // 3.0a5 didn't use strategy, and active was shut off during init() w/ retina
 //  boolean useStrategy = true;
 
-//  Canvas canvas;
-  Component canvas;
+  Canvas canvas;
+//  Component canvas;
 
 //  PGraphics graphics;  // moved to PSurfaceNone
 
@@ -97,7 +123,7 @@ public class PSurfaceAWT extends PSurfaceNone {
     canvas.addComponentListener(new ComponentAdapter() {
       @Override
       public void componentResized(ComponentEvent e) {
-        if (!sketch.looping) {
+        if (!sketch.isLooping()) {
           // make sure this is a real resize event, not just initial setup
           // https://github.com/processing/processing/issues/3310
           Dimension canvasSize = canvas.getSize();
@@ -156,6 +182,7 @@ public class PSurfaceAWT extends PSurfaceNone {
     private Dimension newSize = new Dimension(0, 0);
 
 
+    // Turns out getParent() returns a JPanel on a JFrame. Yech.
     public Frame getFrame() {
       return frame;
     }
@@ -193,7 +220,11 @@ public class PSurfaceAWT extends PSurfaceNone {
 //        System.out.println("validate() render old=" + oldSize + " -> new=" + newSize);
         oldSize = newSize;
         sketch.setSize(newSize.width, newSize.height);
+//        try {
         render();
+//        } catch (IllegalStateException ise) {
+//          System.out.println(ise.getMessage());
+//        }
       }
     }
 
@@ -244,100 +275,33 @@ public class PSurfaceAWT extends PSurfaceNone {
 
 
   synchronized protected void render() {
-//      System.out.println("render() top");
-
-      /*
-      if (!EventQueue.isDispatchThread()) {
-        //throw new IllegalStateException("render() called outside the EDT");
-        //System.err.println("render() called outside the EDT");
-        new Exception("render() called outside the EDT").printStackTrace();
+    if (canvas.isDisplayable() &&
+        graphics.image != null) {
+      if (canvas.getBufferStrategy() == null) {
+        canvas.createBufferStrategy(2);
       }
-      */
-//      if (canvas == null) {
-//        removeListeners(this);
-//        canvas = new Canvas();
-//        add(canvas);
-//        setIgnoreRepaint(true);
-//        canvas.setIgnoreRepaint(true);
-//        addListeners(canvas);
-////        add(canvas, BorderLayout.CENTER);
-////        doLayout();
-//      }
+      BufferStrategy strategy = canvas.getBufferStrategy();
+      if (strategy != null) {
+        // Render single frame
+//        try {
+        do {
+          // The following loop ensures that the contents of the drawing buffer
+          // are consistent in case the underlying surface was recreated
+          do {
+            Graphics2D draw = (Graphics2D) strategy.getDrawGraphics();
+            // draw to width/height, since this may be a 2x image
+            draw.drawImage(graphics.image, 0, 0, sketchWidth, sketchHeight, null);
+            draw.dispose();
+          } while (strategy.contentsRestored());
 
-      // not sure why this was here, can't be good
-      //canvas.setBounds(0, 0, sketch.width, sketch.height);
+          // Display the buffer
+          strategy.show();
 
-    if (!canvas.isDisplayable()) {
-//        System.out.println("no peer.. holding");
-      return;
-    }
-
-    if (graphics.image == null) {
-      if (PApplet.DEBUG) {
-        new Exception("image is null, returning").printStackTrace(System.out);
+          // Repeat the rendering if the drawing buffer was lost
+        } while (strategy.contentsLost());
       }
-      return;
     }
-
-    Canvas c = (Canvas) canvas;
-//      System.out.println("render(), canvas bounds are " + canvas.getBounds());
-    if (c.getBufferStrategy() == null) {  // whole block [121222]
-//        System.out.println("creating a strategy");
-      c.createBufferStrategy(2);
-    }
-    BufferStrategy strategy = c.getBufferStrategy();
-//      System.out.println(strategy);
-    if (strategy == null) {
-      return;
-    }
-    // Render single frame
-    do {
-      // The following loop ensures that the contents of the drawing buffer
-      // are consistent in case the underlying surface was recreated
-      do {
-        Graphics2D draw = (Graphics2D) strategy.getDrawGraphics();
-        //draw.drawImage(pg.image, 0, 0, sketch.width, sketch.height, null);
-        //System.out.println("render() drawing image");
-          /*
-          while (sketch.insideDraw) {
-            System.out.println("render() yielding because inside draw");
-            //Thread.yield();
-            try {
-              Thread.sleep(1);
-            } catch (InterruptedException e) { }
-          }
-          */
-
-          // this wasn't any faster than setting the image size while drawing
-//          if (graphics.pixelFactor == 2) {
-//            draw.scale(0.5, 0.5);
-//          }
-
-        // draw to width/height, since this may be a 2x image
-        draw.drawImage(graphics.image, 0, 0, sketchWidth, sketchHeight, null);
-//          draw.drawImage(graphics.image, 0, 0, null);
-        draw.dispose();
-
-        // Repeat the rendering if the drawing buffer contents
-        // were restored
-//          System.out.println("restored " + strategy.contentsRestored());
-      } while (strategy.contentsRestored());
-
-      // Display the buffer
-//        System.out.println("showing");
-      strategy.show();
-
-      // Repeat the rendering if the drawing buffer was lost
-//        System.out.println("lost " + strategy.contentsLost());
-//        System.out.println();
-    } while (strategy.contentsLost());
-//      System.out.println("render() bottom");
   }
-
-
-//  Object offscreenLock = new Object();
-//  BufferedImage offscreen;
-//  BufferedImage onscreen;
 
 
   /*
@@ -476,6 +440,7 @@ public class PSurfaceAWT extends PSurfaceNone {
     // OS X. It's time for a turnaround: Redmond is thinking different too!
     // https://github.com/processing/processing/issues/1955
     frame = new JFrame(displayDevice.getDefaultConfiguration());
+//    frame = new Frame(displayDevice.getDefaultConfiguration());
 //    // Default Processing gray, which will be replaced below if another
 //    // color is specified on the command line (i.e. in the prefs).
 //    ((JFrame) frame).getContentPane().setBackground(WINDOW_BGCOLOR);
@@ -487,10 +452,14 @@ public class PSurfaceAWT extends PSurfaceNone {
 //      backgroundColor = WINDOW_BGCOLOR;
 //    }
     final Color windowColor = new Color(sketch.sketchWindowColor(), false);
-    frame.getContentPane().setBackground(windowColor);
+    if (frame instanceof JFrame) {
+      ((JFrame) frame).getContentPane().setBackground(windowColor);
+    } else {
+      frame.setBackground(windowColor);
+    }
 
     // Put the p5 logo in the Frame's corner to override the Java coffee cup.
-    setIconImage(frame);
+    setProcessingIcon(frame);
 
     // For 0149, moving this code (up to the pack() method) before init().
     // For OpenGL (and perhaps other renderers in the future), a peer is
@@ -503,6 +472,7 @@ public class PSurfaceAWT extends PSurfaceNone {
     frame.add(canvas);
     setSize(sketchWidth, sketchHeight);
 
+    /*
     if (fullScreen) {
       // Called here because the graphics device is needed before we can
       // determine whether the sketch wants size(displayWidth, displayHeight),
@@ -525,6 +495,7 @@ public class PSurfaceAWT extends PSurfaceNone {
       // will be set visible in placeWindow() [3.0a10]
       //frame.setVisible(true);  // re-add native resources
     }
+    */
     frame.setLayout(null);
     //frame.add(applet);
 
@@ -566,6 +537,11 @@ public class PSurfaceAWT extends PSurfaceNone {
   }
 
 
+//  public Toolkit getToolkit() {
+//    return canvas.getToolkit();
+//  }
+
+
   /** Set the window (and dock, or whatever necessary) title. */
   @Override
   public void setTitle(String title) {
@@ -585,8 +561,100 @@ public class PSurfaceAWT extends PSurfaceNone {
 
 
   @Override
+  public void setIcon(PImage image) {
+    Image awtImage = (Image) image.getNative();
+
+    if (PApplet.platform != PConstants.MACOSX) {
+      frame.setIconImage(awtImage);
+
+    } else {
+      try {
+        final String td = "processing.core.ThinkDifferent";
+        Class<?> thinkDifferent =
+          Thread.currentThread().getContextClassLoader().loadClass(td);
+        Method method =
+          thinkDifferent.getMethod("setIconImage", new Class[] { java.awt.Image.class });
+        method.invoke(null, new Object[] { awtImage });
+      } catch (Exception e) {
+        e.printStackTrace();  // That's unfortunate
+      }
+    }
+  }
+
+
+  List<Image> iconImages;
+
+  protected void setProcessingIcon(Frame frame) {
+    // On OS X, this only affects what shows up in the dock when minimized.
+    // So replacing it is actually a step backwards. Brilliant.
+    if (PApplet.platform != PConstants.MACOSX) {
+      //Image image = Toolkit.getDefaultToolkit().createImage(ICON_IMAGE);
+      //frame.setIconImage(image);
+      try {
+        if (iconImages == null) {
+          iconImages = new ArrayList<Image>();
+          final int[] sizes = { 16, 32, 48, 64, 128, 256, 512 };
+
+          for (int sz : sizes) {
+            //URL url = getClass().getResource("/icon/icon-" + sz + ".png");
+            URL url = PApplet.class.getResource("/icon/icon-" + sz + ".png");
+            Image image = Toolkit.getDefaultToolkit().getImage(url);
+            iconImages.add(image);
+            //iconImages.add(Toolkit.getLibImage("icons/pde-" + sz + ".png", frame));
+          }
+        }
+        frame.setIconImages(iconImages);
+
+      } catch (Exception e) { }  // harmless; keep this to ourselves
+
+    } else {  // handle OS X differently
+      if (!dockIconSpecified()) {  // don't override existing -Xdock param
+        // On OS X, set this for AWT surfaces, which handles the dock image
+        // as well as the cmd-tab image that's shown. Just one size, I guess.
+        URL url = PApplet.class.getResource("/icon/icon-512.png");
+        // Seems dangerous to have this in code instead of using reflection, no?
+        //ThinkDifferent.setIconImage(Toolkit.getDefaultToolkit().getImage(url));
+        try {
+          final String td = "processing.core.ThinkDifferent";
+          Class<?> thinkDifferent =
+            Thread.currentThread().getContextClassLoader().loadClass(td);
+          Method method =
+            thinkDifferent.getMethod("setIconImage", new Class[] { java.awt.Image.class });
+          method.invoke(null, new Object[] { Toolkit.getDefaultToolkit().getImage(url) });
+        } catch (Exception e) {
+          e.printStackTrace();  // That's unfortunate
+        }
+      }
+    }
+  }
+
+
+  /**
+   * @return true if -Xdock:icon was specified on the command line
+   */
+  private boolean dockIconSpecified() {
+    // TODO This is incomplete... Haven't yet found a way to figure out if
+    //      the app has an icns file specified already. Help?
+    List<String> jvmArgs =
+      ManagementFactory.getRuntimeMXBean().getInputArguments();
+    for (String arg : jvmArgs) {
+      if (arg.startsWith("-Xdock:icon")) {
+        return true;  // dock image already set
+      }
+    }
+    return false;
+  }
+
+
+  @Override
   public void setVisible(boolean visible) {
     frame.setVisible(visible);
+
+    // Generally useful whenever setting the frame visible
+    if (canvas != null) {
+      //canvas.requestFocusInWindow();
+      canvas.requestFocus();
+    }
 
     // removing per https://github.com/processing/processing/pull/3162
     // can remove the code below once 3.0a6 is tested and behaving
@@ -610,8 +678,10 @@ public class PSurfaceAWT extends PSurfaceNone {
   //public void placeFullScreen(boolean hideStop) {
   @Override
   public void placePresent(int stopColor) {
+    setFullFrame();
+
     // After the pack(), the screen bounds are gonna be 0s
-    frame.setBounds(screenRect);
+//    frame.setBounds(screenRect);  // already called in setFullFrame()
     canvas.setBounds((screenRect.width - sketchWidth) / 2,
                      (screenRect.height - sketchHeight) / 2,
                      sketchWidth, sketchHeight);
@@ -639,6 +709,10 @@ public class PSurfaceAWT extends PSurfaceNone {
       label.setSize(labelSize);
       label.setLocation(20, screenRect.height - labelSize.height - 20);
     }
+
+//    if (sketch.getGraphics().displayable()) {
+//      setVisible(true);
+//    }
   }
 
 
@@ -726,6 +800,30 @@ public class PSurfaceAWT extends PSurfaceNone {
   }
 
 
+  /** Hide the menu bar, make the Frame undecorated, set it to screenRect. */
+  private void setFullFrame() {
+    // Called here because the graphics device is needed before we can
+    // determine whether the sketch wants size(displayWidth, displayHeight),
+    // and getting the graphics device will be PSurface-specific.
+    PApplet.hideMenuBar();
+
+    // Tried to use this to fix the 'present' mode issue.
+    // Did not help, and the screenRect setup seems to work fine.
+    //frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+
+    // https://github.com/processing/processing/pull/3162
+    //frame.dispose();  // release native resources, allows setUndecorated()
+    frame.removeNotify();
+    frame.setUndecorated(true);
+    frame.addNotify();
+
+    // this may be the bounds of all screens
+    frame.setBounds(screenRect);
+    // will be set visible in placeWindow() [3.0a10]
+    //frame.setVisible(true);  // re-add native resources
+  }
+
+
   @Override
   public void placeWindow(int[] location, int[] editorLocation) {
     //Dimension window = setFrameSize(sketchWidth, sketchHeight);
@@ -733,6 +831,10 @@ public class PSurfaceAWT extends PSurfaceNone {
 
     int contentW = Math.max(sketchWidth, MIN_WINDOW_WIDTH);
     int contentH = Math.max(sketchHeight, MIN_WINDOW_HEIGHT);
+
+    if (sketch.sketchFullScreen()) {
+      setFullFrame();
+    }
 
     // Ignore placement of previous window and editor when full screen
     if (!sketch.sketchFullScreen()) {
@@ -782,32 +884,37 @@ public class PSurfaceAWT extends PSurfaceNone {
     // handle frame resizing events
     setupFrameResizeListener();
 
+    /*
     // If displayable() is false, then PSurfaceNone should be used, but...
     if (sketch.getGraphics().displayable()) {
       frame.setVisible(true);
 //      System.out.println("setting visible on EDT? " + EventQueue.isDispatchThread());
       //requestFocus();
-      if (canvas != null) {
-        //canvas.requestFocusInWindow();
-        canvas.requestFocus();
-      }
+//      if (canvas != null) {
+//        //canvas.requestFocusInWindow();
+//        canvas.requestFocus();
+//      }
     }
+    */
+//    if (sketch.getGraphics().displayable()) {
+//      setVisible(true);
+//    }
   }
 
 
   // needs to resize the frame, which will resize the canvas, and so on...
   @Override
   public void setSize(int wide, int high) {
-    if (PApplet.DEBUG) {
-      //System.out.format("frame visible %b, setSize(%d, %d) %n", frame.isVisible(), wide, high);
-      new Exception(String.format("setSize(%d, %d)", wide, high)).printStackTrace(System.out);
-    }
+//    if (PApplet.DEBUG) {
+//      //System.out.format("frame visible %b, setSize(%d, %d) %n", frame.isVisible(), wide, high);
+//      new Exception(String.format("setSize(%d, %d)", wide, high)).printStackTrace(System.out);
+//    }
 
     //if (wide == sketchWidth && high == sketchHeight) {  // doesn't work on launch
     if (wide == sketch.width && high == sketch.height) {
-      if (PApplet.DEBUG) {
-        new Exception("w/h unchanged " + wide + " " + high).printStackTrace(System.out);
-      }
+//      if (PApplet.DEBUG) {
+//        new Exception("w/h unchanged " + wide + " " + high).printStackTrace(System.out);
+//      }
       return;  // unchanged, don't rebuild everything
     }
 
@@ -1004,52 +1111,6 @@ public class PSurfaceAWT extends PSurfaceNone {
         }
       }
     });
-  }
-
-
-  static ArrayList<Image> iconImages;
-
-  static protected void setIconImage(Frame frame) {
-    // On OS X, this only affects what shows up in the dock when minimized.
-    // So replacing it is actually a step backwards. Brilliant.
-    if (PApplet.platform != PConstants.MACOSX) {
-      //Image image = Toolkit.getDefaultToolkit().createImage(ICON_IMAGE);
-      //frame.setIconImage(image);
-      try {
-        if (iconImages == null) {
-          iconImages = new ArrayList<Image>();
-          final int[] sizes = { 16, 32, 48, 64, 128, 256, 512 };
-
-          for (int sz : sizes) {
-            //URL url = getClass().getResource("/icon/icon-" + sz + ".png");
-            URL url = PApplet.class.getResource("/icon/icon-" + sz + ".png");
-            Image image = Toolkit.getDefaultToolkit().getImage(url);
-            iconImages.add(image);
-            //iconImages.add(Toolkit.getLibImage("icons/pde-" + sz + ".png", frame));
-          }
-        }
-        frame.setIconImages(iconImages);
-
-      } catch (Exception e) { }  // harmless; keep this to ourselves
-
-    } else {
-      // On OS X, set this for AWT surfaces, which handles the dock image
-      // as well as the cmd-tab image that's shown. Just one size, I guess.
-      URL url = PApplet.class.getResource("/icon/icon-512.png");
-      // Seems dangerous to have this in code instead of using reflection, no?
-      //ThinkDifferent.setIconImage(Toolkit.getDefaultToolkit().getImage(url));
-      try {
-        final String td = "processing.core.ThinkDifferent";
-        Class<?> thinkDifferent =
-          Thread.currentThread().getContextClassLoader().loadClass(td);
-        Method method =
-          thinkDifferent.getMethod("setIconImage", new Class[] { java.awt.Image.class });
-        method.invoke(null, new Object[] { Toolkit.getDefaultToolkit().getImage(url) });
-      } catch (Exception e) {
-        e.printStackTrace();  // That's unfortunate
-      }
-
-    }
   }
 
 
@@ -1424,7 +1485,6 @@ public class PSurfaceAWT extends PSurfaceNone {
       @Override
       public void callDraw() {
         sketch.handleDraw();
-        //blit();
         render();
       }
     };

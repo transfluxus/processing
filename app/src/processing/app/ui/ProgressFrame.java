@@ -1,4 +1,4 @@
-package processing.app;
+package processing.app.ui;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -14,6 +14,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.SwingWorker;
+
+import processing.app.Language;
+import processing.app.Util;
 
 
 // TODO This code was contributed and needs a lot of work. [fry]
@@ -321,7 +324,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener {
    * the component files and sub-folders if passed.
    */
   long calcSize(File file) {
-    return file.isFile() ? file.length() : Base.calcFolderSize(file);
+    return file.isFile() ? file.length() : Util.calcFolderSize(file);
   }
 
 

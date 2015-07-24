@@ -24,8 +24,7 @@
 
 package processing.core;
 
-// these are used for various methods (url opening, file selection, etc)
-// how many more can we remove?
+// used by link()
 import java.awt.Desktop;
 import java.awt.DisplayMode;
 import java.awt.EventQueue;
@@ -80,10 +79,15 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+
+
 // used by loadImage() functions
 import javax.imageio.ImageIO;
+// allows us to remove our own MediaTracker code
 import javax.swing.ImageIcon;
+// used by selectInput(), selectOutput(), selectFolder()
 import javax.swing.JFileChooser;
+// used to present the fullScreen() warning about Spaces on OS X
 import javax.swing.JOptionPane;
 
 // used by desktopFile() method
@@ -91,6 +95,7 @@ import javax.swing.filechooser.FileSystemView;
 
 // loadXML() error handling
 import javax.xml.parsers.ParserConfigurationException;
+
 import org.xml.sax.SAXException;
 
 import java.io.*;
@@ -310,7 +315,7 @@ public class PApplet implements PConstants {
    * true if no size() command has been executed. This is used to wait until a
    * size has been set before placing in the window and showing it.
    */
-  public boolean defaultSize;
+//  public boolean defaultSize;
 
 //  /** Storage for the current renderer size to avoid re-allocation. */
 //  Dimension currentSize = new Dimension();
@@ -393,7 +398,7 @@ public class PApplet implements PConstants {
    * ( end auto-generated )
    *
    * @webref environment
-   * @see PApplet#pixelWidth
+   * @see PApplet#pixelHeight
    * @see pixelDensity()
    * @see displayDensity()
    */
@@ -417,7 +422,7 @@ public class PApplet implements PConstants {
    * ( end auto-generated )
    *
    * @webref environment
-   * @see PApplet#pixelHeight
+   * @see PApplet#pixelWidth
    * @see pixelDensity()
    * @see displayDensity()
    */
@@ -564,7 +569,7 @@ public class PApplet implements PConstants {
    *             consistently across platforms and input methods.
    */
   @Deprecated
-  public boolean firstMouse;
+  public boolean firstMouse = true;
 
   /**
    * ( begin auto-generated from mouseButton.xml )
@@ -767,10 +772,10 @@ public class PApplet implements PConstants {
    */
   public float frameRate = 10;
 
-  protected boolean looping;
+  protected boolean looping = true;
 
   /** flag set to true when a redraw is asked for by the user */
-  protected boolean redraw;
+  protected boolean redraw = true;
 
   /**
    * ( begin auto-generated from frameCount.xml )
@@ -867,6 +872,11 @@ public class PApplet implements PConstants {
   protected PSurface surface;
 
 
+  public PSurface getSurface() {
+    return surface;
+  }
+
+
   /**
    * A dummy frame to keep compatibility with 2.x code
    * and encourage users to update.
@@ -885,55 +895,56 @@ public class PApplet implements PConstants {
 
   // . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
-  /**
-   * Applet initialization. This can do GUI work because the components have not
-   * been 'realized' yet: things aren't visible, displayed, etc.
-   */
-  public void init() {
-//    println("init() called " + Integer.toHexString(hashCode()));
-    // using a local version here since the class variable is deprecated
-//    Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
-//    screenWidth = screen.width;
-//    screenHeight = screen.height;
 
-    defaultSize = true;
-    finished = false; // just for clarity
-
-    // this will be cleared by draw() if it is not overridden
-    looping = true;
-    redraw = true; // draw this guy at least once
-    firstMouse = true;
-
-    // calculated dynamically on first call
-//    // Removed in 2.1.2, brought back for 2.1.3. Usually sketchPath is set
-//    // inside runSketch(), but if this sketch takes care of calls to init()
-//    // when PApplet.main() is not used (i.e. it's in a Java application).
-//    // THe path needs to be set here so that loadXxxx() functions work.
-//    if (sketchPath == null) {
-//      sketchPath = calcSketchPath();
-//    }
-
-    // set during Surface.initFrame()
-//    // Figure out the available display width and height.
-//    // No major problem if this fails, we have to try again anyway in
-//    // handleDraw() on the first (== 0) frame.
-//    checkDisplaySize();
-
-//    // Set the default size, until the user specifies otherwise
-//    int w = sketchWidth();
-//    int h = sketchHeight();
-//    defaultSize = (w == DEFAULT_WIDTH) && (h == DEFAULT_HEIGHT);
+//  /**
+//   * Applet initialization. This can do GUI work because the components have
+//   * not been 'realized' yet: things aren't visible, displayed, etc.
+//   */
+//  public void init() {
+////    println("init() called " + Integer.toHexString(hashCode()));
+//    // using a local version here since the class variable is deprecated
+////    Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+////    screenWidth = screen.width;
+////    screenHeight = screen.height;
 //
-//    g = makeGraphics(w, h, sketchRenderer(), null, true);
-//    // Fire component resize event
-//    setSize(w, h);
-//    setPreferredSize(new Dimension(w, h));
+//    defaultSize = true;
+//    finished = false; // just for clarity
 //
-//    width = g.width;
-//    height = g.height;
-
-    surface.startThread();
-  }
+//    // this will be cleared by draw() if it is not overridden
+//    looping = true;
+//    redraw = true;  // draw this guy at least once
+//    firstMouse = true;
+//
+//    // calculated dynamically on first call
+////    // Removed in 2.1.2, brought back for 2.1.3. Usually sketchPath is set
+////    // inside runSketch(), but if this sketch takes care of calls to init()
+////    // when PApplet.main() is not used (i.e. it's in a Java application).
+////    // THe path needs to be set here so that loadXxxx() functions work.
+////    if (sketchPath == null) {
+////      sketchPath = calcSketchPath();
+////    }
+//
+//    // set during Surface.initFrame()
+////    // Figure out the available display width and height.
+////    // No major problem if this fails, we have to try again anyway in
+////    // handleDraw() on the first (== 0) frame.
+////    checkDisplaySize();
+//
+////    // Set the default size, until the user specifies otherwise
+////    int w = sketchWidth();
+////    int h = sketchHeight();
+////    defaultSize = (w == DEFAULT_WIDTH) && (h == DEFAULT_HEIGHT);
+////
+////    g = makeGraphics(w, h, sketchRenderer(), null, true);
+////    // Fire component resize event
+////    setSize(w, h);
+////    setPreferredSize(new Dimension(w, h));
+////
+////    width = g.width;
+////    height = g.height;
+//
+//    surface.startThread();
+//  }
 
   // . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
@@ -1170,6 +1181,7 @@ public class PApplet implements PConstants {
           return 1;
         }
       }
+      // If nobody's density is 1 (or != 2, to be exact) then everyone is 2
       return 2;
     }
     return displayDensity(display);
@@ -1203,7 +1215,7 @@ public class PApplet implements PConstants {
               System.err.println("Only one display is currently known, use displayDensity(1).");
             } else {
               System.err.format("Your displays are numbered %d through %d, " +
-                "pass one of those numbers to displayDensity()", 1, devices.length);
+                "pass one of those numbers to displayDensity()%n", 1, devices.length);
             }
             throw new RuntimeException("Display " + display + " does not exist.");
           }
@@ -1947,7 +1959,7 @@ public class PApplet implements PConstants {
     if (width != this.width ||
         height != this.height ||
         !renderer.equals(this.renderer)) {
-      println(width, height, renderer, this.width, this.height, this.renderer);
+      //println(width, height, renderer, this.width, this.height, this.renderer);
       if (insideSettings("size", width, height, renderer)) {
         this.width = width;
         this.height = height;
@@ -2362,7 +2374,7 @@ public class PApplet implements PConstants {
 //          // Give up, instead set the new renderer and re-attempt setup()
 //          return;
 //        }
-      defaultSize = false;
+//      defaultSize = false;
 
     } else {  // frameCount > 0, meaning an actual draw()
       // update the current frameRate
@@ -2519,6 +2531,12 @@ public class PApplet implements PConstants {
       looping = false;
     }
   }
+
+
+  public boolean isLooping() {
+    return looping;
+  }
+
 
   //////////////////////////////////////////////////////////////
 
@@ -5357,7 +5375,8 @@ public class PApplet implements PConstants {
           }
 
           // if it's a .gif image, test to see if it has transparency
-          if (extension.equals("gif") || extension.equals("png")) {
+          if (extension.equals("gif") || extension.equals("png") ||
+              extension.equals("unknown")) {
             image.checkAlpha();
           }
 
@@ -6355,8 +6374,9 @@ public class PApplet implements PConstants {
         File selectedFile = null;
 
         if (platform == MACOSX && useNativeSelect != false) {
-          FileDialog fileDialog = new FileDialog(parentFrame, prompt,
-                                                 FileDialog.LOAD);
+          FileDialog fileDialog =
+            new FileDialog(parentFrame, prompt, FileDialog.LOAD);
+          fileDialog.setDirectory(defaultSelection.getAbsolutePath());
           System.setProperty("apple.awt.fileDialogForDirectories", "true");
           fileDialog.setVisible(true);
           System.setProperty("apple.awt.fileDialogForDirectories", "false");
@@ -9807,15 +9827,16 @@ public class PApplet implements PConstants {
 
   //////////////////////////////////////////////////////////////
 
-  void frameMoved(int x, int y) {
+
+  public void frameMoved(int x, int y) {
     if (!fullScreen) {
       System.err.println(EXTERNAL_MOVE + " " + x + " " + y);
       System.err.flush();  // doesn't seem to help or hurt
     }
   }
 
-  void frameResized(int w, int h) {
 
+  public void frameResized(int w, int h) {
   }
 
   //////////////////////////////////////////////////////////////
@@ -10135,7 +10156,7 @@ public class PApplet implements PConstants {
       sketch.windowColor = windowColor;
     }
 
-    PSurface surface = sketch.initSurface();
+    final PSurface surface = sketch.initSurface();
 //      sketch.initSurface(windowColor, displayIndex, fullScreen, spanDisplays);
 
     /*
@@ -10161,15 +10182,41 @@ public class PApplet implements PConstants {
     } else {
       surface.placeWindow(location, editorLocation);
     }
+
     // not always running externally when in present mode
-    if (external) {
+    // moved above setVisible() in 3.0 alpha 11
+    if (sketch.external) {
       surface.setupExternalMessages();
+    }
+
+    sketch.showSurface();
+    sketch.startSurface();
+    /*
+    if (sketch.getGraphics().displayable()) {
+      surface.setVisible(true);
+    }
+
+    //sketch.init();
+    surface.startThread();
+    */
+  }
+
+
+  /** Danger: available for advanced subclassing, but here be dragons. */
+  protected void showSurface() {
+    if (getGraphics().displayable()) {
+      surface.setVisible(true);
     }
   }
 
 
-  protected PSurface initSurface() {/*int backgroundColor, int displayNum,
-                                 boolean fullScreen, boolean spanDisplays) {*/
+  /** See warning in showSurface() */
+  protected void startSurface() {
+    surface.startThread();
+  }
+
+
+  protected PSurface initSurface() {
     g = createPrimaryGraphics();
     surface = g.createSurface();
 
@@ -10200,32 +10247,37 @@ public class PApplet implements PConstants {
             "use fullScreen() to get an undecorated full screen frame");
         }
 
+        // Can't override this one because it's called by Window's constructor
+        /*
         @Override
         public void setLocation(int x, int y) {
           deprecationWarning("setLocation");
           surface.setLocation(x, y);
         }
+        */
 
         @Override
         public void setSize(int w, int h) {
           deprecationWarning("setSize");
-          surface.setLocation(w, h);
+          surface.setSize(w, h);
         }
 
         private void deprecationWarning(String method) {
-          PGraphics.showWarning("Use surface." + method + "() instead of "
-            + "frame." + method + " in Processing 3");
+
+          PGraphics.showWarning("Use surface." + method + "() instead of " +
+                                "frame." + method + " in Processing 3");
+          //new Exception(method).printStackTrace(System.out);
         }
       };
 
       surface.initFrame(this); //, backgroundColor, displayNum, fullScreen, spanDisplays);
-      surface.setTitle(getClass().getName());
+      surface.setTitle(getClass().getSimpleName());
 
     } else {
       surface.initOffscreen(this); // for PDF/PSurfaceNone and friends
     }
 
-    init();
+//    init();
     return surface;
   }
 
@@ -10620,6 +10672,24 @@ public class PApplet implements PConstants {
   public void normal(float nx, float ny, float nz) {
     if (recorder != null) recorder.normal(nx, ny, nz);
     g.normal(nx, ny, nz);
+  }
+
+
+  public void attribPosition(String name, float x, float y, float z) {
+    if (recorder != null) recorder.attribPosition(name, x, y, z);
+    g.attribPosition(name, x, y, z);
+  }
+
+
+  public void attribNormal(String name, float nx, float ny, float nz) {
+    if (recorder != null) recorder.attribNormal(name, nx, ny, nz);
+    g.attribNormal(name, nx, ny, nz);
+  }
+
+
+  public void attribColor(String name, int color) {
+    if (recorder != null) recorder.attribColor(name, color);
+    g.attribColor(name, color);
   }
 
 

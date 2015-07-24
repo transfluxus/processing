@@ -25,6 +25,7 @@
 package processing.app.tools;
 
 import processing.app.*;
+import processing.app.ui.Editor;
 import processing.core.PApplet;
 
 import java.io.*;
@@ -158,7 +159,7 @@ public class Archiver implements Tool {
         ZipEntry entry = new ZipEntry(nowfar);
         entry.setTime(sub.lastModified());
         zos.putNextEntry(entry);
-        zos.write(Base.loadBytesRaw(sub));
+        zos.write(Util.loadBytesRaw(sub));
         zos.closeEntry();
       }
     }

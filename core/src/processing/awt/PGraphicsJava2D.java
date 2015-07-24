@@ -22,7 +22,7 @@
   Boston, MA  02111-1307  USA
 */
 
-package processing.core;
+package processing.awt;
 
 import java.awt.*;
 import java.awt.font.TextAttribute;
@@ -32,15 +32,19 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import processing.core.*;
+
 
 /**
  * Subclass for PGraphics that implements the graphics API using Java2D.
  * <p>
  * To get access to the Java 2D "Graphics2D" object for the default
  * renderer, use:
- * <PRE>Graphics2D g2 = ((PGraphicsJava2D)g).g2;</PRE>
- * This will let you do Java 2D stuff directly, but is not supported in
- * any way shape or form. Which just means "have fun, but don't complain
+ * <PRE>
+ * Graphics2D g2 = (Graphics2D) g.getNative();
+ * </PRE>
+ * This will let you do Graphics2D calls directly, but is not supported
+ * in any way shape or form. Which just means "have fun, but don't complain
  * if it breaks."
  * <p>
  * Advanced <a href="http://docs.oracle.com/javase/7/docs/webnotes/tsg/TSG-Desktop/html/java2d.html">debugging notes</a> for Java2D.
@@ -246,7 +250,13 @@ public class PGraphicsJava2D extends PGraphics {
   @Override
   public PSurface createSurface() {
     return surface = new PSurfaceAWT(this);
-//    return new PSurfaceAWT(this);
+  }
+
+
+  /** Returns the java.awt.Graphics2D object used by this renderer. */
+  @Override
+  public Object getNative() {
+    return g2;
   }
 
 
@@ -1564,7 +1574,7 @@ public class PGraphicsJava2D extends PGraphics {
       cash = new ImageCache(); //who);
       setCache(who, cash);
       who.updatePixels();  // mark the whole thing for update
-      who.modified = true;
+      who.setModified();
     }
 
     // If image previously was tinted, or the color changed
@@ -1576,7 +1586,7 @@ public class PGraphicsJava2D extends PGraphics {
       who.updatePixels();
     }
 
-    if (who.modified) {
+    if (who.isModified()) {
       if (who.pixels == null) {
         // This might be a PGraphics that hasn't been drawn to yet.
         // Can't just bail because the cache has been created above.
@@ -1584,7 +1594,7 @@ public class PGraphicsJava2D extends PGraphics {
         who.pixels = new int[who.width * who.height];
       }
       cash.update(who, tint, tintColor);
-      who.modified = false;
+      who.setModified(false);
     }
 
     g2.drawImage(((ImageCache) getCache(who)).image,
@@ -1813,7 +1823,7 @@ public class PGraphicsJava2D extends PGraphics {
   public PShape loadShape(String filename, String options) {
     String extension = PApplet.getExtension(filename);
     if (extension.equals("svg") || extension.equals("svgz")) {
-      return new PShapeSVG(parent.loadXML(filename));
+      return new PShapeJava2D(parent.loadXML(filename));
     }
     PGraphics.showWarning("Unsupported format: " + filename);
     return null;
@@ -1840,7 +1850,8 @@ public class PGraphicsJava2D extends PGraphics {
 
     Font font = (Font) textFont.getNative();
     if (font != null) {
-      return getFontMetrics(font).getAscent();
+      //return getFontMetrics(font).getAscent();
+      return g2.getFontMetrics(font).getAscent();
     }
     return super.textAscent();
   }
@@ -1853,7 +1864,8 @@ public class PGraphicsJava2D extends PGraphics {
     }
     Font font = (Font) textFont.getNative();
     if (font != null) {
-      return getFontMetrics(font).getDescent();
+      //return getFontMetrics(font).getDescent();
+      return g2.getFontMetrics(font).getDescent();
     }
     return super.textDescent();
   }
@@ -1939,11 +1951,14 @@ public class PGraphicsJava2D extends PGraphics {
     }
 
     Font font = (Font) textFont.getNative();
+//    System.out.println(font);
     //if (font != null && (textFont.isStream() || hints[ENABLE_NATIVE_FONTS])) {
     if (font != null) {
+//      System.out.println("using charswidth for " + new String(buffer, start, stop-start));
       // maybe should use one of the newer/fancier functions for this?
-      int length = stop - start;
-      FontMetrics metrics = getFontMetrics(font);
+//      int length = stop - start;
+//      FontMetrics metrics = getFontMetrics(font);
+      FontMetrics metrics = g2.getFontMetrics(font);
       // Using fractional metrics makes the measurement worse, not better,
       // at least on OS X 10.6 (November, 2010).
       // TextLayout returns the same value as charsWidth().
@@ -1951,13 +1966,16 @@ public class PGraphicsJava2D extends PGraphics {
 //      g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
 //                          RenderingHints.VALUE_FRACTIONALMETRICS_ON);
 //      float m1 = metrics.charsWidth(buffer, start, length);
-//      //float m2 = (float) metrics.getStringBounds(buffer, start, stop, g2).getWidth();
+//      float m2 = (float) metrics.getStringBounds(buffer, start, stop, g2).getWidth();
 //      TextLayout tl = new TextLayout(new String(buffer, start, length), font, g2.getFontRenderContext());
-//      float m2 = (float) tl.getBounds().getWidth();
-//      System.err.println(m1 + " " + m2);
-////      return m1;
+//      float m3 = (float) tl.getBounds().getWidth();
+//      System.err.println(m1 + " " + m2 + " " + m3);
+//////      return m1;
+////      return m2;
+////      return metrics.charsWidth(buffer, start, length);
 //      return m2;
-      return metrics.charsWidth(buffer, start, length);
+      return (float)
+        metrics.getStringBounds(buffer, start, stop, g2).getWidth();
     }
 //    System.err.println("not native");
     return super.textWidthImpl(buffer, start, stop);
@@ -2023,7 +2041,7 @@ public class PGraphicsJava2D extends PGraphics {
       // also changes global setting for antialiasing, but this is because it's
       // not possible to enable/disable them independently in some situations.
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                          textFont.smooth ?
+                          textFont.isSmooth() ?
                           RenderingHints.VALUE_ANTIALIAS_ON :
                           RenderingHints.VALUE_ANTIALIAS_OFF);
 
@@ -2055,10 +2073,46 @@ public class PGraphicsJava2D extends PGraphics {
   }
 
 
-  @Override
-  public FontMetrics getFontMetrics(Font font) {
-    return (g2 != null) ? g2.getFontMetrics(font) : super.getFontMetrics(font);
+//  /**
+//   * Convenience method to get a legit FontMetrics object. Where possible,
+//   * override this any renderer subclass so that you're not using what's
+//   * returned by getDefaultToolkit() to get your metrics.
+//   */
+//  @SuppressWarnings("deprecation")
+//  public FontMetrics getFontMetrics(Font font) {  // ignore
+//    Frame frame = parent.frame;
+//    if (frame != null) {
+//      return frame.getToolkit().getFontMetrics(font);
+//    }
+//    return Toolkit.getDefaultToolkit().getFontMetrics(font);
+//  }
+//
+//
+//  /**
+//   * Convenience method to jump through some Java2D hoops and get an FRC.
+//   */
+//  public FontRenderContext getFontRenderContext(Font font) {  // ignore
+//    return getFontMetrics(font).getFontRenderContext();
+//  }
+
+  /*
+  Toolkit toolkit;
+
+  @SuppressWarnings("deprecation")
+  protected FontMetrics getFontMetrics(Font font) {
+    if (toolkit == null) {
+      try {
+        Canvas canvas = (Canvas) surface.getNative();
+        toolkit = canvas.getToolkit();
+      } catch (Exception e) {
+        // May error out if it's a PSurfaceNone or similar
+        toolkit = Toolkit.getDefaultToolkit();
+      }
+    }
+    return toolkit.getFontMetrics(font);
+    //return (g2 != null) ? g2.getFontMetrics(font) : super.getFontMetrics(font);
   }
+  */
 
 
   //////////////////////////////////////////////////////////////
@@ -2849,6 +2903,9 @@ public class PGraphicsJava2D extends PGraphics {
     if ((sourceX == 0) && (sourceY == 0) &&
         (sourceWidth == sourceImage.width) &&
         (sourceHeight == sourceImage.height)) {
+//      System.out.format("%d %d  %dx%d  %d%n", targetX, targetY,
+//                             sourceImage.width, sourceImage.height,
+//                             sourceImage.pixels.length);
       raster.setDataElements(targetX, targetY,
                              sourceImage.width, sourceImage.height,
                              sourceImage.pixels);

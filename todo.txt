@@ -1,57 +1,39 @@
-0238 (3.0b1)
-X Re-enable the display menu in Preferences after display added
-X   Previously, the checkbox menu stayed disabled (though it updated the list)
-X sketch.isReadOnly returns false for examples coming from multiple modes
-o   http://code.google.com/p/processing/issues/detail?id=734
-X   https://github.com/processing/processing/issues/773
-X Drag and Drop & "Add File" broken for .pde files in 3.0a10
-X   https://github.com/processing/processing/issues/3383
-X Show "not compatible" error message in the manager
-X   https://github.com/processing/processing/issues/3386
-X Add more code for handling low-level errors on startup
-
-contribs
-X Use correct localized strings in JavaEditor.java
-X   https://github.com/processing/processing/pull/3376
-
-gsoc
-X Mode problems window wasn't doing line breaks
-X   https://github.com/processing/processing/issues/3369
-X   https://github.com/processing/processing/pull/3370
-X Add missing internationalization in app/Sketch.java
-X   https://github.com/processing/processing/pull/3392
+0239
+X Welcome screen completely broken/looking for debug files
+X   https://github.com/processing/processing/issues/3474
+X Add message that says it's safe to ignore the tools.jar warning
 
 fixed earlier
-X dim edit menus as appropriate during selection/no selection/etc
-o   http://code.google.com/p/processing/issues/detail?id=14
-X   https://github.com/processing/processing/issues/53
+X font fixes for Georgia in the examples
+X contribs listed multiple times
+X   because they're listed multiple times in contribs.txt
+X   https://github.com/processing/processing/issues/3353
 
-cleaning
-o libraries in java tabs (separate .java files) are reported missing
-o   need to scan the .java files for imports that need to be included
-o   http://code.google.com/p/processing/issues/detail?id=459
-X   https://github.com/processing/processing/issues/498
+contribs
+X Fix contribution compatibility check
+X   https://github.com/processing/processing/pull/3479
 
-"OS X v10.11 is the last major release of OS X that will support the previously deprecated Java 6 runtime and tools provided by Apple. Applications or features that depend upon Java 6 may not function properly or will not launch when Java 6 is removed." https://developer.apple.com/library/prerelease/mac/releasenotes/General/rn-osx-10.11/index.html
+gsoc
+X CM updates dialog box doesn't open CM
+X   https://github.com/processing/processing/issues/3481
+X   https://github.com/processing/processing/pull/3489
 
 
 beta
-_ add "welcome" or "what's new" window to explain features in 3
-_   https://github.com/processing/processing/issues/3358
-_   a summary of what's new, plus a link to GitHub wiki page with details
-_   a warning that some Processing 2 sketches may not be compatible
-_   a checkbox for "show this welcome each time" (default to checked)
-_   a button to dismiss the welcome screen (e.g., "get started")
-_ 2.x vs 3.x sketchbook battle (part of the welcome screen item)
-_   if a v2 sketchbook already exists, show a prompt to choose either creating a new Processing 3 sketch folder or use the existing v2 one, plus a link to GitHub wiki page with details
-_ send list of installed Libraries, Modes, Tools, and Examples on update
-_   https://github.com/processing/processing/issues/3365
-_ processing-java command line mode not working on Mac
-_   https://github.com/processing/processing/issues/3409
+_ write notes about changes with Toolkit and Util, and packages
+_ write text for non-sketchbook version of welcome screen
+_ CM ongoing notes and questions
+_   https://github.com/processing/processing/issues/3440
+_ Contribution Manager design is really rough
+_   https://github.com/processing/processing/issues/3464
+_ Ready to add contributed example packages?
+_   https://github.com/processing/processing/issues/2953
 
 
 gui
 _ add new lower console/errors icons
+_ fix the red for the console/error stuff
+_   also the sidebar, the squiggly line beneath code, and the status bar
 _ show hover text with 'debug'
 _ inquire about updated document icon
 _ don't show breakpoints when debugger is off
@@ -85,11 +67,15 @@ _ deactivate step, continue, stop when not running?
 _ update EditorButton rollover label when pressing shift or alt
 _ disable the debug toggle menu while running
 _   otherwise could run in one mode, then try to stop in another
+_ recent menu gets huge with other p5 versions on osx
 
 
 pde/build
-_ error message caused by curly bracket in a println string
-_   https://github.com/processing/processing/issues/3394
+_ Cannot find "processing.core" library. Line 12 in tab sketch_150704a
+_ dim out the Run button if there are compile errors detected
+_   the AST checker has better error message handling for those cases
+_   and hitting Run replaces the useful error with something weird
+_   https://github.com/processing/processing/issues/3408
 _ when variables used in size(), getting exceptions instead of any warning
 _   https://github.com/processing/processing/issues/3311
 _ crashed on startup w/ JavaScript mode as default b/c PdeKeyListener not found
@@ -107,11 +93,6 @@ _   make a Tool that installs it for all platforms, not just OS X
 _   not really part of the 'build' anymore
 _ break out Mode options to their own panels in prefs
 _   Mode should just provide a panel for their prefs
-_ finish adding 'examples' contribs
-_   https://github.com/processing/processing/issues/2953
-_   don't return here, allow contrib types to fail:
-_   https://github.com/processing/processing/blob/master/app/src/processing/app/contrib/ContributionListing.java#L509
-_ add build.xml prompt for OS X developers to download the JDK update
 _ make examples pull/build automatic during dist
 _ dist needs to do a git pull on processing-docs
 _ make reference build process part of dist
@@ -152,7 +133,6 @@ _   https://github.com/processing/processing/issues/3360
 
 
 breakage
-_ break out a gui package (get class count down in .app)
 _ remove deprecated methods
 _ do the right thing on passing around List vs ArrayList and others
 _ PreferencesFrame is a misnomer (not a frame itself)
@@ -887,12 +867,6 @@ How the environment gets packed up, downloaded, and installed.
 
 DIST / General 
 
-_ should be able to build p5 without a JDK install, just a JRE
-_   https://github.com/processing/processing/issues/1840
-_   need to have ecj.jar accessible to ant, then modify build.xml to use this:
-_   <property name="build.compiler" 
-_             value="org.eclipse.jdt.core.JDTCompilerAdapter"/>
-_   http://help.eclipse.org/juno/index.jsp?topic=%2Forg.eclipse.jdt.doc.user%2Ftasks%2Ftask-ant_javac_adapter.htm
 _ line ending issues
 _   doesn't really help on Windows since we use Cygwin
 _     but it would be helpful for people not using it (ant/other LF issues)

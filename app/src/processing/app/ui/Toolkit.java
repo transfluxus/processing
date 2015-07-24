@@ -3,7 +3,7 @@
 /*
   Part of the Processing project - http://processing.org
 
-  Copyright (c) 2012 The Processing Foundation
+  Copyright (c) 2012-15 The Processing Foundation
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License version 2
@@ -19,7 +19,7 @@
   Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-package processing.app;
+package processing.app.ui;
 
 import java.awt.Component;
 import java.awt.Dimension;
@@ -55,6 +55,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
@@ -65,6 +66,10 @@ import javax.swing.JPopupMenu;
 import javax.swing.JRootPane;
 import javax.swing.KeyStroke;
 
+import processing.app.Base;
+import processing.app.Language;
+import processing.app.Preferences;
+
 
 /**
  * Utility functions for base that require a java.awt.Toolkit object. These
@@ -73,6 +78,21 @@ import javax.swing.KeyStroke;
  * @author fry
  */
 public class Toolkit {
+  static public final String PROMPT_YES     = Language.text("prompt.yes");
+  static public final String PROMPT_NO      = Language.text("prompt.no");
+  static public final String PROMPT_CANCEL  = Language.text("prompt.cancel");
+  static public final String PROMPT_OK      = Language.text("prompt.ok");
+  static public final String PROMPT_BROWSE  = Language.text("prompt.browse");
+
+  /**
+   * Standardized width for buttons. Mac OS X 10.3 wants 70 as its default,
+   * Windows XP needs 66, and my Ubuntu machine needs 80+, so 80 seems proper.
+   * This is now stored in the languages file since this may need to be larger
+   * for languages that are consistently wider than English.
+   */
+  static public int BUTTON_WIDTH =
+    Integer.parseInt(Language.text("preferences.button.width"));
+
   static final java.awt.Toolkit awtToolkit =
     java.awt.Toolkit.getDefaultToolkit();
 
@@ -92,13 +112,25 @@ public class Toolkit {
 
 
   /**
-   * A software engineer, somewhere, needs to have his abstraction
-   * taken away. In some countries they jail or beat people for crafting
-   * the sort of API that would require a five line helper function
-   * just to set the shortcut key for a menu item.
+   * A software engineer, somewhere, needs to have their abstraction
+   * taken away. Who crafts the sort of API that would require a
+   * five-line helper function just to set the shortcut key for a
+   * menu item?
    */
   static public JMenuItem newJMenuItem(String title, int what) {
     JMenuItem menuItem = new JMenuItem(title);
+    int modifiers = awtToolkit.getMenuShortcutKeyMask();
+    menuItem.setAccelerator(KeyStroke.getKeyStroke(what, modifiers));
+    return menuItem;
+  }
+
+
+  /**
+   * @param action: use an Action, which sets the title, reaction
+   *                and enabled-ness all by itself.
+   */
+  static public JMenuItem newJMenuItem(Action action, int what) {
+    JMenuItem menuItem = new JMenuItem(action);
     int modifiers = awtToolkit.getMenuShortcutKeyMask();
     menuItem.setAccelerator(KeyStroke.getKeyStroke(what, modifiers));
     return menuItem;
@@ -110,6 +142,18 @@ public class Toolkit {
    */
   static public JMenuItem newJMenuItemShift(String title, int what) {
     JMenuItem menuItem = new JMenuItem(title);
+    int modifiers = awtToolkit.getMenuShortcutKeyMask();
+    modifiers |= ActionEvent.SHIFT_MASK;
+    menuItem.setAccelerator(KeyStroke.getKeyStroke(what, modifiers));
+    return menuItem;
+  }
+
+
+  /**
+   * Like newJMenuItem() but adds shift as a modifier for the shortcut.
+   */
+  static public JMenuItem newJMenuItemShift(Action action, int what) {
+    JMenuItem menuItem = new JMenuItem(action);
     int modifiers = awtToolkit.getMenuShortcutKeyMask();
     modifiers |= ActionEvent.SHIFT_MASK;
     menuItem.setAccelerator(KeyStroke.getKeyStroke(what, modifiers));

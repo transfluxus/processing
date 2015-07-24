@@ -24,13 +24,16 @@ package processing.app.contrib;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.zip.GZIPOutputStream;
 
 import javax.swing.SwingWorker;
 
 import processing.app.Base;
-import processing.app.Editor;
 import processing.app.Language;
+import processing.app.Util;
+import processing.app.ui.Editor;
 import processing.core.PApplet;
+import processing.data.StringDict;
 
 
 public class ContributionManager {
@@ -42,32 +45,44 @@ public class ContributionManager {
 
 
   /**
-   * Blocks until the file is downloaded or an error occurs. Returns true if the
-   * file was successfully downloaded, false otherwise.
+   * Blocks until the file is downloaded or an error occurs.
    *
-   * @param source
-   *          the URL of the file to download
-   * @param dest
-   *          the file on the local system where the file will be written. This
-   *          must be a file (not a directory), and must already exist.
-   * @param progress
-   *          null if progress is irrelevant, such as when downloading for an
-   *          install during startup, when the ProgressMonitor is useless since
-   *          UI isn't setup yet.
-   * @throws FileNotFoundException
-   *           if an error occurred downloading the file
+   * @param source the URL of the file to download
+   * @param post Binary blob of POST data if a payload should be sent.
+   *             Must already be URL-encoded and will be Gzipped for upload.
+   * @param dest The file on the local system where the file will be written.
+   *             This must be a file (not a directory), and must already exist.
+   * @param progress null if progress is irrelevant, such as when downloading
+   *                 for an install during startup, when the ProgressMonitor
+   *                 is useless since UI isn't setup yet.
+   *
+   * @return true if the file was successfully downloaded, false otherwise.
    */
-  static boolean download(URL source, File dest, ContribProgressMonitor progress) {
+  static boolean download(URL source, byte[] post,
+                          File dest, ContribProgressMonitor progress) {
     boolean success = false;
     try {
-//      System.out.println("downloading file " + source);
-//      URLConnection conn = source.openConnection();
+
       HttpURLConnection conn = (HttpURLConnection) source.openConnection();
       HttpURLConnection.setFollowRedirects(true);
       conn.setConnectTimeout(15 * 1000);
       conn.setReadTimeout(60 * 1000);
-      conn.setRequestMethod("GET");
-      conn.connect();
+
+      if (post == null) {
+        conn.setRequestMethod("GET");
+        conn.connect();
+      } else {
+        post = gzipEncode(post);
+
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+        conn.setRequestProperty("Content-Encoding", "gzip");
+        conn.setRequestProperty("Content-Length", String.valueOf(post.length));
+        conn.setUseCaches(false);
+        conn.setDoInput(true);
+        conn.setDoOutput(true);
+        conn.getOutputStream().write(post);
+      }
 
       if (progress != null) {
         // TODO this is often -1, may need to set progress to indeterminate
@@ -118,6 +133,15 @@ public class ContributionManager {
   }
 
 
+  static private byte[] gzipEncode(byte[] what) throws IOException {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    GZIPOutputStream output = new GZIPOutputStream(baos);
+    PApplet.saveStream(output, new ByteArrayInputStream(what));
+    output.close();
+    return baos.toByteArray();
+  }
+
+
   /**
    * Non-blocking call to download and install a contribution in a new thread.
    *
@@ -145,7 +169,7 @@ public class ContributionManager {
           contribZip.setWritable(true);  // necessary?
 
           try {
-            download(url, contribZip, downloadProgress);
+            download(url, null, contribZip, downloadProgress);
 
             if (!downloadProgress.isCanceled() && !downloadProgress.isError()) {
               installProgress.startTask(Language.text("contrib.progress.installing"), ContribProgressMonitor.UNKNOWN);
@@ -232,7 +256,7 @@ public class ContributionManager {
           contribZip.setWritable(true); // necessary?
 
           try {
-            download(url, contribZip, null);
+            download(url, null, contribZip, null);
 
             LocalContribution contribution = ad.install(base, contribZip,
                                                         false, null);
@@ -291,7 +315,7 @@ public class ContributionManager {
             return file.equals(ac.getType() + ".properties");
           }
         });
-        if (contents.length > 0 && Base.readSettings(contents[0]).get("name").equals(ac.getName())) {
+        if (contents.length > 0 && Util.readSettings(contents[0]).get("name").equals(ac.getName())) {
           return;
         }
       }
@@ -363,7 +387,7 @@ public class ContributionManager {
 
             isPrevDone = false;
 
-            download(url, contribZip, null);
+            download(url, null, contribZip, null);
 
             String arg = "contrib.import.progress.install";
             base.getActiveEditor().statusNotice(Language.interpolate(arg,ad.name));
@@ -530,7 +554,7 @@ public class ContributionManager {
     Iterator<File> folderIter = deleteList.iterator();
 
     while (folderIter.hasNext()) {
-      Base.removeDir(folderIter.next());
+      Util.removeDir(folderIter.next());
     }
   }
 
@@ -549,7 +573,7 @@ public class ContributionManager {
       }
     });
     for (File folder : markedForDeletion) {
-      Base.removeDir(folder);
+      Util.removeDir(folder);
     }
   }
 
@@ -613,10 +637,9 @@ public class ContributionManager {
       propFileName = "libraries.properties";
 
     for (File folder : markedForUpdate) {
-      Map<String, String> properties =
-        Base.readSettings(new File(folder, propFileName));
-      updateContribsNames.add(properties.get("name"));
-      Base.removeDir(folder);
+      StringDict props = Util.readSettings(new File(folder, propFileName));
+      updateContribsNames.add(props.get("name"));
+      Util.removeDir(folder);
     }
 
     Iterator<AvailableContribution> iter = contribListing.advertisedContributions.iterator();
